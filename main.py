@@ -4,17 +4,21 @@ import json
 
 app = Flask(__name__)
 
-def load_pokemon_data():
-    try:
-        # Try reading with utf-8-sig to handle BOM
-        df = pd.read_csv('data.csv', encoding='utf-8-sig')
-    except UnicodeDecodeError:
-        try:
-            # Fallback to latin-1 encoding
-            df = pd.read_csv('data.csv', encoding='latin-1')
-        except UnicodeDecodeError:
-            # Final fallback to cp1252
-            df = pd.read_csv('data.csv', encoding='cp1252')
+def pokemon_name_to_filename(name):
+    """Convert Pokemon name to image filename format"""
+    # Convert to lowercase
+    filename = name.lower()
+    
+    # Handle special characters
+    filename = filename.replace("♀", "-f")  # Female symbol
+    filename = filename.replace("♂", "-m")  # Male symbol
+    filename = filename.replace("'", "")    # Remove apostrophes
+    filename = filename.replace(".", "-")   # Replace periods with hyphens
+    filename = filename.replace(" ", "-")   # Replace spaces with hyphens
+    filename = filename.replace("deoxys", "deoxys-normal") # Special pokemon cases
+    filename = filename.replace("mr--mime", "mr-mime") # Special pokemon cases
+    
+    return filename
 
 def load_pokemon_data():
     try:
@@ -38,34 +42,35 @@ def load_pokemon_data():
             
     pokemon_list = []
     for _, row in df.iterrows():
+        if row['gen'] == 'I' or row['gen'] == 'II' or row['gen'] == 'III':
         # Assign cost based on total base stats (for demo purposes)
-        total_stats = row['hp'] + row['attack'] + row['defense'] + row['sp_attack'] + row['sp_defense'] + row['speed']
-        if total_stats < 300:
-            cost = 1
-        elif total_stats < 400:
-            cost = 2
-        elif total_stats < 500:
-            cost = 3
-        elif total_stats < 600:
-            cost = 4
-        else:
-            cost = 5
-            
-        pokemon = {
-            'id': int(row['national_number']),
-            'name': row['english_name'],
-            'img': f"https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/{int(row['national_number'])}.png",
-            'cost': cost,
-            'type': [row['primary_type']] + ([row['secondary_type']] if pd.notna(row['secondary_type']) else []),
-            'hp': int(row['hp']),
-            'attack': int(row['attack']),
-            'defense': int(row['defense']),
-            'sp_atk': int(row['sp_attack']),
-            'sp_def': int(row['sp_defense']),
-            'speed': int(row['speed']),
-            'desc': row['description'] if pd.notna(row['description']) else "No description available."
-        }
-        pokemon_list.append(pokemon)
+            total_stats = row['hp'] + row['attack'] + row['defense'] + row['sp_attack'] + row['sp_defense'] + row['speed']
+            if total_stats < 300:
+                cost = 1
+            elif total_stats < 400:
+                cost = 2
+            elif total_stats < 500:
+                cost = 3
+            elif total_stats < 600:
+                cost = 4
+            else:
+                cost = 5
+                
+            pokemon = {
+                'id': int(row['national_number']),
+                'name': row['english_name'],
+                'img': f"/static/images/{pokemon_name_to_filename(row['english_name'])}.png",
+                'cost': cost,
+                'type': [row['primary_type']] + ([row['secondary_type']] if pd.notna(row['secondary_type']) else []),
+                'hp': int(row['hp']),
+                'attack': int(row['attack']),
+                'defense': int(row['defense']),
+                'sp_atk': int(row['sp_attack']),
+                'sp_def': int(row['sp_defense']),
+                'speed': int(row['speed']),
+                'desc': row['description'] if pd.notna(row['description']) else "No description available."
+            }
+            pokemon_list.append(pokemon)
     return pokemon_list
 
 # Load data once at startup
