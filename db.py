@@ -11,7 +11,6 @@ def get_db_connection():
 # --- Data Access Functions ---
 
 def fetch_pokemon(filters=None):
-    print("[fetch_pokemon] Filters received:", filters)
     conn = get_db_connection()
     cur = conn.cursor()
     base_query = """
@@ -28,8 +27,49 @@ def fetch_pokemon(filters=None):
         type_list = [t.strip().lower() for t in filters['types'].split(',') if t.strip()]
         if type_list:
             join_clauses += " JOIN PokemonHasType pht ON p.pokemon_id = pht.pokemon_id JOIN Type t ON pht.type_id = t.type_id"
+            # Use GROUP BY and HAVING to ensure Pokémon have ALL selected types
             where_clauses.append(f"LOWER(t.type_name) IN ({','.join(['?']*len(type_list))})")
             params.extend(type_list)
+            # Add GROUP BY and HAVING clause to ensure all types are present
+            query = base_query + join_clauses
+            if where_clauses:
+                query += " WHERE " + " AND ".join(where_clauses)
+            query += f" GROUP BY p.pokemon_id HAVING COUNT(DISTINCT LOWER(t.type_name)) = {len(type_list)}"
+            cur.execute(query, params)
+            pokemons = cur.fetchall()
+            # Fetch types for all pokemon in one go
+            pokemon_ids = [row['pokemon_id'] for row in pokemons]
+            types_map = {}
+            if pokemon_ids:
+                q_marks = ','.join(['?']*len(pokemon_ids))
+                cur.execute(f"""
+                    SELECT pht.pokemon_id, t.type_name
+                    FROM PokemonHasType pht
+                    JOIN Type t ON pht.type_id = t.type_id
+                    WHERE pht.pokemon_id IN ({q_marks})
+                    ORDER BY t.type_name
+                """, pokemon_ids)
+                for row in cur.fetchall():
+                    types_map.setdefault(row['pokemon_id'], []).append(row['type_name'])
+            # Build output
+            result = []
+            for row in pokemons:
+                result.append({
+                    'id': row['pokemon_id'],
+                    'name': row['name'],
+                    'img': f"/static/images/{pokemon_name_to_filename(row['name'])}.png",
+                    'cost': row['cost'],
+                    'type': types_map.get(row['pokemon_id'], []),
+                    'hp': row['hp'],
+                    'attack': row['atk'],
+                    'defense': row['def'],
+                    'sp_atk': row['sp_atk'],
+                    'sp_def': row['sp_def'],
+                    'speed': row['speed'],
+                    'gen': str(row['generation'])
+                })
+            conn.close()
+            return result
 
     # Other filters
     if filters:
@@ -63,11 +103,8 @@ def fetch_pokemon(filters=None):
     query = base_query + join_clauses
     if where_clauses:
         query += " WHERE " + " AND ".join(where_clauses)
-    print("\n[fetch_pokemon] SQL Query:", query)
-    print("[fetch_pokemon] Params:", params)
     cur.execute(query, params)
     pokemons = cur.fetchall()
-    print(f"[fetch_pokemon] Number of Pokémon returned: {len(pokemons)}")
     # Fetch types for all pokemon in one go
     pokemon_ids = [row['pokemon_id'] for row in pokemons]
     types_map = {}
@@ -100,7 +137,6 @@ def fetch_pokemon(filters=None):
             'gen': str(row['generation'])
         })
     conn.close()
-    print(f"[fetch_pokemon] Example result: {result[:2]}")
     return result
 
 def fetch_pokemon_by_id(pokemon_id):

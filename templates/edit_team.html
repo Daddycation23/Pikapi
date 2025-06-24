@@ -1486,9 +1486,13 @@
         params.append('types', activeFilters.types.join(','));
       }
       
-      // Add generation filters
+      // Add generation filters - convert Roman numerals to integers
       if (activeFilters.generations.length > 0) {
-        params.append('generations', activeFilters.generations.join(','));
+        const genMap = { 'I': 1, 'II': 2, 'III': 3, 'IV': 4, 'V': 5, 'VI': 6, 'VII': 7, 'VIII': 8 };
+        const genNumbers = activeFilters.generations.map(gen => genMap[gen]).filter(num => num);
+        if (genNumbers.length > 0) {
+          params.append('generations', genNumbers.join(','));
+        }
       }
       
       // Add special property filters
@@ -1510,6 +1514,7 @@
         params.append('cost_min', activeFilters.cost.min);
         params.append('cost_max', activeFilters.cost.max);
       }
+      
       
       // Fetch filtered Pokemon
       const res = await fetch(`/api/pokemon?${params}`);
