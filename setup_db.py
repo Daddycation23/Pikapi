@@ -3,22 +3,6 @@ import sqlite3
 DB_NAME = 'pokemon.db'
 
 schema = '''
-CREATE TABLE IF NOT EXISTS Player (
-    player_id INTEGER PRIMARY KEY AUTOINCREMENT,
-    username VARCHAR(50) UNIQUE NOT NULL,
-    email VARCHAR(100) UNIQUE NOT NULL,
-    password_hash CHAR(80) NOT NULL,
-    registration_date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE TABLE IF NOT EXISTS Team (
-    team_id INTEGER PRIMARY KEY AUTOINCREMENT,
-    budget INT NOT NULL CHECK (budget > 0),
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    player_id INTEGER NOT NULL,
-    FOREIGN KEY (player_id) REFERENCES Player(player_id)
-);
-
 CREATE TABLE IF NOT EXISTS Pokemon (
     pokemon_id INTEGER PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
@@ -45,7 +29,6 @@ CREATE TABLE IF NOT EXISTS Move (
     move_name VARCHAR(100) NOT NULL,
     power SMALLINT NOT NULL,
     accuracy TINYINT NOT NULL,
-    category VARCHAR(20) NOT NULL,
     FOREIGN KEY (type_id) REFERENCES Type(type_id)
 );
 
@@ -74,14 +57,6 @@ CREATE TABLE IF NOT EXISTS PokemonHasMove (
     FOREIGN KEY (pokemon_id) REFERENCES Pokemon(pokemon_id)
 );
 
-CREATE TABLE IF NOT EXISTS TeamPokemon (
-    team_id INTEGER NOT NULL,
-    pokemon_id INTEGER NOT NULL,
-    slot TINYINT NOT NULL,
-    PRIMARY KEY (team_id, slot),
-    FOREIGN KEY (team_id) REFERENCES Team(team_id),
-    FOREIGN KEY (pokemon_id) REFERENCES Pokemon(pokemon_id)
-);
 '''
 
 def main():

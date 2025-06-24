@@ -893,201 +893,155 @@ id,identifier,species_id,height,weight,base_experience,order,is_default
 892,urshifu-single-strike,892,19,1050,275,1082,1
 893,zarude,893,18,700,300,1084,1
 894,regieleki,894,12,1450,290,1086,1
-895,regidrago,895,21,2000,290,1087,1
-896,glastrier,896,22,8000,290,1088,1
-897,spectrier,897,20,445,290,1089,1
-898,calyrex,898,11,77,250,1090,1
-10001,deoxys-attack,386,17,608,270,515,0
-10002,deoxys-defense,386,17,608,270,516,0
-10003,deoxys-speed,386,17,608,270,517,0
-10004,wormadam-sandy,413,5,65,148,543,0
-10005,wormadam-trash,413,5,65,148,544,0
-10006,shaymin-sky,492,4,52,270,607,0
-10007,giratina-origin,487,69,6500,340,601,0
-10008,rotom-heat,479,3,3,182,588,0
-10009,rotom-wash,479,3,3,182,589,0
-10010,rotom-frost,479,3,3,182,590,0
-10011,rotom-fan,479,3,3,182,591,0
-10012,rotom-mow,479,3,3,182,592,0
-10013,castform-sunny,351,3,8,147,465,0
-10014,castform-rainy,351,3,8,147,466,0
-10015,castform-snowy,351,3,8,147,467,0
-10016,basculin-blue-striped,550,10,180,161,667,0
-10017,darmanitan-zen,555,13,929,189,674,0
-10018,meloetta-pirouette,648,6,65,270,778,0
-10019,tornadus-therian,641,14,630,290,765,0
-10020,thundurus-therian,642,30,610,290,767,0
-10021,landorus-therian,645,13,680,300,771,0
-10022,kyurem-black,646,33,3250,350,774,0
-10023,kyurem-white,646,36,3250,350,773,0
-10024,keldeo-resolute,647,14,485,290,776,0
-10025,meowstic-female,678,6,85,163,812,0
-10026,aegislash-blade,681,17,530,250,816,0
-10027,pumpkaboo-small,710,3,35,67,845,0
-10028,pumpkaboo-large,710,5,75,67,846,0
-10029,pumpkaboo-super,710,8,150,67,847,0
-10030,gourgeist-small,711,7,95,173,849,0
-10031,gourgeist-large,711,11,140,173,850,0
-10032,gourgeist-super,711,17,390,173,851,0
-10033,venusaur-mega,3,24,1555,281,4,0
-10034,charizard-mega-x,6,17,1105,285,8,0
-10035,charizard-mega-y,6,17,1005,285,9,0
-10036,blastoise-mega,9,16,1011,284,13,0
-10037,alakazam-mega,65,12,480,270,106,0
-10038,gengar-mega,94,14,405,270,150,0
-10039,kangaskhan-mega,115,22,1000,207,185,0
-10040,pinsir-mega,127,17,590,210,208,0
-10041,gyarados-mega,130,65,3050,224,212,0
-10042,aerodactyl-mega,142,21,790,215,233,0
-10043,mewtwo-mega-x,150,23,1270,351,246,0
-10044,mewtwo-mega-y,150,15,330,351,247,0
-10045,ampharos-mega,181,14,615,275,276,0
-10046,scizor-mega,212,20,1250,210,198,0
-10047,heracross-mega,214,17,625,210,311,0
-10048,houndoom-mega,229,19,495,210,331,0
-10049,tyranitar-mega,248,25,2550,315,343,0
-10050,blaziken-mega,257,19,520,284,354,0
-10051,gardevoir-mega,282,16,484,278,383,0
-10052,mawile-mega,303,10,235,168,408,0
-10053,aggron-mega,306,22,3950,284,412,0
-10054,medicham-mega,308,13,315,179,415,0
-10055,manectric-mega,310,18,440,201,418,0
-10056,banette-mega,354,12,130,194,471,0
-10057,absol-mega,359,12,490,198,479,0
-10058,garchomp-mega,445,19,950,315,571,0
-10059,lucario-mega,448,13,575,219,574,0
-10060,abomasnow-mega,460,27,1850,208,586,0
-10061,floette-eternal,670,2,9,243,803,0
-10062,latias-mega,380,18,520,315,504,0
-10063,latios-mega,381,23,700,315,506,0
-10064,swampert-mega,260,19,1020,286,358,0
-10065,sceptile-mega,254,19,552,284,350,0
-10066,sableye-mega,302,5,1610,168,406,0
-10067,altaria-mega,334,15,206,207,447,0
-10068,gallade-mega,475,16,564,278,385,0
-10069,audino-mega,531,15,320,425,647,0
-10070,sharpedo-mega,319,25,1303,196,430,0
-10071,slowbro-mega,80,20,1200,207,128,0
-10072,steelix-mega,208,105,7400,214,153,0
-10073,pidgeot-mega,18,22,505,261,24,0
-10074,glalie-mega,362,21,3502,203,482,0
-10075,diancie-mega,719,11,278,315,864,0
-10076,metagross-mega,376,25,9429,315,499,0
-10077,kyogre-primal,382,98,4300,347,508,0
-10078,groudon-primal,383,50,9997,347,510,0
-10079,rayquaza-mega,384,108,3920,351,512,0
-10080,pikachu-rock-star,25,4,60,112,37,0
-10081,pikachu-belle,25,4,60,112,38,0
-10082,pikachu-pop-star,25,4,60,112,39,0
-10083,pikachu-phd,25,4,60,112,40,0
-10084,pikachu-libre,25,4,60,112,41,0
-10085,pikachu-cosplay,25,4,60,112,36,0
-10086,hoopa-unbound,720,65,4900,306,866,0
-10087,camerupt-mega,323,25,3205,196,435,0
-10088,lopunny-mega,428,13,283,203,559,0
-10089,salamence-mega,373,18,1126,315,495,0
-10090,beedrill-mega,15,14,405,223,20,0
-10091,rattata-alola,19,3,38,51,26,0
-10092,raticate-alola,20,7,255,145,28,0
-10093,raticate-totem-alola,20,14,1050,145,29,0
-10094,pikachu-original-cap,25,4,60,112,42,0
-10095,pikachu-hoenn-cap,25,4,60,112,43,0
-10096,pikachu-sinnoh-cap,25,4,60,112,44,0
-10097,pikachu-unova-cap,25,4,60,112,45,0
-10098,pikachu-kalos-cap,25,4,60,112,46,0
-10099,pikachu-alola-cap,25,4,60,112,47,0
-10100,raichu-alola,26,7,210,243,52,0
-10101,sandshrew-alola,27,7,400,60,54,0
-10102,sandslash-alola,28,12,550,158,56,0
-10103,vulpix-alola,37,6,99,60,67,0
-10104,ninetales-alola,38,11,199,177,69,0
-10105,diglett-alola,50,2,10,53,85,0
-10106,dugtrio-alola,51,7,666,149,87,0
-10107,meowth-alola,52,4,42,58,89,0
-10108,persian-alola,53,11,330,154,92,0
-10109,geodude-alola,74,4,203,60,116,0
-10110,graveler-alola,75,10,1100,137,118,0
-10111,golem-alola,76,17,3160,223,120,0
-10112,grimer-alola,88,7,420,65,142,0
-10113,muk-alola,89,10,520,175,144,0
-10114,exeggutor-alola,103,109,4156,186,162,0
-10115,marowak-alola,105,10,340,149,165,0
-10116,greninja-battle-bond,658,15,400,239,789,0
-10117,greninja-ash,658,15,400,288,790,0
-10118,zygarde-10-power-construct,718,12,335,243,860,0
-10119,zygarde-50-power-construct,718,50,3050,300,861,0
-10120,zygarde-complete,718,45,6100,354,862,0
-10121,gumshoos-totem,735,14,600,146,882,0
-10122,vikavolt-totem,738,26,1475,225,886,0
-10123,oricorio-pom-pom,741,6,34,167,890,0
-10124,oricorio-pau,741,6,34,167,891,0
-10125,oricorio-sensu,741,6,34,167,892,0
-10126,lycanroc-midnight,745,11,250,170,899,0
-10127,wishiwashi-school,746,82,786,217,902,0
-10128,lurantis-totem,754,15,580,168,912,0
-10129,salazzle-totem,758,21,810,168,917,0
-10130,minior-orange-meteor,774,3,400,154,934,0
-10131,minior-yellow-meteor,774,3,400,154,935,0
-10132,minior-green-meteor,774,3,400,154,936,0
-10133,minior-blue-meteor,774,3,400,154,937,0
-10134,minior-indigo-meteor,774,3,400,154,938,0
-10135,minior-violet-meteor,774,3,400,154,939,0
-10136,minior-red,774,3,3,175,940,0
-10137,minior-orange,774,3,3,175,941,0
-10138,minior-yellow,774,3,3,175,942,0
-10139,minior-green,774,3,3,175,943,0
-10140,minior-blue,774,3,3,175,944,0
-10141,minior-indigo,774,3,3,175,945,0
-10142,minior-violet,774,3,3,175,946,0
-10143,mimikyu-busted,778,2,7,167,952,0
-10144,mimikyu-totem-disguised,778,4,28,167,953,0
-10145,mimikyu-totem-busted,778,4,28,167,954,0
-10146,kommo-o-totem,784,24,2075,270,961,0
-10147,magearna-original,801,10,805,300,982,0
-10148,pikachu-partner-cap,25,4,60,112,48,0
-10149,marowak-totem,105,17,980,149,166,0
-10150,ribombee-totem,743,4,20,162,895,0
-10151,rockruff-own-tempo,744,5,92,56,897,0
-10152,lycanroc-dusk,745,8,250,170,900,0
-10153,araquanid-totem,752,31,2175,159,909,0
-10154,togedemaru-totem,777,6,130,152,950,0
-10155,necrozma-dusk,800,38,4600,340,978,0
-10156,necrozma-dawn,800,42,3500,340,979,0
-10157,necrozma-ultra,800,75,2300,339,980,0
-10158,pikachu-starter,25,4,60,86,49,0
-10159,eevee-starter,133,3,65,87,216,0
-10160,pikachu-world-cap,25,4,60,112,50,0
-10161,meowth-galar,52,4,75,58,90,0
-10162,ponyta-galar,77,8,240,82,122,0
-10163,rapidash-galar,78,17,800,175,124,0
-10164,slowpoke-galar,79,12,360,63,126,0
-10165,slowbro-galar,80,16,705,172,129,0
-10166,farfetchd-galar,83,8,420,132,136,0
-10167,weezing-galar,110,30,160,172,175,0
-10168,mr-mime-galar,122,14,568,161,195,0
-10169,articuno-galar,144,17,509,290,237,0
-10170,zapdos-galar,145,16,582,290,239,0
-10171,moltres-galar,146,20,660,290,241,0
-10172,slowking-galar,199,18,795,172,131,0
-10173,corsola-galar,222,6,5,144,322,0
-10174,zigzagoon-galar,263,4,175,56,362,0
-10175,linoone-galar,264,5,325,147,364,0
-10176,darumaka-galar,554,7,400,63,672,0
-10177,darmanitan-galar-standard,555,17,1200,168,675,0
-10178,darmanitan-galar-zen,555,17,1200,189,676,0
-10179,yamask-galar,562,5,15,61,684,0
-10180,stunfisk-galar,618,7,205,165,741,0
-10181,zygarde-10,718,12,335,243,859,0
-10182,cramorant-gulping,845,8,180,166,1027,0
-10183,cramorant-gorging,845,8,180,166,1028,0
-10184,toxtricity-low-key,849,16,400,176,1033,0
-10185,eiscue-noice,875,14,890,165,1060,0
-10186,indeedee-female,876,9,280,166,1062,0
-10187,morpeko-hangry,877,3,30,153,1064,0
-10188,zacian-crowned,888,28,3550,360,1076,0
-10189,zamazenta-crowned,889,29,7850,360,1078,0
-10190,eternatus-eternamax,890,1000,0,563,1080,0
-10191,urshifu-rapid-strike,892,19,1050,275,1083,0
-10192,zarude-dada,893,18,700,300,1085,0
-10193,calyrex-ice,898,24,8091,340,1091,0
-10194,calyrex-shadow,898,24,536,340,1092,0
+895,Regidrago,2.1,200
+896,Glastrier,2.2,800
+897,Spectrier,2,44.5
+898,Calyrex,1.1,7.7
+898,Calyrex (Ice Rider),2.4,809.1
+898,Calyrex (Shadow Rider),2.4,53.6
+899,Wyrdeer,1.8,95.1
+900,Kleavor,1.8,89
+901,Ursaluna,2.4,290
+901,Ursaluna (Bloodmoon),2.7,333
+902,Basculegion (Male),3,110
+902,Basculegion (Female),3,110
+903,Sneasler,1.3,43
+904,Overqwil,2.5,60.5
+905,Enamorus (Incarnate Forme),1.6,48
+905,Enamorus (Therian Forme),1.6,48
+906,Sprigatito,0.4,4.1
+907,Floragato,0.9,12.2
+908,Meowscarada,1.5,31.2
+909,Fuecoco,0.4,9.8
+910,Crocalor,1,30.7
+911,Skeledirge,1.6,326.5
+912,Quaxly,0.5,6.1
+913,Quaxwell,1.2,21.5
+914,Quaquaval,1.8,61.9
+915,Lechonk,0.5,10.2
+916,Oinkologne (Male),1,120
+916,Oinkologne (Female),1,120
+917,Tarountula,0.3,4
+918,Spidops,1,16.5
+919,Nymble,0.2,1
+920,Lokix,1,17.5
+921,Pawmi,0.3,2.5
+922,Pawmo,0.4,6.5
+923,Pawmot,0.9,41
+924,Tandemaus,0.3,1.8
+925,Maushold (Family of Four),0.3,2.8
+925,Maushold (Family of Three),0.3,2.3
+926,Fidough,0.3,10.9
+927,Dachsbun,0.5,14.9
+928,Smoliv,0.3,6.5
+929,Dolliv,0.6,11.9
+930,Arboliva,1.4,48.2
+931,Squawkabilly (Green Plumage),0.6,2.4
+931,Squawkabilly (Blue Plumage),0.6,2.4
+931,Squawkabilly (Yellow Plumage),0.6,2.4
+931,Squawkabilly (White Plumage),0.6,2.4
+932,Nacli,0.4,16
+933,Naclstack,0.6,105
+934,Garganacl,2.3,240
+935,Charcadet,0.6,10.5
+936,Armarouge,1.5,85
+937,Ceruledge,1.6,62
+938,Tadbulb,0.3,0.4
+939,Bellibolt,1.2,113
+940,Wattrel,0.4,3.6
+941,Kilowattrel,1.4,38.6
+942,Maschiff,0.5,16
+943,Mabosstiff,1.1,61
+944,Shroodle,0.2,0.7
+945,Grafaiai,0.7,27.2
+946,Bramblin,0.6,0.6
+947,Brambleghast,1.2,6
+948,Toedscool,0.9,33
+949,Toedscruel,1.9,58
+950,Klawf,1.3,79
+951,Capsakid,0.3,3
+952,Scovillain,0.9,15
+953,Rellor,0.2,1
+954,Rabsca,0.3,3.5
+955,Flittle,0.2,1.5
+956,Espathra,1.9,90
+957,Tinkatink,0.4,8.9
+958,Tinkatuff,0.7,59.1
+959,Tinkaton,0.7,112.8
+960,Wiglett,1.2,1.8
+961,Wugtrio,1.2,5.4
+962,Bombirdier,1.5,42.9
+963,Finizen,1.3,60.2
+964,Palafin (Zero Form),1.3,60.2
+964,Palafin (Hero Form),1.8,97.4
+965,Varoom,1,35
+966,Revavroom,1.8,120
+967,Cyclizar,1.6,63
+968,Orthworm,2.5,310
+969,Glimmet,0.7,8
+970,Glimmora,1.5,45
+971,Greavard,0.6,35
+972,Houndstone,2,15
+973,Flamigo,1.6,37
+974,Cetoddle,1.2,45
+975,Cetitan,4.5,700
+976,Veluza,2.5,90
+977,Dondozo,12,220
+978,Tatsugiri (Curly Form),0.3,8
+978,Tatsugiri (Droopy Form),0.3,8
+978,Tatsugiri (Stretchy Form),0.3,8
+979,Annihilape,1.2,56
+980,Clodsire,1.8,223
+981,Farigiraf,3.2,160
+982,Dudunsparce (Two-Segment Form),3.6,39.2
+982,Dudunsparce (Three-Segment Form),4.5,47.4
+983,Kingambit,2,120
+984,Great Tusk,2.2,320
+985,Scream Tail,1.2,8
+986,Brute Bonnet,1.2,21
+987,Flutter Mane,1.4,4
+988,Slither Wing,3.2,92
+989,Sandy Shocks,2.3,60
+990,Iron Treads,0.9,240
+991,Iron Bundle,0.6,11
+992,Iron Hands,1.8,380.7
+993,Iron Jugulis,1.3,111
+994,Iron Moth,1.2,36
+995,Iron Thorns,1.6,303
+996,Frigibax,0.5,17
+997,Arctibax,0.8,30
+998,Baxcalibur,2.1,210
+999,Gimmighoul (Chest Form),0.3,5
+999,Gimmighoul (Roaming Form),0.1,0.1
+1000,Gholdengo,1.2,30
+1001,Wo-Chien,1.5,74.2
+1002,Chien-Pao,1.9,152.2
+1003,Ting-Lu,2.7,699.7
+1004,Chi-Yu,0.4,4.9
+1005,Roaring Moon,2,380
+1006,Iron Valiant,1.4,35
+1007,Koraidon,2.5,303
+1008,Miraidon,3.5,240
+1009,Walking Wake,3.5,280
+1010,Iron Leaves,1.5,125
+1011,Dipplin,0.4,4.4
+1012,Poltchageist,0.1,1.1
+1013,Sinistcha,0.2,2.2
+1014,Okidogi,1.8,92
+1015,Munkidori,1,12.2
+1016,Fezandipiti,1.4,30.1
+1017,Ogerpon (Teal Mask),1.2,39.8
+1017,Ogerpon (Wellspring Mask),1.2,39.8
+1017,Ogerpon (Hearthflame Mask),1.2,39.8
+1017,Ogerpon (Cornerstone Mask),1.2,39.8
+1018,Archaludon,2,60
+1019,Hydrapple,1.8,93
+1020,Gouging Fire,3.5,590
+1021,Raging Bolt,5.2,480
+1022,Iron Boulder,1.5,162.5
+1023,Iron Crown,1.6,156
+1024,Terapagos (Normal Form),0.2,6.5
+1024,Terapagos (Terastal Form),0.3,16
+1024,Terapagos (Stellar Form),1.7,77
+1025,Pecharunt,0.3,0.3
+
