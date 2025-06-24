@@ -1,0 +1,1527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Team - Pokemon Team Builder</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f2f5;
+        }
+        .edit-team-container {
+            display: flex;
+            height: 100vh;
+        }
+        /* Left: Current Team */
+        .team-column {
+            width: 18%;
+            background: #fff;
+            border-right: 1px solid #e0e0e0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 30px 10px;
+        }
+        .team-pokemon-slot {
+            width: 90px;
+            height: 90px;
+            background: #e9ecef;
+            border-radius: 16px;
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: border 0.2s;
+        }
+        .team-pokemon-slot.selected {
+            border: 2px solid #4CAF50;
+        }
+        .team-pokemon-img {
+            width: 70px;
+            height: 70px;
+            object-fit: contain;
+        }
+        /* Middle: Selection Panel */
+        .selection-column {
+            width: 34%;
+            background: #f8f9fa;
+            border-right: 1px solid #e0e0e0;
+            padding: 30px 20px;
+            display: flex;
+            flex-direction: column;
+        }
+        .cost-filter {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 18px;
+        }
+        .cost-btn {
+            padding: 6px 16px;
+            border: none;
+            border-radius: 6px;
+            background: #e0e0e0;
+            color: #333;
+            cursor: pointer;
+            font-size: 15px;
+            transition: background 0.2s;
+        }
+        .cost-btn + .cost-btn {
+            margin-left: 10px;
+        }
+
+        .cost-btn.active {
+            background: #4CAF50;
+            color: #fff;
+        }
+        .search-filter-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 18px;
+        }
+        .search-input {
+            flex: 1;
+            padding: 8px 12px;
+            border: 1.5px solid #ccc;
+            border-radius: 6px;
+            font-size: 15px;
+        }
+        .type-select {
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: 1.5px solid #ccc;
+            font-size: 15px;
+        }
+        .advanced-filter-btn {
+            padding: 8px 16px;
+            border-radius: 8px;
+            border: 2px solid #4CAF50;
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+            color: white;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
+        }
+        .advanced-filter-btn:hover {
+            background: linear-gradient(135deg, #45a049, #4CAF50);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(76, 175, 80, 0.4);
+        }
+        .filter-icon {
+            font-size: 16px;
+        }
+        .filter-count {
+            background: #ff5722;
+            color: white;
+            border-radius: 12px;
+            padding: 2px 8px;
+            font-size: 12px;
+            min-width: 20px;
+            text-align: center;
+            display: none;
+        }
+        .filter-count.active {
+            display: inline-block;
+        }
+        .pokemon-selection-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+            gap: 16px;
+            overflow-y: auto;
+        }
+        .pokemon-card-img {
+            width: 70px;
+            height: 70px;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.07);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: border 0.2s;
+        }
+        .pokemon-card-img.selected {
+            border: 2px solid #2196F3;
+        }
+        /* Right: Details Panel */
+        .details-column {
+            width: 48%;
+            background: #fff;
+            position: relative;
+            display: flex;
+        }
+        .details-left {
+            width: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+        }
+        .details-right {
+            width: 50%;
+            padding: 40px 20px 80px 20px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .details-img {
+            width: 180px;
+            height: 180px;
+            background: #e9ecef;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .details-info {
+            margin-bottom: 20px;
+        }
+        .details-name {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 8px;
+        }
+        .details-type {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 8px;
+            flex-wrap: wrap;
+        }
+        .type-badge {
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 13px;
+            color: #fff;
+            background: #888;
+            opacity: 0.8;
+        }
+        .details-cost {
+            color: #e74c3c;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        .details-stats {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+            margin-bottom: 18px;
+        }
+        .stat-row {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .stat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .stat-label {
+            color: #666;
+            font-weight: 500;
+        }
+        .stat-value {
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        .stat-bar-bg {
+            width: 100%;
+            height: 8px;
+            background: #e9ecef;
+            border-radius: 4px;
+        }
+        .stat-bar-fill {
+            height: 100%;
+            background: #4CAF50;
+            border-radius: 4px;
+        }
+        .stat-row.winner {
+            background: rgba(76, 175, 80, 0.2);
+            border-radius: 4px;
+        }
+        .comparison-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0);
+            display: none;
+            z-index: 1000;
+        }
+        .comparison-content {
+            background: transparent;
+            margin: 0;
+            border-radius: 0;
+            padding: 0;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+        .comparison-pokemon {
+            display: flex;
+            gap: 0;
+            flex: 1;
+            height: 100%;
+        }
+        .comparison-pokemon-details {
+            width: 50%;
+            background: rgba(255, 255, 255, 0.5);
+            margin-right: 50%;
+            padding: 40px 20px 80px 20px;
+            display: flex;
+            flex-direction: column;
+        }
+        .comparison-close {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #666;
+        }
+        .back-btn {
+            margin: 0 auto 30px auto;
+            width: 90px;
+            height: 32px;
+            padding: 4px 8px;
+            background: transparent;
+            color:rgb(0, 0, 0);
+            border: none;
+            border-radius: 16px;
+            font-size: 0.9em;
+            cursor: pointer;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            transition: all 0.2s;
+        }
+        .back-btn:hover {
+            background: rgba(108, 117, 125, 0.1);
+            color: #495057;
+        }
+        .action-buttons {
+            position: absolute;
+            right: 20px;
+            bottom: 30px;
+            display: flex;
+            gap: 15px;
+        }
+        .compare-btn, .replace-btn {
+            padding: 14px 32px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1em;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            transition: background 0.2s;
+        }
+        .compare-btn {
+            background: #2196F3;
+            color: #fff;
+        }
+        .compare-btn:hover {
+            background: #1769aa;
+        }
+        .replace-btn {
+            background: #ff9800;
+            color: #fff;
+        }
+        .replace-btn:hover {
+            background: #f57c00;
+        }
+        .replace-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        
+        /* Advanced Filter Modal Styles */
+        .filter-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 2000;
+            backdrop-filter: blur(4px);
+        }
+        .filter-modal-content {
+            background: linear-gradient(135deg, #2c3e50, #34495e);
+            margin: 2% auto;
+            padding: 0;
+            border-radius: 16px;
+            width: 85%;
+            max-width: 1000px;
+            max-height: 90vh;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            animation: modalSlideIn 0.3s ease-out;
+        }
+        @keyframes modalSlideIn {
+            from { transform: translateY(-50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .filter-header {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            padding: 20px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .filter-header h2 {
+            margin: 0;
+            font-size: 1.8em;
+            font-weight: 700;
+        }
+        .filter-close {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 32px;
+            cursor: pointer;
+            line-height: 1;
+            padding: 0 5px;
+            border-radius: 50%;
+            transition: background 0.2s;
+        }
+        .filter-close:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        .filter-body {
+            padding: 30px;
+            max-height: 60vh;
+            overflow-y: auto;
+            color: white;
+        }
+        .filter-section {
+            margin-bottom: 35px;
+        }
+        .filter-section h3 {
+            color: #ecf0f1;
+            font-size: 1.3em;
+            margin-bottom: 15px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #3498db;
+            font-weight: 600;
+        }
+        .filter-grid {
+            display: grid;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .type-grid {
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        }
+        .gen-grid {
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+        }
+        .special-grid {
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        }
+        .filter-toggle-btn {
+            padding: 12px 16px;
+            border: 2px solid #7f8c8d;
+            background: #34495e;
+            color: #ecf0f1;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            text-transform: capitalize;
+        }
+        .filter-toggle-btn:hover {
+            border-color: #3498db;
+            background: #4a5568;
+            transform: translateY(-1px);
+        }
+        .filter-toggle-btn.active {
+            border-color: #e74c3c;
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            color: white;
+            box-shadow: 0 4px 15px rgba(231, 76, 60, 0.4);
+        }
+        .type-btn.active {
+            border-color: #f39c12;
+            background: linear-gradient(135deg, #f39c12, #e67e22);
+        }
+        .gen-btn.active {
+            border-color: #9b59b6;
+            background: linear-gradient(135deg, #9b59b6, #8e44ad);
+        }
+        .special-btn.active {
+            border-color: #1abc9c;
+            background: linear-gradient(135deg, #1abc9c, #16a085);
+        }
+        .stat-sliders {
+            display: grid;
+            gap: 20px;
+        }
+        .stat-slider-row {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .stat-slider-row label {
+            color: #ecf0f1;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        .range-slider {
+            position: relative;
+            height: 8px;
+            background: #7f8c8d;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .stat-range-min, .stat-range-max {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 8px;
+            background: none;
+            pointer-events: none;
+            appearance: none;
+            border-radius: 4px;
+        }
+        .stat-range-min {
+            z-index: 1;
+        }
+        .stat-range-max {
+            z-index: 2;
+        }
+        .stat-range-min::-webkit-slider-thumb,
+        .stat-range-max::-webkit-slider-thumb {
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            border-radius: 50%;
+            cursor: pointer;
+            pointer-events: all;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+            border: 2px solid white;
+        }
+        .stat-range-min::-webkit-slider-thumb:hover,
+        .stat-range-max::-webkit-slider-thumb:hover {
+            transform: scale(1.1);
+        }
+        .cost-range-container {
+            background: #34495e;
+            padding: 20px;
+            border-radius: 10px;
+            border: 2px solid #7f8c8d;
+        }
+        .filter-footer {
+            background: #2c3e50;
+            padding: 20px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 1px solid #34495e;
+        }
+        .filter-clear-btn, .filter-apply-btn {
+            padding: 14px 32px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .filter-clear-btn {
+            background: linear-gradient(135deg, #95a5a6, #7f8c8d);
+            color: white;
+        }
+        .filter-clear-btn:hover {
+            background: linear-gradient(135deg, #7f8c8d, #95a5a6);
+            transform: translateY(-2px);
+        }
+        .filter-apply-btn {
+            background: linear-gradient(135deg, #27ae60, #2ecc71);
+            color: white;
+            box-shadow: 0 4px 15px rgba(46, 204, 113, 0.3);
+        }
+        .filter-apply-btn:hover {
+            background: linear-gradient(135deg, #2ecc71, #27ae60);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(46, 204, 113, 0.4);
+        }
+    </style>
+</head>
+  <body>
+    <div class="edit-team-container">
+        <!-- Left: Current Team -->
+        <div class="team-column">
+            <a href="/" class="back-btn">← Back</a>
+            <div class="team-pokemon-slot" id="team-slot-1">
+                <!-- <img src="..." class="team-pokemon-img"> -->
+            </div>
+            <div class="team-pokemon-slot" id="team-slot-2">
+            </div>
+            <div class="team-pokemon-slot" id="team-slot-3">
+            </div>
+        </div>
+        <!-- Middle: Selection Panel -->
+        <div class="selection-column">
+            <div class="cost-filter">
+                <button class="cost-btn active">All</button>
+                <h3>Cost</h3>
+                <button class="cost-btn">1</button>
+                <button class="cost-btn">2</button>
+                <button class="cost-btn">3</button>
+                <button class="cost-btn">4</button>
+                <button class="cost-btn">5</button>
+            </div>
+            <div class="search-filter-row">
+                <input type="text" class="search-input" placeholder="Search Pokemon...">
+                <button class="advanced-filter-btn" id="advanced-filter-btn">
+                    <span class="filter-icon">⚙️</span>
+                    <span class="filter-count" id="filter-count"></span>
+                </button>
+            </div>
+            <div class="pokemon-selection-grid">
+                <!-- More cards will be generated dynamically -->
+            </div>
+        </div>
+        <!-- Right: Details Panel -->
+        <div class="details-column">
+            <div class="details-left">
+                <div class="details-img" id="details-img"></div>
+            </div>
+            <div class="details-right">
+                <div class="details-info">
+                    <div class="details-name" id="details-name">Select a Pokemon</div>
+                    <div class="details-type" id="details-type"></div>
+                    <div class="details-cost" id="details-cost"></div>
+                </div>
+                <div class="details-stats" id="details-stats"></div>
+                <div class="action-buttons">
+                    <button class="compare-btn">Compare</button>
+                    <button class="replace-btn" id="replace-btn">Replace</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Advanced Filter Modal -->
+    <div class="filter-modal" id="filter-modal">
+        <div class="filter-modal-content">
+            <div class="filter-header">
+                <h2>Advanced Filters</h2>
+                <button class="filter-close" id="filter-close">&times;</button>
+            </div>
+            
+            <div class="filter-body">
+                <!-- Types Section -->
+                <div class="filter-section">
+                    <h3>Types</h3>
+                    <div class="filter-grid type-grid">
+                        <button class="filter-toggle-btn type-btn" data-type="normal">Normal</button>
+                        <button class="filter-toggle-btn type-btn" data-type="fire">Fire</button>
+                        <button class="filter-toggle-btn type-btn" data-type="water">Water</button>
+                        <button class="filter-toggle-btn type-btn" data-type="electric">Electric</button>
+                        <button class="filter-toggle-btn type-btn" data-type="grass">Grass</button>
+                        <button class="filter-toggle-btn type-btn" data-type="ice">Ice</button>
+                        <button class="filter-toggle-btn type-btn" data-type="fighting">Fighting</button>
+                        <button class="filter-toggle-btn type-btn" data-type="poison">Poison</button>
+                        <button class="filter-toggle-btn type-btn" data-type="ground">Ground</button>
+                        <button class="filter-toggle-btn type-btn" data-type="flying">Flying</button>
+                        <button class="filter-toggle-btn type-btn" data-type="psychic">Psychic</button>
+                        <button class="filter-toggle-btn type-btn" data-type="bug">Bug</button>
+                        <button class="filter-toggle-btn type-btn" data-type="rock">Rock</button>
+                        <button class="filter-toggle-btn type-btn" data-type="ghost">Ghost</button>
+                        <button class="filter-toggle-btn type-btn" data-type="dragon">Dragon</button>
+                        <button class="filter-toggle-btn type-btn" data-type="dark">Dark</button>
+                        <button class="filter-toggle-btn type-btn" data-type="steel">Steel</button>
+                        <button class="filter-toggle-btn type-btn" data-type="fairy">Fairy</button>
+                    </div>
+                </div>
+
+                <!-- Generation Section -->
+                <div class="filter-section">
+                    <h3>Generation</h3>
+                    <div class="filter-grid gen-grid">
+                        <button class="filter-toggle-btn gen-btn" data-gen="I">Gen I</button>
+                        <button class="filter-toggle-btn gen-btn" data-gen="II">Gen II</button>
+                        <button class="filter-toggle-btn gen-btn" data-gen="III">Gen III</button>
+                        <button class="filter-toggle-btn gen-btn" data-gen="IV">Gen IV</button>
+                        <button class="filter-toggle-btn gen-btn" data-gen="V">Gen V</button>
+                        <button class="filter-toggle-btn gen-btn" data-gen="VI">Gen VI</button>
+                        <button class="filter-toggle-btn gen-btn" data-gen="VII">Gen VII</button>
+                        <button class="filter-toggle-btn gen-btn" data-gen="VIII">Gen VIII</button>
+                    </div>
+                </div>
+
+                <!-- Special Properties Section -->
+                <div class="filter-section">
+                    <h3>Special Properties</h3>
+                    <div class="filter-grid special-grid">
+                        <button class="filter-toggle-btn special-btn" data-special="legendary">Legendary</button>
+                        <button class="filter-toggle-btn special-btn" data-special="mythical">Mythical</button>
+                        <button class="filter-toggle-btn special-btn" data-special="sublegendary">Sub-Legendary</button>
+                        <button class="filter-toggle-btn special-btn" data-special="mega">Mega Evolution</button>
+                        <button class="filter-toggle-btn special-btn" data-special="gigantamax">Gigantamax</button>
+                    </div>
+                </div>
+
+                <!-- Stat Ranges Section -->
+                <div class="filter-section">
+                    <h3>Stat Ranges</h3>
+                    <div class="stat-sliders">
+                        <div class="stat-slider-row">
+                            <label>HP: <span id="hp-value">0-255</span></label>
+                            <div class="range-slider">
+                                <input type="range" id="hp-min" min="0" max="255" value="0" class="stat-range-min">
+                                <input type="range" id="hp-max" min="0" max="255" value="255" class="stat-range-max">
+                            </div>
+                        </div>
+                        <div class="stat-slider-row">
+                            <label>Attack: <span id="attack-value">0-255</span></label>
+                            <div class="range-slider">
+                                <input type="range" id="attack-min" min="0" max="255" value="0" class="stat-range-min">
+                                <input type="range" id="attack-max" min="0" max="255" value="255" class="stat-range-max">
+                            </div>
+                        </div>
+                        <div class="stat-slider-row">
+                            <label>Defense: <span id="defense-value">0-255</span></label>
+                            <div class="range-slider">
+                                <input type="range" id="defense-min" min="0" max="255" value="0" class="stat-range-min">
+                                <input type="range" id="defense-max" min="0" max="255" value="255" class="stat-range-max">
+                            </div>
+                        </div>
+                        <div class="stat-slider-row">
+                            <label>Sp. Attack: <span id="sp-attack-value">0-255</span></label>
+                            <div class="range-slider">
+                                <input type="range" id="sp-attack-min" min="0" max="255" value="0" class="stat-range-min">
+                                <input type="range" id="sp-attack-max" min="0" max="255" value="255" class="stat-range-max">
+                            </div>
+                        </div>
+                        <div class="stat-slider-row">
+                            <label>Sp. Defense: <span id="sp-defense-value">0-255</span></label>
+                            <div class="range-slider">
+                                <input type="range" id="sp-defense-min" min="0" max="255" value="0" class="stat-range-min">
+                                <input type="range" id="sp-defense-max" min="0" max="255" value="255" class="stat-range-max">
+                            </div>
+                        </div>
+                        <div class="stat-slider-row">
+                            <label>Speed: <span id="speed-value">0-255</span></label>
+                            <div class="range-slider">
+                                <input type="range" id="speed-min" min="0" max="255" value="0" class="stat-range-min">
+                                <input type="range" id="speed-max" min="0" max="255" value="255" class="stat-range-max">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Cost Range Section -->
+                <div class="filter-section">
+                    <h3>Cost Range</h3>
+                    <div class="cost-range-container">
+                        <label>Cost: <span id="cost-value">1-5</span></label>
+                        <div class="range-slider">
+                            <input type="range" id="cost-min" min="1" max="5" value="1" class="stat-range-min">
+                            <input type="range" id="cost-max" min="1" max="5" value="5" class="stat-range-max">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="filter-footer">
+                <button class="filter-clear-btn" id="filter-clear">Clear All</button>
+                <button class="filter-apply-btn" id="filter-apply">Apply Filters</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    // --- Enhanced Team Editor with Full Features ---
+    let team = [];
+    let pokedex = [];
+    let selectedTeamIdx = null;
+    let selectedPokeIdx = null;
+    let selectedPokemon = null;
+    let maxCost = 10;
+
+    // Fetch team and pokedex data from backend
+    async function fetchData() {
+      // Team data is passed from Flask as a Jinja variable
+      team = {{ team|tojson }};
+      await fetchPokemon();
+      renderTeam();
+      renderSelection();
+      renderDetails();
+      updateCostDisplay();
+    }
+
+    // Fetch Pokemon with filters
+    async function fetchPokemon(search = '', type = '', cost = '') {
+      const params = new URLSearchParams();
+      if (search) params.append('search', search);
+      if (type) params.append('type', type);
+      if (cost) params.append('cost', cost);
+      
+      const res = await fetch(`/api/pokemon?${params}`);
+      pokedex = await res.json();
+    }
+
+    // Render team slots
+    function renderTeam() {
+      for (let i = 0; i < 3; i++) {
+        const slot = document.getElementById(`team-slot-${i+1}`);
+        slot.innerHTML = '';
+        if (team[i]) {
+          const img = document.createElement('img');
+          img.src = team[i].img;
+          img.alt = team[i].name;
+          img.className = 'team-pokemon-img';
+          slot.appendChild(img);
+          
+          // Add remove button
+          const removeBtn = document.createElement('div');
+          removeBtn.innerHTML = '×';
+          removeBtn.style.cssText = 'position:absolute; top:5px; right:5px; background:red; color:white; border-radius:50%; width:20px; height:20px; text-align:center; cursor:pointer; font-size:14px; line-height:20px;';
+          removeBtn.onclick = (e) => {
+            e.stopPropagation();
+            removePokemonFromTeam(i);
+          };
+          slot.style.position = 'relative';
+          slot.appendChild(removeBtn);
+        }
+        slot.classList.remove('selected');
+        slot.onclick = () => {
+          selectedTeamIdx = i;
+          selectedPokeIdx = null;
+          selectedPokemon = team[i] || null;
+          highlightTeam();
+          renderDetails(team[i]);
+          updateActionButtons();
+        };
+      }
+    }
+
+    function highlightTeam() {
+      for (let i = 0; i < 3; i++) {
+        const slot = document.getElementById(`team-slot-${i+1}`);
+        if (selectedTeamIdx === i) slot.classList.add('selected');
+        else slot.classList.remove('selected');
+      }
+      // Keep selection cards highlighted - don't deselect them when team is selected
+    }
+
+    // Render selection panel
+    function renderSelection() {
+      const grid = document.querySelector('.pokemon-selection-grid');
+      grid.innerHTML = '';
+      pokedex.forEach((poke, idx) => {
+        const card = document.createElement('div');
+        card.className = 'pokemon-card-img';
+        card.id = `select-pokemon-${poke.id}`;
+        const img = document.createElement('img');
+        img.src = poke.img;
+        img.alt = poke.name;
+        img.style.width = '60px';
+        img.style.height = '60px';
+        
+        // Add cost badge
+        const costBadge = document.createElement('div');
+        costBadge.textContent = poke.cost;
+        costBadge.style.cssText = 'position:absolute; top:2px; left:2px; background:#e74c3c; color:white; border-radius:50%; width:18px; height:18px; text-align:center; font-size:12px; line-height:18px;';
+        
+        card.appendChild(img);
+        card.style.position = 'relative';
+        card.appendChild(costBadge);
+        
+        // Double click to add to team
+        card.ondblclick = () => addPokemonToTeam(poke);
+        
+        card.onclick = () => {
+          selectedPokeIdx = idx;
+          // Don't clear team selection - keep both selections active
+          selectedPokemon = poke;
+          highlightSelection(idx);
+          renderDetails(poke);
+          updateActionButtons();
+        };
+        grid.appendChild(card);
+      });
+    }
+
+    function highlightSelection(idx) {
+      document.querySelectorAll('.pokemon-card-img').forEach((card, i) => {
+        if (i === idx) card.classList.add('selected');
+        else card.classList.remove('selected');
+      });
+      // Keep team slots highlighted - don't deselect them when selection is made
+    }
+
+    // Add Pokemon to team
+    async function addPokemonToTeam(pokemon) {
+      // Check for duplicate Pokemon
+      const isDuplicate = team.some(slot => slot && slot.id === pokemon.id);
+      if (isDuplicate) {
+        alert(`${pokemon.name} is already in your team! You cannot have duplicate Pokemon.`);
+        return;
+      }
+      
+      // Find first empty slot
+      const emptySlot = team.findIndex(slot => !slot);
+      if (emptySlot === -1) {
+        alert('Team is full! Remove a Pokemon first.');
+        return;
+      }
+      
+      // Check cost constraint
+      const newTeam = [...team];
+      newTeam[emptySlot] = pokemon;
+      const validation = await validateTeam(newTeam);
+      
+      if (!validation.valid) {
+        alert(`Cannot add ${pokemon.name}. Total cost would be ${validation.total_cost}/${maxCost}.`);
+        return;
+      }
+      
+      team[emptySlot] = pokemon;
+      renderTeam();
+      updateCostDisplay();
+    }
+
+    // Remove Pokemon from team
+    function removePokemonFromTeam(slotIdx) {
+      team[slotIdx] = null;
+      renderTeam();
+      updateCostDisplay();
+      if (selectedTeamIdx === slotIdx) {
+        selectedTeamIdx = null;
+        selectedPokemon = null;
+        renderDetails();
+        updateActionButtons();
+      }
+    }
+
+    // Replace Pokemon in team
+    async function replacePokemonInTeam() {
+      if (selectedTeamIdx === null || selectedPokeIdx === null) {
+        alert('Please select both a team slot and a Pokemon to replace with!');
+        return;
+      }
+
+      const pokemonToAdd = pokedex[selectedPokeIdx];
+      
+      // Check for duplicate Pokemon (excluding the slot being replaced)
+      const isDuplicate = team.some((slot, idx) => slot && slot.id === pokemonToAdd.id && idx !== selectedTeamIdx);
+      if (isDuplicate) {
+        alert(`${pokemonToAdd.name} is already in your team! You cannot have duplicate Pokemon.`);
+        return;
+      }
+      
+      // Check cost constraint with replacement
+      const newTeam = [...team];
+      newTeam[selectedTeamIdx] = pokemonToAdd;
+      const validation = await validateTeam(newTeam);
+      
+      if (!validation.valid) {
+        alert(`Cannot replace with ${pokemonToAdd.name}. Total cost would be ${validation.total_cost}/${maxCost}.`);
+        return;
+      }
+      
+      team[selectedTeamIdx] = pokemonToAdd;
+      renderTeam();
+      updateCostDisplay();
+      updateActionButtons();
+      
+      // Keep the team slot selected and update details to show the new Pokemon
+      renderDetails(pokemonToAdd);
+    }
+
+    // Update action buttons state
+    function updateActionButtons() {
+      const compareBtn = document.querySelector('.compare-btn');
+      const replaceBtn = document.querySelector('.replace-btn');
+      
+      if (!compareBtn || !replaceBtn) return;
+      
+      // Compare button: enabled when we have a team Pokemon and a selection Pokemon
+      const canCompare = selectedTeamIdx !== null && team[selectedTeamIdx] && selectedPokeIdx !== null;
+      compareBtn.disabled = !canCompare;
+      compareBtn.style.opacity = canCompare ? '1' : '0.5';
+      
+      // Replace button: enabled when we have a team slot selected and a selection Pokemon
+      const canReplace = selectedTeamIdx !== null && selectedPokeIdx !== null;
+      replaceBtn.disabled = !canReplace;
+      replaceBtn.style.opacity = canReplace ? '1' : '0.5';
+    }
+
+    // Validate team cost
+    async function validateTeam(teamToValidate) {
+      const validTeam = teamToValidate.filter(p => p !== null);
+      const res = await fetch('/api/team/validate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ team: validTeam })
+      });
+      return await res.json();
+    }
+
+    // Update cost display
+    async function updateCostDisplay() {
+      const validation = await validateTeam(team);
+      const costDisplay = document.querySelector('#current-cost');
+      const costFill = document.querySelector('.cost-fill');
+      
+      if (costDisplay) {
+        costDisplay.textContent = validation.total_cost;
+        costFill.style.width = `${(validation.total_cost / maxCost) * 100}%`;
+        costFill.style.backgroundColor = validation.valid ? '#4CAF50' : '#e74c3c';
+      }
+    }
+
+    // Render details panel
+    function renderDetails(poke) {
+      const detailsColumn = document.querySelector('.details-column');
+      
+      if (!poke) {
+        // Show completely blank space when no Pokemon is selected
+        detailsColumn.innerHTML = '';
+        return;
+      }
+      
+      const typeColors = {
+        'fire': '#F08030', 'water': '#6890F0', 'grass': '#78C850', 'electric': '#F8D030',
+        'psychic': '#F85888', 'ice': '#98D8D8', 'dragon': '#7038F8', 'dark': '#705848',
+        'fairy': '#EE99AC', 'fighting': '#C03028', 'poison': '#A040A0', 'ground': '#E0C068',
+        'flying': '#A890F0', 'bug': '#A8B820', 'rock': '#B8A038', 'ghost': '#705898',
+        'steel': '#B8B8D0', 'normal': '#A8A878'
+      };
+      
+      const typeDisplay = (poke.type||[]).map(t => 
+        `<span class="type-badge" style="background-color:${typeColors[t.toLowerCase()] || '#888'}">${t}</span>`
+      ).join(' ');
+      
+      // Show Pokemon details with new split layout
+      detailsColumn.innerHTML = `
+        <div class="details-left">
+          <div class="details-img">
+            <img src="${poke.img}" alt="${poke.name}" style="width:160px;height:160px;object-fit:contain;">
+          </div>
+        </div>
+        <div class="details-right">
+          <div class="details-info">
+            <div class="details-name">${poke.name}</div>
+            <div class="details-type">${typeDisplay}</div>
+            <div class="details-cost">Cost: ${poke.cost}</div>
+          </div>
+          <div class="details-stats">
+            <div class="stat-row">
+              <div class="stat-header">
+                <span class="stat-label">HP</span>
+                <span class="stat-value">${poke.hp}</span>
+              </div>
+              <div class="stat-bar-bg"><div class="stat-bar-fill" style="width:${Math.min(poke.hp/2, 100)}%"></div></div>
+            </div>
+            <div class="stat-row">
+              <div class="stat-header">
+                <span class="stat-label">Attack</span>
+                <span class="stat-value">${poke.attack}</span>
+              </div>
+              <div class="stat-bar-bg"><div class="stat-bar-fill" style="width:${Math.min(poke.attack/2, 100)}%"></div></div>
+            </div>
+            <div class="stat-row">
+              <div class="stat-header">
+                <span class="stat-label">Defense</span>
+                <span class="stat-value">${poke.defense}</span>
+              </div>
+              <div class="stat-bar-bg"><div class="stat-bar-fill" style="width:${Math.min(poke.defense/2, 100)}%"></div></div>
+            </div>
+            <div class="stat-row">
+              <div class="stat-header">
+                <span class="stat-label">Sp. Attack</span>
+                <span class="stat-value">${poke.sp_atk}</span>
+              </div>
+              <div class="stat-bar-bg"><div class="stat-bar-fill" style="width:${Math.min(poke.sp_atk/2, 100)}%"></div></div>
+            </div>
+            <div class="stat-row">
+              <div class="stat-header">
+                <span class="stat-label">Sp. Defense</span>
+                <span class="stat-value">${poke.sp_def}</span>
+              </div>
+              <div class="stat-bar-bg"><div class="stat-bar-fill" style="width:${Math.min(poke.sp_def/2, 100)}%"></div></div>
+            </div>
+            <div class="stat-row">
+              <div class="stat-header">
+                <span class="stat-label">Speed</span>
+                <span class="stat-value">${poke.speed}</span>
+              </div>
+              <div class="stat-bar-bg"><div class="stat-bar-fill" style="width:${Math.min(poke.speed/2, 100)}%"></div></div>
+            </div>
+          </div>
+        </div>
+        <div class="action-buttons">
+          <button class="compare-btn">Compare</button>
+          <button class="replace-btn" id="replace-btn">Replace</button>
+        </div>
+        <div class="comparison-overlay" id="comparison-overlay">
+          <div class="comparison-content">
+            <button class="comparison-close" onclick="hideComparison()">&times;</button>
+            <div class="comparison-pokemon" id="comparison-pokemon">
+              <!-- Comparison content will be inserted here -->
+            </div>
+          </div>
+        </div>
+      `;
+      
+      // Re-attach button event listeners
+      const compareBtn = document.querySelector('.compare-btn');
+      const replaceBtn = document.querySelector('.replace-btn');
+      
+      compareBtn.onclick = () => {
+        if (selectedTeamIdx !== null && team[selectedTeamIdx] && selectedPokeIdx !== null) {
+          showComparison(team[selectedTeamIdx], pokedex[selectedPokeIdx]);
+        } else {
+          alert('Please select both a team Pokemon and a selection Pokemon to compare!');
+        }
+      };
+      
+      replaceBtn.onclick = () => {
+        replacePokemonInTeam();
+      };
+      
+      updateActionButtons();
+    }
+
+    // Filter functions
+    async function applyFilters() {
+      const search = document.querySelector('.search-input').value;
+      const type = document.querySelector('.type-select').value;
+      const activeCostBtn = document.querySelector('.cost-btn.active');
+      const cost = activeCostBtn && activeCostBtn.textContent !== 'All' ? activeCostBtn.textContent : '';
+      
+      await fetchPokemon(search, type, cost);
+      renderSelection();
+    }
+
+    // Cost filter buttons
+    function setupCostFilter() {
+      document.querySelectorAll('.cost-btn').forEach(btn => {
+        btn.onclick = () => {
+          document.querySelectorAll('.cost-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          applyFilters();
+        };
+      });
+    }
+
+    // Search and type filter
+    function setupFilters() {
+      document.querySelector('.search-input').oninput = applySimpleFilters;
+    }
+
+    async function applySimpleFilters() {
+      const search = document.querySelector('.search-input').value;
+      
+      if (!search.trim()) {
+        // If no search, load all Pokemon (respecting any advanced filters)
+        const res = await fetch('/api/pokemon');
+        pokedex = await res.json();
+      } else {
+        // Apply search filter
+        const params = new URLSearchParams();
+        params.append('search', search);
+        const res = await fetch(`/api/pokemon?${params}`);
+        pokedex = await res.json();
+      }
+      
+      renderSelection();
+    }
+
+    // Show comparison overlay
+    function showComparison(pokemon1, pokemon2) {
+      const overlay = document.getElementById('comparison-overlay');
+      const comparisonContainer = document.getElementById('comparison-pokemon');
+      
+      const stats = ['hp', 'attack', 'defense', 'sp_atk', 'sp_def', 'speed'];
+      const statLabels = ['HP', 'Attack', 'Defense', 'Sp. Attack', 'Sp. Defense', 'Speed'];
+      
+      const typeColors = {
+        'fire': '#F08030', 'water': '#6890F0', 'grass': '#78C850', 'electric': '#F8D030',
+        'psychic': '#F85888', 'ice': '#98D8D8', 'dragon': '#7038F8', 'dark': '#705848',
+        'fairy': '#EE99AC', 'fighting': '#C03028', 'poison': '#A040A0', 'ground': '#E0C068',
+        'flying': '#A890F0', 'bug': '#A8B820', 'rock': '#B8A038', 'ghost': '#705898',
+        'steel': '#B8B8D0', 'normal': '#A8A878'
+      };
+      
+      const typeDisplay = (pokemon1.type||[]).map(t => 
+        `<span class="type-badge" style="background-color:${typeColors[t.toLowerCase()] || '#888'}">${t}</span>`
+      ).join(' ');
+      
+      let statsHTML = '';
+      stats.forEach((stat, idx) => {
+        const value1 = pokemon1[stat];
+        const value2 = pokemon2[stat];
+        const isWinner = value1 > value2;
+        
+        statsHTML += `
+          <div class="stat-row ${isWinner ? 'winner' : ''}">
+            <div class="stat-header">
+              <span class="stat-label">${statLabels[idx]}</span>
+              <span class="stat-value">${value1}</span>
+            </div>
+            <div class="stat-bar-bg"><div class="stat-bar-fill" style="width:${Math.min(value1/2, 100)}%"></div></div>
+          </div>
+        `;
+      });
+      
+      const comparisonHTML = `
+        <div class="comparison-pokemon-details">
+          <div class="details-info">
+            <div class="details-name">${pokemon1.name}</div>
+            <div class="details-type">${typeDisplay}</div>
+            <div class="details-cost">Cost: ${pokemon1.cost}</div>
+          </div>
+          <div class="details-stats">
+            ${statsHTML}
+          </div>
+          <div class="action-buttons">
+            <button class="replace-btn" id="comparison-replace-btn">Replace</button>
+          </div>
+        </div>
+      `;
+      
+      comparisonContainer.innerHTML = comparisonHTML;
+      
+      // Add event listener for comparison replace button
+      const comparisonReplaceBtn = document.getElementById('comparison-replace-btn');
+      comparisonReplaceBtn.onclick = () => {
+        replacePokemonInTeam();
+        hideComparison(); // Close comparison after replacement
+      };
+      
+      overlay.style.display = 'block';
+    }
+    
+    // Hide comparison overlay
+    function hideComparison() {
+      const overlay = document.getElementById('comparison-overlay');
+      overlay.style.display = 'none';
+    }
+
+    // Add cost tracker to team section
+    function addCostTracker() {
+      const teamColumn = document.querySelector('.team-column');
+      const costTracker = document.createElement('div');
+      costTracker.innerHTML = `
+        <div style="margin-top: 20px; text-align: center;">
+          <h4>Team Cost: <span id="current-cost">0</span>/${maxCost}</h4>
+          <div style="width: 80%; height: 10px; background: #e9ecef; border-radius: 5px; margin: 10px auto;">
+            <div class="cost-fill" style="height: 100%; background: #4CAF50; border-radius: 5px; width: 0%; transition: width 0.3s;"></div>
+          </div>
+        </div>
+      `;
+      teamColumn.appendChild(costTracker);
+    }
+
+    // Advanced Filter System
+    let activeFilters = {
+      types: [],
+      generations: [],
+      special: [],
+      stats: {
+        hp: { min: 0, max: 255 },
+        attack: { min: 0, max: 255 },
+        defense: { min: 0, max: 255 },
+        sp_atk: { min: 0, max: 255 },
+        sp_def: { min: 0, max: 255 },
+        speed: { min: 0, max: 255 }
+      },
+      cost: { min: 1, max: 5 }
+    };
+
+    function setupAdvancedFilters() {
+      const modal = document.getElementById('filter-modal');
+      const openBtn = document.getElementById('advanced-filter-btn');
+      const closeBtn = document.getElementById('filter-close');
+      const clearBtn = document.getElementById('filter-clear');
+      const applyBtn = document.getElementById('filter-apply');
+
+      // Open modal
+      openBtn.onclick = () => {
+        modal.style.display = 'block';
+        document.body.style.overflow = 'hidden';
+      };
+
+      // Close modal
+      const closeModal = () => {
+        modal.style.display = 'none';
+        document.body.style.overflow = 'auto';
+      };
+      closeBtn.onclick = closeModal;
+      modal.onclick = (e) => {
+        if (e.target === modal) closeModal();
+      };
+
+      // Setup filter toggle buttons
+      setupFilterToggleButtons();
+      
+      // Setup stat range sliders
+      setupStatRangeSliders();
+
+      // Clear all filters
+      clearBtn.onclick = () => {
+        clearAllFilters();
+        updateFilterDisplay();
+        updateFilterCount();
+      };
+
+      // Apply filters
+      applyBtn.onclick = () => {
+        closeModal();
+        applyAdvancedFilters();
+        updateFilterCount();
+      };
+    }
+
+    function setupFilterToggleButtons() {
+      // Type filters
+      document.querySelectorAll('.type-btn').forEach(btn => {
+        btn.onclick = () => {
+          const type = btn.dataset.type;
+          toggleArrayFilter(activeFilters.types, type);
+          btn.classList.toggle('active');
+        };
+      });
+
+      // Generation filters
+      document.querySelectorAll('.gen-btn').forEach(btn => {
+        btn.onclick = () => {
+          const gen = btn.dataset.gen;
+          toggleArrayFilter(activeFilters.generations, gen);
+          btn.classList.toggle('active');
+        };
+      });
+
+      // Special property filters
+      document.querySelectorAll('.special-btn').forEach(btn => {
+        btn.onclick = () => {
+          const special = btn.dataset.special;
+          toggleArrayFilter(activeFilters.special, special);
+          btn.classList.toggle('active');
+        };
+      });
+    }
+
+    function setupStatRangeSliders() {
+      const stats = ['hp', 'attack', 'defense', 'sp-attack', 'sp-defense', 'speed'];
+      
+      stats.forEach(stat => {
+        const minSlider = document.getElementById(`${stat}-min`);
+        const maxSlider = document.getElementById(`${stat}-max`);
+        const valueDisplay = document.getElementById(`${stat}-value`);
+        
+        const statKey = stat.replace('-', '_');
+        
+        const updateValues = () => {
+          const min = parseInt(minSlider.value);
+          const max = parseInt(maxSlider.value);
+          
+          // Ensure min doesn't exceed max
+          if (min > max) {
+            minSlider.value = max;
+          }
+          if (max < min) {
+            maxSlider.value = min;
+          }
+          
+          const finalMin = parseInt(minSlider.value);
+          const finalMax = parseInt(maxSlider.value);
+          
+          activeFilters.stats[statKey] = { min: finalMin, max: finalMax };
+          valueDisplay.textContent = `${finalMin}-${finalMax}`;
+        };
+        
+        minSlider.oninput = updateValues;
+        maxSlider.oninput = updateValues;
+      });
+
+      // Cost range slider
+      const costMin = document.getElementById('cost-min');
+      const costMax = document.getElementById('cost-max');
+      const costValue = document.getElementById('cost-value');
+      
+      const updateCostValues = () => {
+        const min = parseInt(costMin.value);
+        const max = parseInt(costMax.value);
+        
+        if (min > max) {
+          costMin.value = max;
+        }
+        if (max < min) {
+          costMax.value = min;
+        }
+        
+        const finalMin = parseInt(costMin.value);
+        const finalMax = parseInt(costMax.value);
+        
+        activeFilters.cost = { min: finalMin, max: finalMax };
+        costValue.textContent = `${finalMin}-${finalMax}`;
+      };
+      
+      costMin.oninput = updateCostValues;
+      costMax.oninput = updateCostValues;
+    }
+
+    function toggleArrayFilter(array, value) {
+      const index = array.indexOf(value);
+      if (index > -1) {
+        array.splice(index, 1);
+      } else {
+        array.push(value);
+      }
+    }
+
+    function clearAllFilters() {
+      // Clear arrays
+      activeFilters.types = [];
+      activeFilters.generations = [];
+      activeFilters.special = [];
+      
+      // Reset stat ranges
+      Object.keys(activeFilters.stats).forEach(stat => {
+        activeFilters.stats[stat] = { min: 0, max: 255 };
+      });
+      activeFilters.cost = { min: 1, max: 5 };
+      
+      // Reset UI
+      document.querySelectorAll('.filter-toggle-btn').forEach(btn => {
+        btn.classList.remove('active');
+      });
+      
+      // Reset sliders
+      document.querySelectorAll('.stat-range-min').forEach(slider => {
+        slider.value = slider.min;
+      });
+      document.querySelectorAll('.stat-range-max').forEach(slider => {
+        slider.value = slider.max;
+      });
+      
+      // Update value displays
+      const stats = ['hp', 'attack', 'defense', 'sp-attack', 'sp-defense', 'speed'];
+      stats.forEach(stat => {
+        const valueDisplay = document.getElementById(`${stat}-value`);
+        valueDisplay.textContent = '0-255';
+      });
+      document.getElementById('cost-value').textContent = '1-5';
+    }
+
+    function updateFilterDisplay() {
+      // This function can be used to update any visual indicators
+      // of active filters in the main interface
+    }
+
+    function updateFilterCount() {
+      const totalFilters = activeFilters.types.length + 
+                          activeFilters.generations.length + 
+                          activeFilters.special.length +
+                          getModifiedStatRangesCount() +
+                          (hasModifiedCostRange() ? 1 : 0);
+      
+      const countElement = document.getElementById('filter-count');
+      if (totalFilters > 0) {
+        countElement.textContent = totalFilters;
+        countElement.classList.add('active');
+      } else {
+        countElement.classList.remove('active');
+      }
+    }
+
+    function getModifiedStatRangesCount() {
+      return Object.values(activeFilters.stats).filter(range => 
+        range.min > 0 || range.max < 255
+      ).length;
+    }
+
+    function hasModifiedStatRanges() {
+      return Object.values(activeFilters.stats).some(range => 
+        range.min > 0 || range.max < 255
+      );
+    }
+
+    function hasModifiedCostRange() {
+      return activeFilters.cost.min > 1 || activeFilters.cost.max < 5;
+    }
+
+    async function applyAdvancedFilters() {
+      const search = document.querySelector('.search-input').value;
+      
+      // Build filter parameters
+      const params = new URLSearchParams();
+      if (search) params.append('search', search);
+      
+      // Add type filters
+      if (activeFilters.types.length > 0) {
+        params.append('types', activeFilters.types.join(','));
+      }
+      
+      // Add generation filters
+      if (activeFilters.generations.length > 0) {
+        params.append('generations', activeFilters.generations.join(','));
+      }
+      
+      // Add special property filters
+      if (activeFilters.special.length > 0) {
+        params.append('special', activeFilters.special.join(','));
+      }
+      
+      // Add stat range filters
+      Object.keys(activeFilters.stats).forEach(stat => {
+        const range = activeFilters.stats[stat];
+        if (range.min > 0 || range.max < 255) {
+          params.append(`${stat}_min`, range.min);
+          params.append(`${stat}_max`, range.max);
+        }
+      });
+      
+      // Add cost range filter
+      if (activeFilters.cost.min > 1 || activeFilters.cost.max < 5) {
+        params.append('cost_min', activeFilters.cost.min);
+        params.append('cost_max', activeFilters.cost.max);
+      }
+      
+      // Fetch filtered Pokemon
+      const res = await fetch(`/api/pokemon?${params}`);
+      pokedex = await res.json();
+      renderSelection();
+    }
+
+    // Initial load
+    document.addEventListener('DOMContentLoaded', () => {
+      fetchData();
+      setupCostFilter();
+      setupFilters();
+      addCostTracker();
+      updateActionButtons();
+      setupAdvancedFilters();
+    });
+    </script>
+</body>
+</html> 
