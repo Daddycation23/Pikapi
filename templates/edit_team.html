@@ -251,6 +251,10 @@
             background: rgba(76, 175, 80, 0.2);
             border-radius: 4px;
         }
+        .stat-row.loser {
+            background: rgba(175, 76, 76, 0.2);
+            border-radius: 4px;
+        }
         .comparison-overlay {
             position: absolute;
             top: 0;
@@ -1182,7 +1186,7 @@
         const isWinner = value1 > value2;
         
         statsHTML += `
-          <div class="stat-row ${isWinner ? 'winner' : ''}">
+          <div class="stat-row ${isWinner ? 'winner' : 'loser'}">
             <div class="stat-header">
               <span class="stat-label">${statLabels[idx]}</span>
               <span class="stat-value">${value1}</span>
