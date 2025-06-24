@@ -52,9 +52,17 @@ def fetch_pokemon(filters=None):
             where_clauses.append("p.cost <= ?")
             params.append(filters['cost_max'])
         if 'generations' in filters and filters['generations']:
-            gen_list = [g.strip() for g in filters['generations'].split(',')]
-            where_clauses.append(f"p.generation IN ({','.join(['?']*len(gen_list))})")
-            params.extend(gen_list)
+            gen_list = [int(g.strip()) for g in filters['generations'].split(',') if g.strip().isdigit()]
+            if gen_list:
+                where_clauses.append(f"p.generation IN ({','.join(['?']*len(gen_list))})")
+                params.extend(gen_list)
+        if 'types' in filters and filters['types']:
+            type_list = [t.strip().capitalize() for t in filters['types'].split(',') if t.strip()]
+            if type_list:
+                # Join with Type and PokemonHasType to filter by type
+                query += " JOIN PokemonHasType pht ON p.pokemon_id = pht.pokemon_id JOIN Type t ON pht.type_id = t.type_id"
+                where_clauses.append(f"t.type_name IN ({','.join(['?']*len(type_list))})")
+                params.extend(type_list)
         # Stat filters
         for stat in ['hp', 'atk', 'def', 'sp_atk', 'sp_def', 'speed']:
             min_key = f'{stat}_min'
@@ -75,11 +83,11 @@ def fetch_pokemon(filters=None):
     if pokemon_ids:
         q_marks = ','.join(['?']*len(pokemon_ids))
         cur.execute(f"""
-            SELECT pht.pokemon_id, t.type_name, pht.slot
+            SELECT pht.pokemon_id, t.type_name
             FROM PokemonHasType pht
             JOIN Type t ON pht.type_id = t.type_id
             WHERE pht.pokemon_id IN ({q_marks})
-            ORDER BY pht.slot
+            ORDER BY t.type_id
         """, pokemon_ids)
         for row in cur.fetchall():
             types_map.setdefault(row['pokemon_id'], []).append(row['type_name'])
@@ -118,7 +126,7 @@ def fetch_pokemon_by_id(pokemon_id):
     cur.execute("""
         SELECT t.type_name FROM PokemonHasType pht
         JOIN Type t ON pht.type_id = t.type_id
-        WHERE pht.pokemon_id = ? ORDER BY pht.slot
+        WHERE pht.pokemon_id = ? ORDER BY t.type_id
     """, (pokemon_id,))
     types = [r['type_name'] for r in cur.fetchall()]
     result = {

@@ -41,7 +41,7 @@ def calculate_cost(row):
         return 5
 
 def load_pokemon():
-    CSV_PATH = os.path.join('CSV', 'Pokemon.csv')
+    CSV_PATH = os.path.join('CSV', 'Pokemon_new.csv')
     df = pd.read_csv(CSV_PATH)
     conn = sqlite3.connect(DB_PATH)
     cur = conn.cursor()
@@ -50,15 +50,25 @@ def load_pokemon():
         pokemon_id = int(row['ID'])
         name = row['Name']
         generation = int(row['Generation'])
-        cost = calculate_cost(row)
         hp = int(row['HP'])
         atk = int(row['Attack'])
         defense = int(row['Defense'])
         sp_atk = int(row['Sp. Atk'])
         sp_def = int(row['Sp. Def'])
         speed = int(row['Speed'])
-        height_cm = None
-        weight_kg = None
+        total_stats = hp + atk + defense + sp_atk + sp_def + speed
+        if total_stats < 300:
+            cost = 1
+        elif total_stats < 400:
+            cost = 2
+        elif total_stats < 500:
+            cost = 3
+        elif total_stats < 600:
+            cost = 4
+        else:
+            cost = 5
+        height_cm = row.get('height_cm', None)
+        weight_kg = row.get('weight_kg', None)
         cur.execute('SELECT 1 FROM Pokemon WHERE pokemon_id = ?', (pokemon_id,))
         if cur.fetchone():
             continue
