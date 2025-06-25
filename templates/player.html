@@ -4,15 +4,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pokemon Team Builder</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='common.css')}}"> 
     <link rel="stylesheet" href="{{ url_for('static', filename='index.css')}}"> 
 </head>
 <body>
     <div class="container">
         <div class="header">
             <h1>Pokemon Team Builder</h1>
-            <div class="auth-section" id="auth-section">
-                <button class="auth-button login-btn" id="login-btn">Login</button>
-                <button class="auth-button register-btn" id="register-btn">Register</button>
+            <div class="header-buttons">
+                <button class="auth-button" onclick="window.location.href='/'">Browse Pokemon</button>
+                <div class="auth-section" id="auth-section">
+                    <!-- Will be populated by JavaScript -->
+                </div>
             </div>
         </div>
 
@@ -100,32 +103,7 @@
             </div>
         </div>
     </div>
-    <!-- Login Modal -->
-    <div id="login-modal" class="modal">
-        <div class="modal-content">
-            <span class="close-button" id="login-close">&times;</span>
-            <h2>Login</h2>
-            <form id="login-form">
-                <input type="text" id="login-username" placeholder="Username" required style="width:100%;margin-bottom:10px;padding:8px;">
-                <input type="password" id="login-password" placeholder="Password" required style="width:100%;margin-bottom:10px;padding:8px;">
-                <button type="submit" class="auth-button login-btn" style="width:100%;">Login</button>
-                <div id="login-error" style="color:red;margin-top:10px;"></div>
-            </form>
-        </div>
-    </div>
-    <!-- Register Modal -->
-    <div id="register-modal" class="modal">
-        <div class="modal-content">
-            <span class="close-button" id="register-close">&times;</span>
-            <h2>Register</h2>
-            <form id="register-form">
-                <input type="text" id="register-username" placeholder="Username" required style="width:100%;margin-bottom:10px;padding:8px;">
-                <input type="password" id="register-password" placeholder="Password" required style="width:100%;margin-bottom:10px;padding:8px;">
-                <button type="submit" class="auth-button register-btn" style="width:100%;">Register</button>
-                <div id="register-error" style="color:red;margin-top:10px;"></div>
-            </form>
-        </div>
-    </div>
-    <script src="{{ url_for('static', filename='index.js') }}"></script>
+
+    <script src="{{ url_for('static', filename='player.js') }}"></script>
 </body>
 </html> 

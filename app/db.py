@@ -73,7 +73,7 @@ def fetch_pokemon(filters=None):
                 result.append({
                     'id': row['pokemon_id'],
                     'name': row['name'],
-                    'img': f"/pokemon_image/{row['pokemon_id']}",
+                    'img': f"/api/pokemon_image/{row['pokemon_id']}",
                     'cost': row['cost'],
                     'type': types_map.get(row['pokemon_id'], []),
                     'hp': row['hp'],
@@ -159,7 +159,7 @@ def fetch_pokemon(filters=None):
         result.append({
             'id': row['pokemon_id'],
             'name': row['name'],
-            'img': f"/static/images/{row['pokemon_id']}.png",
+            'img': f"/api/pokemon_image/{row['pokemon_id']}",
             'cost': row['cost'],
             'type': types_map.get(row['pokemon_id'], []),
             'hp': row['hp'],
@@ -205,7 +205,7 @@ def fetch_pokemon_by_id(pokemon_id):
     result = {
         'id': row['pokemon_id'],
         'name': row['name'],
-        'img': f"/static/images/{row['pokemon_id']}.png",
+        'img': f"/api/pokemon_image/{row['pokemon_id']}",
         'cost': row['cost'],
         'type': types,
         'hp': row['hp'],
