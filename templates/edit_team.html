@@ -1117,10 +1117,11 @@
     // Filter functions
     async function applyFilters() {
       const search = document.querySelector('.search-input').value;
-      const type = document.querySelector('.type-select').value;
+      // Remove or comment out the unused type-select reference
+      // const type = document.querySelector('.type-select').value;
+      const type = '';
       const activeCostBtn = document.querySelector('.cost-btn.active');
-      const cost = activeCostBtn && activeCostBtn.textContent !== 'All' ? activeCostBtn.textContent : '';
-      
+      const cost = activeCostBtn && activeCostBtn.textContent !== 'All' ? parseInt(activeCostBtn.textContent) : '';
       await fetchPokemon(search, type, cost);
       renderSelection();
     }
