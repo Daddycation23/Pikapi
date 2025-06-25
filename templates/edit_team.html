@@ -4,21 +4,25 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Edit Team - Pokemon Team Builder</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='edit_team.css')}}"> 
+    <link rel="stylesheet" href="{{ url_for('static', filename='common.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='edit_team.css') }}"> 
 </head>
-  <body>
+<body>
     <div class="edit-team-container">
         <!-- Left: Current Team -->
         <div class="team-column">
             <a href="/" class="back-btn">← Back</a>
             <div class="team-pokemon-slot" id="team-slot-1">
-                <!-- <img src="..." class="team-pokemon-img"> -->
+                <!-- Pokemon will be rendered here -->
             </div>
             <div class="team-pokemon-slot" id="team-slot-2">
+                <!-- Pokemon will be rendered here -->
             </div>
             <div class="team-pokemon-slot" id="team-slot-3">
+                <!-- Pokemon will be rendered here -->
             </div>
         </div>
+
         <!-- Middle: Selection Panel -->
         <div class="selection-column">
             <div class="cost-filter">
@@ -38,13 +42,14 @@
                 </button>
             </div>
             <div class="pokemon-selection-grid">
-                <!-- More cards will be generated dynamically -->
+                <!-- Pokemon cards will be generated dynamically -->
             </div>
             <div style="margin-top: 20px; text-align: center;">
                 <button id="save-team-btn" class="auth-button" style="background:#2196F3;color:white;padding:10px 30px;border-radius:8px;font-size:16px;">Save Team</button>
                 <div id="save-team-msg" style="margin-top:10px;font-weight:bold;"></div>
             </div>
         </div>
+
         <!-- Right: Details Panel -->
         <div class="details-column">
             <div class="details-left">
@@ -194,6 +199,11 @@
             </div>
         </div>
     </div>
-     <script src="{{ url_for('static', filename='edit_team.js') }}"></script>
+
+    <!-- Pass team data to JavaScript -->
+    <script>
+        window.team = {{ team|tojson }};
+    </script>
+    <script src="{{ url_for('static', filename='edit_team.js') }}"></script>
 </body>
-</html>
+</html> 

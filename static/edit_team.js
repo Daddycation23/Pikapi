@@ -9,10 +9,11 @@ let maxCost = 10;
 // Fetch team and pokedex data from backend
 async function fetchData() {
   // Team data is passed from Flask as a Jinja variable
-  let loadedTeam = window.team || [];
+  team = window.team || [];
   // Pad team to length 3 with nulls
-  while (loadedTeam.length < 3) loadedTeam.push(null);
-  team = loadedTeam.slice(0, 3);
+  while (team.length < 3) team.push(null);
+  team = team.slice(0, 3);
+  
   await fetchPokemon();
   renderTeam();
   renderSelection();
@@ -41,7 +42,6 @@ function renderTeam() {
       img.src = team[i].img;
       img.alt = team[i].name;
       img.className = 'team-pokemon-img';
-      img.loading = 'lazy'; 
       slot.appendChild(img);
       
       // Add remove button
@@ -79,10 +79,6 @@ function highlightTeam() {
 // Render selection panel
 function renderSelection() {
   const grid = document.querySelector('.pokemon-selection-grid');
-  if (!grid) {
-    console.error('No element with class "pokemon-selection-grid" found in the DOM.');
-    return;
-  }
   grid.innerHTML = '';
   pokedex.forEach((poke, idx) => {
     const card = document.createElement('div');
@@ -93,14 +89,14 @@ function renderSelection() {
     img.alt = poke.name;
     img.style.width = '60px';
     img.style.height = '60px';
-    img.setAttribute('loading', 'lazy'); 
-    card.appendChild(img);
     
     // Add cost badge
     const costBadge = document.createElement('div');
     costBadge.textContent = poke.cost;
     costBadge.style.cssText = 'position:absolute; top:2px; left:2px; background:#e74c3c; color:white; border-radius:50%; width:18px; height:18px; text-align:center; font-size:12px; line-height:18px;';
     
+    card.appendChild(img);
+    card.style.position = 'relative';
     card.appendChild(costBadge);
     
     // Double click to add to team
@@ -273,7 +269,7 @@ function renderDetails(poke) {
   detailsColumn.innerHTML = `
     <div class="details-left">
       <div class="details-img">
-        <img src="${poke.img}" alt="${poke.name}" style="width:160px;height:160px;object-fit:contain;" loading="lazy">
+        <img src="${poke.img}" alt="${poke.name}" style="width:160px;height:160px;object-fit:contain;">
       </div>
     </div>
     <div class="details-right">
@@ -363,11 +359,10 @@ function renderDetails(poke) {
 // Filter functions
 async function applyFilters() {
   const search = document.querySelector('.search-input').value;
-  // Remove or comment out the unused type-select reference
-  // const type = document.querySelector('.type-select').value;
-  const type = '';
+  const type = document.querySelector('.type-select').value;
   const activeCostBtn = document.querySelector('.cost-btn.active');
-  const cost = activeCostBtn && activeCostBtn.textContent !== 'All' ? parseInt(activeCostBtn.textContent) : '';
+  const cost = activeCostBtn && activeCostBtn.textContent !== 'All' ? activeCostBtn.textContent : '';
+  
   await fetchPokemon(search, type, cost);
   renderSelection();
 }
@@ -433,7 +428,7 @@ function showComparison(pokemon1, pokemon2) {
     const isWinner = value1 > value2;
     
     statsHTML += `
-      <div class="stat-row ${isWinner ? 'winner' : 'loser'}">
+      <div class="stat-row ${isWinner ? 'winner' : ''}">
         <div class="stat-header">
           <span class="stat-label">${statLabels[idx]}</span>
           <span class="stat-value">${value1}</span>
@@ -733,13 +728,9 @@ async function applyAdvancedFilters() {
     params.append('types', activeFilters.types.join(','));
   }
   
-  // Add generation filters - convert Roman numerals to integers
+  // Add generation filters
   if (activeFilters.generations.length > 0) {
-    const genMap = { 'I': 1, 'II': 2, 'III': 3, 'IV': 4, 'V': 5, 'VI': 6, 'VII': 7, 'VIII': 8 };
-    const genNumbers = activeFilters.generations.map(gen => genMap[gen]).filter(num => num);
-    if (genNumbers.length > 0) {
-      params.append('generations', genNumbers.join(','));
-    }
+    params.append('generations', activeFilters.generations.join(','));
   }
   
   // Add special property filters
@@ -762,11 +753,35 @@ async function applyAdvancedFilters() {
     params.append('cost_max', activeFilters.cost.max);
   }
   
-  
   // Fetch filtered Pokemon
   const res = await fetch(`/api/pokemon?${params}`);
   pokedex = await res.json();
   renderSelection();
+}
+
+// Save team to backend
+async function saveTeam() {
+  try {
+    const validTeam = team.filter(p => p !== null);
+    const pokemonIds = validTeam.map(p => p.id);
+    
+    const res = await fetch('/api/team/save', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ pokemon_ids: pokemonIds })
+    });
+    
+    const result = await res.json();
+    
+    if (result.success) {
+      alert('Team saved successfully!');
+    } else {
+      alert('Error saving team: ' + (result.message || 'Unknown error'));
+    }
+  } catch (error) {
+    console.error('Error saving team:', error);
+    alert('Error saving team. Please try again.');
+  }
 }
 
 // Initial load
@@ -777,33 +792,10 @@ document.addEventListener('DOMContentLoaded', () => {
   addCostTracker();
   updateActionButtons();
   setupAdvancedFilters();
-
-  // Save Team button logic
+  
+  // Add save team button functionality if it exists
   const saveBtn = document.getElementById('save-team-btn');
   if (saveBtn) {
-    saveBtn.onclick = async function() {
-      // Collect current team Pokémon IDs (filter out nulls)
-      const teamIds = (window.team || team || []).filter(p => p && p.id).map(p => p.id);
-      if (!teamIds.length) {
-        document.getElementById('save-team-msg').style.color = 'red';
-        document.getElementById('save-team-msg').textContent = 'No Pokémon in team!';
-        return;
-      }
-      // Optional: prompt for team name or use default
-      const teamName = 'Team 1';
-      const res = await fetch('/api/team/save', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ pokemon_ids: teamIds, team_name: teamName })
-      });
-      const data = await res.json();
-      if (data.success) {
-        document.getElementById('save-team-msg').style.color = 'green';
-        document.getElementById('save-team-msg').textContent = 'Team saved!';
-      } else {
-        document.getElementById('save-team-msg').style.color = 'red';
-        document.getElementById('save-team-msg').textContent = data.error || 'Failed to save team.';
-      }
-    };
+    saveBtn.onclick = saveTeam;
   }
 });
