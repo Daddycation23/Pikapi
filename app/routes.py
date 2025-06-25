@@ -1,6 +1,6 @@
 from flask import render_template, request, jsonify, session
 from app.db import fetch_pokemon, fetch_pokemon_by_id, get_db_connection
-from app.mongo_client import get_player_profiles_collection, get_teams_collection
+#from app.mongo_client import get_player_profiles_collection, get_teams_collection
 import bcrypt
 from datetime import datetime
 import sqlite3
@@ -149,6 +149,11 @@ def fetch_pokemon_by_id(pokemon_id):
             'gen': str(row['generation'])
         }
 
+
+
+
+
+
 def register_routes(app):
     @app.route('/')
     def home():
@@ -164,11 +169,14 @@ def register_routes(app):
             return {'_id': user_id, 'username': username}
         user = get_current_user()
         team = []
-        if user:
-            teams = get_teams_collection()
-            team_doc = teams.find_one({'player_id': user['_id']})
-            if team_doc and team_doc.get('pokemon_ids'):
-                team = [fetch_pokemon_by_id(pid) for pid in team_doc['pokemon_ids']]
+        # if user:
+        #     with get_db_connection() as conn:
+        #         cur = conn.cursor()
+        #         cur.execute("SELECT pokemon_ids FROM PlayerTeam WHERE player_id = ?", (user['_id'],))
+        #         row = cur.fetchone()
+        #         if row and row['pokemon_ids']:
+        #             team_ids = [int(pid) for pid in row['pokemon_ids'].split(',') if pid]
+        #             team = [fetch_pokemon_by_id(pid) for pid in team_ids]
         return render_template('edit_team.html', team=team)
 
     @app.route('/api/pokemon')
@@ -229,19 +237,27 @@ def register_routes(app):
         data = request.json
         username = data.get('username')
         password = data.get('password')
-        if not username or not password:
-            return jsonify({'error': 'Username and password required'}), 400
+        email = data.get('email')  # <-- get email
 
-        profiles = get_player_profiles_collection()
-        if profiles.find_one({'username': username}):
-            return jsonify({'error': 'Username already exists'}), 409
+        if not username or not password or not email:
+            return jsonify({'error': 'Username, password, and email required'}), 400
 
-        password_hash = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
-        profiles.insert_one({
-            'username': username,
-            'password_hash': password_hash,
-            'registration_date': datetime.utcnow()
-        })
+        with get_db_connection() as conn:
+            cur = conn.cursor()
+            # Check if username or email exists
+            cur.execute("SELECT 1 FROM Player WHERE username = ?", (username,))
+            if cur.fetchone():
+                return jsonify({'error': 'Username already exists'}), 409
+            cur.execute("SELECT 1 FROM Player WHERE email = ?", (email,))
+            if cur.fetchone():
+                return jsonify({'error': 'Email already exists'}), 409
+
+            password_hash = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
+            cur.execute(
+                "INSERT INTO Player (username, email, password_hash, registration_date) VALUES (?, ?, ?, CURRENT_TIMESTAMP)",
+                (username, email, password_hash)
+            )
+            conn.commit()
         return jsonify({'success': True})
 
     @app.route('/api/login', methods=['POST'])
@@ -252,14 +268,24 @@ def register_routes(app):
         if not username or not password:
             return jsonify({'error': 'Username and password required'}), 400
 
-        profiles = get_player_profiles_collection()
-        user = profiles.find_one({'username': username})
-        if not user or not bcrypt.checkpw(password.encode('utf-8'), user['password_hash']):
-            return jsonify({'error': 'Invalid credentials'}), 401
+        with get_db_connection() as conn:
+            cur = conn.cursor()
+            cur.execute("SELECT player_id, username, password_hash FROM Player WHERE username = ?", (username,))
+            user = cur.fetchone()
+            if not user:
+                return jsonify({'error': 'Invalid credentials'}), 401
 
-        session['user_id'] = str(user['_id'])
-        session['username'] = user['username']
-        return jsonify({'success': True, 'username': user['username']})
+            # password_hash is stored as bytes in SQLite, so ensure correct type
+            db_hash = user['password_hash']
+            if isinstance(db_hash, str):
+                db_hash = db_hash.encode('utf-8')
+
+            if not bcrypt.checkpw(password.encode('utf-8'), db_hash):
+                return jsonify({'error': 'Invalid credentials'}), 401
+
+            session['user_id'] = str(user['player_id'])
+            session['username'] = user['username']
+            return jsonify({'success': True, 'username': user['username']})
 
     @app.route('/api/logout', methods=['POST'])
     def logout():
@@ -294,7 +320,7 @@ def register_routes(app):
         if set(pokemon_ids) != valid_ids:
             return jsonify({'error': 'Invalid Pokémon in team'}), 400
 
-        teams = get_teams_collection()
+        #teams = get_teams_collection()
         teams.update_one(
             {'player_id': user['_id']},
             {'$set': {
@@ -313,12 +339,15 @@ def register_routes(app):
         user = get_current_user()
         if not user:
             return jsonify({'team': []})
-        teams = get_teams_collection()
-        team_doc = teams.find_one({'player_id': user['_id']})
-        if not team_doc or not team_doc.get('pokemon_ids'):
-            return jsonify({'team': []})
-        team = [fetch_pokemon_by_id(pid) for pid in team_doc['pokemon_ids']]
-        return jsonify({'team': team})
+        with get_db_connection() as conn:
+            cur = conn.cursor()
+            cur.execute("SELECT pokemon_ids FROM PlayerTeam WHERE player_id = ?", (user['_id'],))
+            row = cur.fetchone()
+            if not row or not row['pokemon_ids']:
+                return jsonify({'team': []})
+            team_ids = [int(pid) for pid in row['pokemon_ids'].split(',') if pid]
+            team = [fetch_pokemon_by_id(pid) for pid in team_ids]
+            return jsonify({'team': team})
 
     @app.route('/api/me')
     def get_me():

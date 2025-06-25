@@ -27,18 +27,30 @@ document.getElementById('login-form').onsubmit = async function(e) {
   e.preventDefault();
   const username = document.getElementById('login-username').value;
   const password = document.getElementById('login-password').value;
-  const res = await fetch('/api/login', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ username, password })
-  });
-  const data = await res.json();
-  if (data.success) {
-    updateAuthUI(data.username);
-    closeLogin();
-    loadTeam(); // Immediately load the user's team after login
-  } else {
-    document.getElementById('login-error').textContent = data.error || 'Login failed';
+  const loginError = document.getElementById('login-error');
+  const loginBtn = this.querySelector('button[type="submit"]');
+  loginBtn.disabled = true;
+  loginError.textContent = '';
+
+  try {
+    const res = await fetch('/api/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password })
+    });
+    const data = await res.json();
+    if (data.success) {
+      loginError.textContent = '';
+      updateAuthUI(data.username);
+      closeLogin();
+      loadTeam();
+    } else {
+      loginError.textContent = data.error || 'Login failed';
+    }
+  } catch (err) {
+    loginError.textContent = 'Network error. Please try again.';
+  } finally {
+    loginBtn.disabled = false;
   }
 };
 
@@ -46,11 +58,12 @@ document.getElementById('login-form').onsubmit = async function(e) {
 document.getElementById('register-form').onsubmit = async function(e) {
   e.preventDefault();
   const username = document.getElementById('register-username').value;
+  const email = document.getElementById('register-email').value;
   const password = document.getElementById('register-password').value;
   const res = await fetch('/api/register', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ username, password })
+    body: JSON.stringify({ username, email, password })
   });
   const data = await res.json();
   if (data.success) {

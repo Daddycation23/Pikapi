@@ -1,7 +1,7 @@
 import sqlite3
 
 DB_NAME = 'pokemon.db'
-SCHEMA_FILE = 'schema.sql'
+SCHEMA_FILE = './schema.sql'
 
 def main():
     print(f"Connecting to database '{DB_NAME}'...")

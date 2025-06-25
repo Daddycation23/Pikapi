@@ -51,13 +51,12 @@ CREATE TABLE IF NOT EXISTS PokemonHasMove (
     PRIMARY KEY (move_id, pokemon_id),
     FOREIGN KEY (move_id) REFERENCES Move(move_id),
     FOREIGN KEY (pokemon_id) REFERENCES Pokemon(pokemon_id)
-)
+);
 
-CREATE TABLE IF NOT EXISTS Player{
-  player_id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+CREATE TABLE IF NOT EXISTS Player (
+  player_id INTEGER PRIMARY KEY AUTOINCREMENT,
   username VARCHAR(50)  NOT NULL UNIQUE,
   email    VARCHAR(100) NOT NULL UNIQUE,
   password_hash CHAR(60) NOT NULL,
-  registration_date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (player_id)
-)
+  registration_date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);

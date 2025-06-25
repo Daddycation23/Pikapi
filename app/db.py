@@ -1,5 +1,5 @@
 import sqlite3
-from app.utils import pokemon_name_to_filename
+#from app.utils import pokemon_name_to_filename
 
 DB_PATH = 'pokemon.db'
 

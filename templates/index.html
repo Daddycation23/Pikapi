@@ -120,12 +120,14 @@
             <h2>Register</h2>
             <form id="register-form">
                 <input type="text" id="register-username" placeholder="Username" required style="width:100%;margin-bottom:10px;padding:8px;">
+                <input type="email" id="register-email" placeholder="Email" required style="width:100%;margin-bottom:10px;padding:8px;">
                 <input type="password" id="register-password" placeholder="Password" required style="width:100%;margin-bottom:10px;padding:8px;">
                 <button type="submit" class="auth-button register-btn" style="width:100%;">Register</button>
                 <div id="register-error" style="color:red;margin-top:10px;"></div>
             </form>
         </div>
     </div>
+
     <script src="{{ url_for('static', filename='index.js') }}"></script>
 </body>
 </html>
