@@ -1,5 +1,5 @@
 from flask import render_template, request, jsonify, session
-from db import fetch_pokemon, fetch_pokemon_by_id
+from app.db import fetch_pokemon, fetch_pokemon_by_id
 import bcrypt
 from mongo_client import get_player_profiles_collection, get_teams_collection
 from datetime import datetime
@@ -66,7 +66,7 @@ def register_routes(app):
         ids = [p.get('id') for p in team_data if p.get('id')]
         if not ids:
             return jsonify({'valid': True, 'total_cost': 0, 'max_cost': 10, 'remaining_cost': 10})
-        from db import get_db_connection
+        from app.db import get_db_connection
         conn = get_db_connection()
         cur = conn.cursor()
         q_marks = ','.join(['?']*len(ids))
@@ -148,7 +148,7 @@ def register_routes(app):
         # Validate Pokémon IDs using SQLite
         if not pokemon_ids or not isinstance(pokemon_ids, list):
             return jsonify({'error': 'Invalid team data'}), 400
-        from db import get_db_connection
+        from app.db import get_db_connection
         conn = get_db_connection()
         cur = conn.cursor()
         q_marks = ','.join(['?']*len(pokemon_ids))

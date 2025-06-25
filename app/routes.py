@@ -4,7 +4,6 @@ from app.mongo_client import get_player_profiles_collection, get_teams_collectio
 import bcrypt
 from datetime import datetime
 import sqlite3
-from app.utils import pokemon_name_to_filename
 
 DB_PATH = 'pokemon.db'
 
@@ -37,7 +36,7 @@ def build_pokemon_result(rows, types_map):
         result.append({
             'id': row['pokemon_id'],
             'name': row['name'],
-            'img': f"/static/images/{pokemon_name_to_filename(row['name'])}.png",
+            'img': f"/static/images/{row['pokemon_id']}.png",
             'cost': row['cost'],
             'type': types_map.get(row['pokemon_id'], []),
             'hp': row['hp'],
@@ -138,7 +137,7 @@ def fetch_pokemon_by_id(pokemon_id):
         return {
             'id': row['pokemon_id'],
             'name': row['name'],
-            'img': f"/static/images/{pokemon_name_to_filename(row['name'])}.png",
+            'img': f"/static/images/{row['pokemon_id']}.png",
             'cost': row['cost'],
             'type': types,
             'hp': row['hp'],

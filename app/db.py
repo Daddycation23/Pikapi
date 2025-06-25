@@ -8,6 +8,8 @@ def get_db_connection():
     conn.row_factory = sqlite3.Row
     return conn
 
+# --- Data Access Functions ---
+
 def fetch_pokemon(filters=None):
     conn = get_db_connection()
     cur = conn.cursor()
