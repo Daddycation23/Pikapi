@@ -547,6 +547,14 @@ function setupAdvancedFilters() {
   };
 }
 
+function convertRomanToNumber(roman) {
+  const romanNumerals = {
+    'I': 1, 'II': 2, 'III': 3, 'IV': 4, 'V': 5,
+    'VI': 6, 'VII': 7, 'VIII': 8, 'IX': 9, 'X': 10
+  };
+  return romanNumerals[roman] || roman;
+}
+
 function setupFilterToggleButtons() {
   // Type filters
   document.querySelectorAll('.type-btn').forEach(btn => {
@@ -561,7 +569,9 @@ function setupFilterToggleButtons() {
   document.querySelectorAll('.gen-btn').forEach(btn => {
     btn.onclick = () => {
       const gen = btn.dataset.gen;
-      toggleArrayFilter(activeFilters.generations, gen);
+      // Convert Roman numeral to number
+      const genNumber = convertRomanToNumber(gen);
+      toggleArrayFilter(activeFilters.generations, genNumber);
       btn.classList.toggle('active');
     };
   });

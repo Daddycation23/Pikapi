@@ -61,29 +61,11 @@ def fetch_pokemon(filters=None):
         where_clauses = []
         params = []
 
-        # Type filter
-        type_list = []
-        if filters and 'types' in filters and filters['types']:
-            type_list = [t.strip().lower() for t in filters['types'].split(',') if t.strip()]
-            if type_list:
-                join_clauses += " JOIN PokemonHasType pht ON p.pokemon_id = pht.pokemon_id JOIN Type t ON pht.type_id = t.type_id"
-                where_clauses.append(f"LOWER(t.type_name) IN ({','.join(['?']*len(type_list))})")
-                params.extend(type_list)
-                query = base_query + join_clauses
-                if where_clauses:
-                    query += " WHERE " + " AND ".join(where_clauses)
-                query += f" GROUP BY p.pokemon_id HAVING COUNT(DISTINCT LOWER(t.type_name)) = {len(type_list)}"
-                cur.execute(query, params)
-                pokemons = cur.fetchall()
-                pokemon_ids = [row['pokemon_id'] for row in pokemons]
-                types_map = get_pokemon_types(cur, pokemon_ids)
-                return build_pokemon_result(pokemons, types_map)
-
         # Other filters
         if filters:
-            if 'search' in filters and filters['search']:
+            if 'search' in filters and filters['search'] and filters['search'].strip():
                 where_clauses.append("LOWER(p.name) LIKE ?")
-                params.append(f"%{filters['search'].lower()}%")
+                params.append(f"%{filters['search'].lower().strip()}%")
             if 'cost' in filters and filters['cost']:
                 where_clauses.append("p.cost = ?")
                 params.append(filters['cost'])
@@ -93,11 +75,17 @@ def fetch_pokemon(filters=None):
             if 'cost_max' in filters and filters['cost_max'] is not None:
                 where_clauses.append("p.cost <= ?")
                 params.append(filters['cost_max'])
-            if 'generations' in filters and filters['generations']:
+            if 'generations' in filters and filters['generations'] and filters['generations'].strip():
                 gen_list = [int(g.strip()) for g in filters['generations'].split(',') if g.strip().isdigit()]
                 if gen_list:
                     where_clauses.append(f"p.generation IN ({','.join(['?']*len(gen_list))})")
                     params.extend(gen_list)
+            if 'types' in filters and filters['types'] and filters['types'].strip():
+                type_list = [t.strip().lower() for t in filters['types'].split(',') if t.strip()]
+                if type_list:
+                    join_clauses += " JOIN PokemonHasType pht ON p.pokemon_id = pht.pokemon_id JOIN Type t ON pht.type_id = t.type_id"
+                    where_clauses.append(f"LOWER(t.type_name) IN ({','.join(['?']*len(type_list))})")
+                    params.extend(type_list)
             for stat in ['hp', 'atk', 'def', 'sp_atk', 'sp_def', 'speed']:
                 min_key = f'{stat}_min'
                 max_key = f'{stat}_max'
@@ -108,9 +96,17 @@ def fetch_pokemon(filters=None):
                     where_clauses.append(f"p.{stat} <= ?")
                     params.append(filters[max_key])
 
+        # Build and execute query
         query = base_query + join_clauses
         if where_clauses:
             query += " WHERE " + " AND ".join(where_clauses)
+        
+        # Add GROUP BY and HAVING for type filtering if needed
+        if 'types' in filters and filters['types'] and filters['types'].strip():
+            type_list = [t.strip().lower() for t in filters['types'].split(',') if t.strip()]
+            if type_list:
+                query += f" GROUP BY p.pokemon_id HAVING COUNT(DISTINCT LOWER(t.type_name)) = {len(type_list)}"
+        
         cur.execute(query, params)
         pokemons = cur.fetchall()
         pokemon_ids = [row['pokemon_id'] for row in pokemons]
@@ -182,7 +178,7 @@ def register_routes(app):
     @app.route('/api/pokemon')
     def get_pokemon():
         filters = {
-            'search': request.args.get('search', '').lower(),
+            'search': request.args.get('search', ''),
             'cost': request.args.get('cost', type=int),
             'cost_min': request.args.get('cost_min', type=int),
             'cost_max': request.args.get('cost_max', type=int),
@@ -201,7 +197,8 @@ def register_routes(app):
             'speed_min': request.args.get('speed_min', type=int),
             'speed_max': request.args.get('speed_max', type=int)
         }
-        filters = {k: v for k, v in filters.items() if v is not None and v != ''}
+        # Only filter out None values, keep empty strings for proper filter logic
+        filters = {k: v for k, v in filters.items() if v is not None}
         pokemon_list = fetch_pokemon(filters)
         return jsonify(pokemon_list)
 
