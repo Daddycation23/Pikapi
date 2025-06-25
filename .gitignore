@@ -1,4 +1,6 @@
 // Ignore python environment
 venv/
-pokemon.db
 .venv/
+*.pyc
+__pycache__/
+pokemon.db

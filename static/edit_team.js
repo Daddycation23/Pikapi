@@ -42,7 +42,9 @@ function renderTeam() {
       img.src = team[i].img;
       img.alt = team[i].name;
       img.className = 'team-pokemon-img';
+      img.setAttribute('loading', 'lazy');
       slot.appendChild(img);
+      
       
       // Add remove button
       const removeBtn = document.createElement('div');
@@ -89,6 +91,7 @@ function renderSelection() {
     img.alt = poke.name;
     img.style.width = '60px';
     img.style.height = '60px';
+    img.setAttribute('loading', 'lazy');
     
     // Add cost badge
     const costBadge = document.createElement('div');
@@ -269,7 +272,7 @@ function renderDetails(poke) {
   detailsColumn.innerHTML = `
     <div class="details-left">
       <div class="details-img">
-        <img src="${poke.img}" alt="${poke.name}" style="width:160px;height:160px;object-fit:contain;">
+        <img src="${poke.img}" alt="${poke.name}" loading="lazy" style="width:160px;height:160px;object-fit:contain;">
       </div>
     </div>
     <div class="details-right">
@@ -359,11 +362,24 @@ function renderDetails(poke) {
 // Filter functions
 async function applyFilters() {
   const search = document.querySelector('.search-input').value;
-  const type = document.querySelector('.type-select').value;
+  // Remove type select if not used in your UI
+  // const type = document.querySelector('.type-select').value;
+
+  // Get cost from active button
   const activeCostBtn = document.querySelector('.cost-btn.active');
-  const cost = activeCostBtn && activeCostBtn.textContent !== 'All' ? activeCostBtn.textContent : '';
-  
-  await fetchPokemon(search, type, cost);
+  let costMin = 1, costMax = 5;
+  if (activeCostBtn && activeCostBtn.textContent !== 'All') {
+    costMin = costMax = parseInt(activeCostBtn.textContent);
+  }
+
+  const params = new URLSearchParams();
+  if (search) params.append('search', search);
+  // if (type) params.append('type', type); // Only if you have a type select
+  params.append('cost_min', costMin);
+  params.append('cost_max', costMax);
+
+  const res = await fetch(`/api/pokemon?${params}`);
+  pokedex = await res.json();
   renderSelection();
 }
 

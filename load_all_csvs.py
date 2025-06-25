@@ -173,6 +173,32 @@ def load_pokemon_moves():
     conn.close()
     print(f"Inserted {inserted} new Pokémon-move relations into the database.")
 
+
+IMAGES_DIR = os.path.join('static', 'images')
+
+def insert_images():
+    conn = sqlite3.connect(DB_PATH)
+    cur = conn.cursor()
+    count = 0
+    for filename in os.listdir(IMAGES_DIR):
+        if filename.endswith('.png'):
+            try:
+                pokemon_id = int(os.path.splitext(filename)[0])
+            except ValueError:
+                print(f"Skipping {filename}: not a valid pokemon_id")
+                continue
+            image_path = os.path.join(IMAGES_DIR, filename)
+            with open(image_path, 'rb') as f:
+                image_data = f.read()
+            cur.execute(
+                "UPDATE Pokemon SET image = ? WHERE pokemon_id = ?",
+                (image_data, pokemon_id)
+            )
+            count += 1
+    conn.commit()
+    conn.close()
+    print(f"Inserted images for {count} Pokémon.")
+
 # --- Main function to run all loaders in order ---
 def main():
     load_types()
@@ -181,6 +207,7 @@ def main():
     load_pokemonhastype()
     load_typeeffectiveness()
     load_pokemon_moves()
+    insert_images() 
 
 if __name__ == '__main__':
     main() 

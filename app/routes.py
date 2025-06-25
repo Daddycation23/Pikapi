@@ -1,9 +1,10 @@
-from flask import render_template, request, jsonify, session
+from flask import render_template, request, jsonify, session, Response, abort, make_response
 from app.db import fetch_pokemon, fetch_pokemon_by_id, get_db_connection
 #from app.mongo_client import get_player_profiles_collection, get_teams_collection
 import bcrypt
 from datetime import datetime
 import sqlite3
+
 
 DB_PATH = 'pokemon.db'
 
@@ -36,7 +37,7 @@ def build_pokemon_result(rows, types_map):
         result.append({
             'id': row['pokemon_id'],
             'name': row['name'],
-            'img': f"/static/images/{row['pokemon_id']}.png",
+            'img': f"/api/pokemon_image/{row['pokemon_id']}",
             'cost': row['cost'],
             'type': types_map.get(row['pokemon_id'], []),
             'hp': row['hp'],
@@ -144,11 +145,6 @@ def fetch_pokemon_by_id(pokemon_id):
             'speed': row['speed'],
             'gen': str(row['generation'])
         }
-
-
-
-
-
 
 def register_routes(app):
     @app.route('/')
@@ -352,3 +348,17 @@ def register_routes(app):
         if user:
             return jsonify({'username': user['username']})
         return jsonify({'username': None})
+
+    @app.route('/api/pokemon_image/<int:pokemon_id>')
+    def pokemon_image(pokemon_id):
+        with get_db_connection() as conn:
+            cur = conn.cursor()
+            cur.execute("SELECT image FROM Pokemon WHERE pokemon_id = ?", (pokemon_id,))
+            row = cur.fetchone()
+            if row and row['image']:
+                response = make_response(row['image'])
+                response.headers.set('Content-Type', 'image/png')
+                response.headers.set('Cache-Control', 'public, max-age=31536000')
+                return response
+            else:
+                abort(404)
