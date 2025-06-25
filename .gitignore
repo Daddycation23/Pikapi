@@ -1,4 +1,4 @@
-// Ignore python environment
+# Ignore python environment
 venv/
 pokemon.db
-.venv/
+*.venv*

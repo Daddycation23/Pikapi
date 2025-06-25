@@ -9,6 +9,10 @@ def register_routes(app):
     def home():
         return render_template('index.html')
 
+    @app.route('/player')
+    def player():
+        return render_template('player.html')
+
     @app.route('/edit_team')
     def edit_team():
         # Remove default team, fetch from MongoDB if logged in

@@ -14,7 +14,7 @@ def fetch_pokemon(filters=None):
     conn = get_db_connection()
     cur = conn.cursor()
     base_query = """
-        SELECT p.pokemon_id, p.name, p.generation, p.cost, p.hp, p.atk, p.def, p.sp_atk, p.sp_def, p.speed
+        SELECT p.pokemon_id, p.name, p.generation, p.cost, p.height_cm, p.weight_kg, p.hp, p.atk, p.def, p.sp_atk, p.sp_def, p.speed
         FROM Pokemon p
     """
     join_clauses = ""
@@ -51,6 +51,22 @@ def fetch_pokemon(filters=None):
                 """, pokemon_ids)
                 for row in cur.fetchall():
                     types_map.setdefault(row['pokemon_id'], []).append(row['type_name'])
+            
+            # Fetch moves for all pokemon in bulk (only for smaller result sets)
+            moves_map = {}
+            if len(pokemon_ids) <= 50:  # Only fetch moves for smaller result sets to avoid performance issues
+                if pokemon_ids:
+                    q_marks = ','.join(['?']*len(pokemon_ids))
+                    cur.execute(f"""
+                        SELECT phm.pokemon_id, m.move_name
+                        FROM PokemonHasMove phm
+                        JOIN Move m ON phm.move_id = m.move_id
+                        WHERE phm.pokemon_id IN ({q_marks})
+                        ORDER BY phm.pokemon_id, m.move_name
+                    """, pokemon_ids)
+                    for row in cur.fetchall():
+                        moves_map.setdefault(row['pokemon_id'], []).append(row['move_name'])
+            
             # Build output
             result = []
             for row in pokemons:
@@ -66,7 +82,10 @@ def fetch_pokemon(filters=None):
                     'sp_atk': row['sp_atk'],
                     'sp_def': row['sp_def'],
                     'speed': row['speed'],
-                    'gen': str(row['generation'])
+                    'gen': str(row['generation']),
+                    'height_cm': row['height_cm'],
+                    'weight_kg': row['weight_kg'],
+                    'moves': moves_map.get(row['pokemon_id'], [])
                 })
             conn.close()
             return result
@@ -120,6 +139,21 @@ def fetch_pokemon(filters=None):
         for row in cur.fetchall():
             types_map.setdefault(row['pokemon_id'], []).append(row['type_name'])
     # Build output
+    # Fetch moves for all pokemon in bulk (only for detailed views)
+    moves_map = {}
+    if len(pokemon_ids) <= 50:  # Only fetch moves for smaller result sets to avoid performance issues
+        if pokemon_ids:
+            q_marks = ','.join(['?']*len(pokemon_ids))
+            cur.execute(f"""
+                SELECT phm.pokemon_id, m.move_name
+                FROM PokemonHasMove phm
+                JOIN Move m ON phm.move_id = m.move_id
+                WHERE phm.pokemon_id IN ({q_marks})
+                ORDER BY phm.pokemon_id, m.move_name
+            """, pokemon_ids)
+            for row in cur.fetchall():
+                moves_map.setdefault(row['pokemon_id'], []).append(row['move_name'])
+    
     result = []
     for row in pokemons:
         result.append({
@@ -134,7 +168,10 @@ def fetch_pokemon(filters=None):
             'sp_atk': row['sp_atk'],
             'sp_def': row['sp_def'],
             'speed': row['speed'],
-            'gen': str(row['generation'])
+            'gen': str(row['generation']),
+            'height_cm': row['height_cm'],
+            'weight_kg': row['weight_kg'],
+            'moves': moves_map.get(row['pokemon_id'], [])
         })
     conn.close()
     return result
@@ -143,7 +180,7 @@ def fetch_pokemon_by_id(pokemon_id):
     conn = get_db_connection()
     cur = conn.cursor()
     cur.execute("""
-        SELECT p.pokemon_id, p.name, p.generation, p.cost, p.hp, p.atk, p.def, p.sp_atk, p.sp_def, p.speed
+        SELECT p.pokemon_id, p.name, p.generation, p.cost, p.height_cm, p.weight_kg, p.hp, p.atk, p.def, p.sp_atk, p.sp_def, p.speed
         FROM Pokemon p WHERE p.pokemon_id = ?
     """, (pokemon_id,))
     row = cur.fetchone()
@@ -157,6 +194,14 @@ def fetch_pokemon_by_id(pokemon_id):
         WHERE pht.pokemon_id = ? ORDER BY t.type_name
     """, (pokemon_id,))
     types = [r['type_name'] for r in cur.fetchall()]
+    # Fetch moves
+    cur.execute("""
+        SELECT m.move_name FROM PokemonHasMove phm
+        JOIN Move m ON phm.move_id = m.move_id
+        WHERE phm.pokemon_id = ? ORDER BY m.move_name
+    """, (pokemon_id,))
+    moves = [r['move_name'] for r in cur.fetchall()]
+    
     result = {
         'id': row['pokemon_id'],
         'name': row['name'],
@@ -169,7 +214,10 @@ def fetch_pokemon_by_id(pokemon_id):
         'sp_atk': row['sp_atk'],
         'sp_def': row['sp_def'],
         'speed': row['speed'],
-        'gen': str(row['generation'])
+        'gen': str(row['generation']),
+        'height_cm': row['height_cm'],
+        'weight_kg': row['weight_kg'],
+        'moves': moves
     }
     conn.close()
     return result 

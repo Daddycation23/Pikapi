@@ -1,0 +1,561 @@
+/* ===========================================
+   COMMON STYLES - SINGLE SOURCE OF TRUTH
+   =========================================== */
+
+/* CSS Variables for consistent theming */
+:root {
+    /* Color Palette */
+    --primary-color: #4CAF50;
+    --primary-hover: #45a049;
+    --secondary-color: #2196F3;
+    --secondary-hover: #1769aa;
+    --accent-color: #ff9800;
+    --accent-hover: #f57c00;
+    --danger-color: #e74c3c;
+    --danger-hover: #c0392b;
+    --text-primary: #2c3e50;
+    --text-secondary: #666;
+    --text-light: #ecf0f1;
+    --background-main: #f0f2f5;
+    --background-card: #fff;
+    --background-light: #f8f9fa;
+    --background-muted: #e9ecef;
+    --border-color: #dee2e6;
+    --border-light: #e0e0e0;
+    --shadow-light: 0 2px 6px rgba(0,0,0,0.07);
+    --shadow-medium: 0 2px 10px rgba(0, 0, 0, 0.1);
+    --shadow-heavy: 0 4px 12px rgba(0,0,0,0.15);
+    
+    /* Common measurements */
+    --border-radius-sm: 6px;
+    --border-radius-md: 8px;
+    --border-radius-lg: 12px;
+    --border-radius-xl: 16px;
+    --border-radius-circle: 50%;
+    
+    /* Transitions */
+    --transition-fast: 0.2s;
+    --transition-medium: 0.3s;
+}
+
+/* Base body styling */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    line-height: 1.6;
+    margin: 0;
+    padding: 0;
+    background-color: var(--background-main);
+    color: var(--text-primary);
+}
+
+/* Common button base styles */
+.btn-base {
+    border: none;
+    border-radius: var(--border-radius-sm);
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all var(--transition-fast);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+}
+
+/* Auth button variants */
+.auth-button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: var(--border-radius-sm);
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all var(--transition-fast);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+}
+
+.login-btn {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.login-btn:hover {
+    background-color: var(--primary-hover);
+}
+
+.register-btn {
+    background-color: var(--secondary-color);
+    color: white;
+}
+
+.register-btn:hover {
+    background-color: var(--secondary-hover);
+}
+
+/* Cost filter buttons */
+.cost-btn {
+    padding: 6px 16px;
+    border: none;
+    border-radius: var(--border-radius-sm);
+    background: var(--border-light);
+    color: #333;
+    cursor: pointer;
+    font-size: 15px;
+    transition: background var(--transition-fast);
+}
+
+.cost-btn.active {
+    background: var(--primary-color);
+    color: #fff;
+}
+
+.cost-btn:hover:not(.active) {
+    background: #d0d0d0;
+}
+
+/* Search input styling */
+.search-input {
+    padding: 8px 12px;
+    border: 1.5px solid #ccc;
+    border-radius: var(--border-radius-sm);
+    font-size: 15px;
+    transition: border-color var(--transition-fast);
+}
+
+.search-input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+}
+
+/* Modal base styles */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+}
+
+.modal-content {
+    background-color: var(--background-card);
+    margin: 10% auto;
+    padding: 20px;
+    width: 80%;
+    max-width: 600px;
+    border-radius: var(--border-radius-lg);
+    box-shadow: var(--shadow-heavy);
+}
+
+.close-button {
+    float: right;
+    cursor: pointer;
+    font-size: 24px;
+    color: var(--text-secondary);
+    transition: color var(--transition-fast);
+}
+
+.close-button:hover {
+    color: var(--text-primary);
+}
+
+/* Stat bar components */
+.stat-bar {
+    height: 8px;
+    background-color: var(--background-muted);
+    border-radius: 4px;
+    margin-top: 5px;
+    overflow: hidden;
+}
+
+.stat-fill {
+    height: 100%;
+    background-color: var(--primary-color);
+    border-radius: 4px;
+    transition: width var(--transition-medium);
+}
+
+.stat-bar-bg {
+    width: 100%;
+    height: 8px;
+    background: var(--background-muted);
+    border-radius: 4px;
+}
+
+.stat-bar-fill {
+    height: 100%;
+    background: var(--primary-color);
+    border-radius: 4px;
+    transition: width var(--transition-medium);
+}
+
+/* Pokemon card base styles */
+.pokemon-card-base {
+    background-color: var(--background-card);
+    border-radius: var(--border-radius-lg);
+    padding: 15px;
+    text-align: center;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    border: 2px solid transparent;
+    box-shadow: var(--shadow-light);
+}
+
+.pokemon-card-base:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-heavy);
+    border-color: var(--primary-color);
+}
+
+/* Pokemon info styling */
+.pokemon-name {
+    font-weight: bold;
+    color: var(--text-primary);
+    margin-bottom: 5px;
+}
+
+.pokemon-cost {
+    color: var(--danger-color);
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.pokemon-types {
+    display: flex;
+    gap: 5px;
+    justify-content: center;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+}
+
+/* Base type badge styling */
+.type-badge {
+    padding: 4px 8px;
+    border-radius: var(--border-radius-lg);
+    font-size: 12px;
+    color: white;
+    background: #888;
+    white-space: nowrap;
+    display: inline-block;
+}
+
+/* Pokemon Type Colors - Official Pokemon type color scheme */
+.type-badge.type-normal, .type-normal { 
+    background: #A8A878 !important; 
+}
+
+.type-badge.type-fire, .type-fire { 
+    background: #F08030 !important; 
+}
+
+.type-badge.type-water, .type-water { 
+    background: #6890F0 !important; 
+}
+
+.type-badge.type-electric, .type-electric { 
+    background: #F8D030 !important; 
+    color: #333 !important; 
+}
+
+.type-badge.type-grass, .type-grass { 
+    background: #78C850 !important; 
+}
+
+.type-badge.type-ice, .type-ice { 
+    background: #98D8D8 !important; 
+    color: #333 !important; 
+}
+
+.type-badge.type-fighting, .type-fighting { 
+    background: #C03028 !important; 
+}
+
+.type-badge.type-poison, .type-poison { 
+    background: #A040A0 !important; 
+}
+
+.type-badge.type-ground, .type-ground { 
+    background: #E0C068 !important; 
+    color: #333 !important; 
+}
+
+.type-badge.type-flying, .type-flying { 
+    background: #A890F0 !important; 
+}
+
+.type-badge.type-psychic, .type-psychic { 
+    background: #F85888 !important; 
+}
+
+.type-badge.type-bug, .type-bug { 
+    background: #A8B820 !important; 
+}
+
+.type-badge.type-rock, .type-rock { 
+    background: #B8A038 !important; 
+}
+
+.type-badge.type-ghost, .type-ghost { 
+    background: #705898 !important; 
+}
+
+.type-badge.type-dragon, .type-dragon { 
+    background: #7038F8 !important; 
+}
+
+.type-badge.type-dark, .type-dark { 
+    background: #705848 !important; 
+}
+
+.type-badge.type-steel, .type-steel { 
+    background: #B8B8D0 !important; 
+    color: #333 !important; 
+}
+
+.type-badge.type-fairy, .type-fairy { 
+    background: #EE99AC !important; 
+    color: #333 !important; 
+}
+
+/* Filter modal styles - shared between pages */
+.filter-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    z-index: 2000;
+    backdrop-filter: blur(4px);
+}
+
+.filter-modal-content {
+    background: linear-gradient(135deg, #2c3e50, #34495e);
+    margin: 2% auto;
+    padding: 0;
+    border-radius: var(--border-radius-xl);
+    width: 85%;
+    max-width: 1000px;
+    max-height: 90vh;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    animation: modalSlideIn var(--transition-medium) ease-out;
+}
+
+@keyframes modalSlideIn {
+    from { transform: translateY(-50px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+.filter-header {
+    background: linear-gradient(135deg, #3498db, #2980b9);
+    color: white;
+    padding: 20px 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.filter-header h2 {
+    margin: 0;
+    font-size: 1.8em;
+    font-weight: 700;
+}
+
+.filter-close {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 32px;
+    cursor: pointer;
+    line-height: 1;
+    padding: 0 5px;
+    border-radius: var(--border-radius-circle);
+    transition: background var(--transition-fast);
+}
+
+.filter-close:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.filter-body {
+    padding: 30px;
+    max-height: 60vh;
+    overflow-y: auto;
+    color: white;
+}
+
+.filter-section {
+    margin-bottom: 35px;
+}
+
+.filter-section h3 {
+    color: var(--text-light);
+    font-size: 1.3em;
+    margin-bottom: 15px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #3498db;
+    font-weight: 600;
+}
+
+.filter-grid {
+    display: grid;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.filter-toggle-btn {
+    padding: 12px 16px;
+    border: 2px solid #7f8c8d;
+    background: #34495e;
+    color: var(--text-light);
+    border-radius: var(--border-radius-md);
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all var(--transition-medium) ease;
+    text-transform: capitalize;
+}
+
+.filter-toggle-btn:hover {
+    border-color: #3498db;
+    background: #4a5568;
+    transform: translateY(-1px);
+}
+
+.filter-toggle-btn.active {
+    border-color: var(--danger-color);
+    background: linear-gradient(135deg, var(--danger-color), var(--danger-hover));
+    color: white;
+    box-shadow: 0 4px 15px rgba(231, 76, 60, 0.4);
+}
+
+.filter-footer {
+    background: #2c3e50;
+    padding: 20px 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid #34495e;
+}
+
+.filter-clear-btn, .filter-apply-btn {
+    padding: 14px 32px;
+    border: none;
+    border-radius: var(--border-radius-md);
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition-medium) ease;
+}
+
+.filter-clear-btn {
+    background: linear-gradient(135deg, #95a5a6, #7f8c8d);
+    color: white;
+}
+
+.filter-clear-btn:hover {
+    background: linear-gradient(135deg, #7f8c8d, #95a5a6);
+    transform: translateY(-2px);
+}
+
+.filter-apply-btn {
+    background: linear-gradient(135deg, #27ae60, #2ecc71);
+    color: white;
+    box-shadow: 0 4px 15px rgba(46, 204, 113, 0.3);
+}
+
+.filter-apply-btn:hover {
+    background: linear-gradient(135deg, #2ecc71, #27ae60);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(46, 204, 113, 0.4);
+}
+
+/* Advanced filter button */
+.advanced-filter-btn {
+    padding: 8px 16px;
+    border-radius: var(--border-radius-md);
+    border: 2px solid var(--primary-color);
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-hover));
+    color: white;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all var(--transition-medium) ease;
+    box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
+}
+
+.advanced-filter-btn:hover {
+    background: linear-gradient(135deg, var(--primary-hover), var(--primary-color));
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(76, 175, 80, 0.4);
+}
+
+.filter-icon {
+    font-size: 16px;
+}
+
+.filter-count {
+    background: #ff5722;
+    color: white;
+    border-radius: var(--border-radius-lg);
+    padding: 2px 8px;
+    font-size: 12px;
+    min-width: 20px;
+    text-align: center;
+    display: none;
+}
+
+.filter-count.active {
+    display: inline-block;
+}
+
+/* Cost filter layout */
+.cost-filter {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 18px;
+    align-items: center;
+}
+
+.cost-filter h3 {
+    margin: 0 10px;
+    color: var(--text-secondary);
+    font-size: 16px;
+}
+
+/* Utility classes */
+.text-center { text-align: center; }
+.text-left { text-align: left; }
+.text-right { text-align: right; }
+
+.mb-10 { margin-bottom: 10px; }
+.mb-15 { margin-bottom: 15px; }
+.mb-20 { margin-bottom: 20px; }
+.mb-30 { margin-bottom: 30px; }
+
+.mt-10 { margin-top: 10px; }
+.mt-15 { margin-top: 15px; }
+.mt-20 { margin-top: 20px; }
+.mt-30 { margin-top: 30px; }
+
+.p-10 { padding: 10px; }
+.p-15 { padding: 15px; }
+.p-20 { padding: 20px; }
+
+.flex { display: flex; }
+.flex-center { display: flex; align-items: center; justify-content: center; }
+.flex-column { flex-direction: column; }
+.gap-5 { gap: 5px; }
+.gap-10 { gap: 10px; }
+.gap-15 { gap: 15px; }
+.gap-20 { gap: 20px; } 

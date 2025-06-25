@@ -17,7 +17,7 @@ async function fetchData() {
   await fetchPokemon();
   renderTeam();
   renderSelection();
-  renderDetails();
+  await renderDetails();
   updateCostDisplay();
 }
 
@@ -48,20 +48,20 @@ function renderTeam() {
       const removeBtn = document.createElement('div');
       removeBtn.innerHTML = '×';
       removeBtn.style.cssText = 'position:absolute; top:5px; right:5px; background:red; color:white; border-radius:50%; width:20px; height:20px; text-align:center; cursor:pointer; font-size:14px; line-height:20px;';
-      removeBtn.onclick = (e) => {
+      removeBtn.onclick = async (e) => {
         e.stopPropagation();
-        removePokemonFromTeam(i);
+        await removePokemonFromTeam(i);
       };
       slot.style.position = 'relative';
       slot.appendChild(removeBtn);
     }
     slot.classList.remove('selected');
-    slot.onclick = () => {
+    slot.onclick = async () => {
       selectedTeamIdx = i;
       selectedPokeIdx = null;
       selectedPokemon = team[i] || null;
       highlightTeam();
-      renderDetails(team[i]);
+      await renderDetails(team[i]);
       updateActionButtons();
     };
   }
@@ -102,12 +102,12 @@ function renderSelection() {
     // Double click to add to team
     card.ondblclick = () => addPokemonToTeam(poke);
     
-    card.onclick = () => {
+    card.onclick = async () => {
       selectedPokeIdx = idx;
       // Don't clear team selection - keep both selections active
       selectedPokemon = poke;
       highlightSelection(idx);
-      renderDetails(poke);
+      await renderDetails(poke);
       updateActionButtons();
     };
     grid.appendChild(card);
@@ -154,14 +154,14 @@ async function addPokemonToTeam(pokemon) {
 }
 
 // Remove Pokemon from team
-function removePokemonFromTeam(slotIdx) {
+async function removePokemonFromTeam(slotIdx) {
   team[slotIdx] = null;
   renderTeam();
   updateCostDisplay();
   if (selectedTeamIdx === slotIdx) {
     selectedTeamIdx = null;
     selectedPokemon = null;
-    renderDetails();
+    await renderDetails();
     updateActionButtons();
   }
 }
@@ -198,7 +198,7 @@ async function replacePokemonInTeam() {
   updateActionButtons();
   
   // Keep the team slot selected and update details to show the new Pokemon
-  renderDetails(pokemonToAdd);
+  await renderDetails(pokemonToAdd);
 }
 
 // Update action buttons state
@@ -244,7 +244,7 @@ async function updateCostDisplay() {
 }
 
 // Render details panel
-function renderDetails(poke) {
+async function renderDetails(poke) {
   const detailsColumn = document.querySelector('.details-column');
   
   if (!poke) {
@@ -253,79 +253,101 @@ function renderDetails(poke) {
     return;
   }
   
-  const typeColors = {
-    'fire': '#F08030', 'water': '#6890F0', 'grass': '#78C850', 'electric': '#F8D030',
-    'psychic': '#F85888', 'ice': '#98D8D8', 'dragon': '#7038F8', 'dark': '#705848',
-    'fairy': '#EE99AC', 'fighting': '#C03028', 'poison': '#A040A0', 'ground': '#E0C068',
-    'flying': '#A890F0', 'bug': '#A8B820', 'rock': '#B8A038', 'ghost': '#705898',
-    'steel': '#B8B8D0', 'normal': '#A8A878'
-  };
+  // Get detailed Pokemon data if moves are missing
+  let detailedPoke = poke;
+  if (poke.id && (!poke.moves || poke.moves.length === 0)) {
+    try {
+      const response = await fetch(`/api/pokemon/${poke.id}`);
+      const data = await response.json();
+      if (data.success && data.pokemon) {
+        detailedPoke = data.pokemon;
+      }
+    } catch (error) {
+      console.error('Error fetching detailed Pokemon:', error);
+    }
+  }
   
-  const typeDisplay = (poke.type||[]).map(t => 
-    `<span class="type-badge" style="background-color:${typeColors[t.toLowerCase()] || '#888'}">${t}</span>`
+  const typeDisplay = (detailedPoke.type||[]).map(t => 
+    `<span class="type-badge type-${t.toLowerCase()}">${t}</span>`
   ).join(' ');
   
   // Show Pokemon details with new split layout
   detailsColumn.innerHTML = `
     <div class="details-left">
       <div class="details-img">
-        <img src="${poke.img}" alt="${poke.name}" style="width:160px;height:160px;object-fit:contain;">
+        <img src="${detailedPoke.img}" alt="${detailedPoke.name}" style="width:160px;height:160px;object-fit:contain;">
       </div>
     </div>
     <div class="details-right">
       <div class="details-info">
-        <div class="details-name">${poke.name}</div>
+        <div class="details-name">${detailedPoke.name}</div>
         <div class="details-type">${typeDisplay}</div>
-        <div class="details-cost">Cost: ${poke.cost}</div>
+        <div class="details-cost">Cost: ${detailedPoke.cost}</div>
       </div>
       <div class="details-stats">
         <div class="stat-row">
           <div class="stat-header">
             <span class="stat-label">HP</span>
-            <span class="stat-value">${poke.hp}</span>
+            <span class="stat-value">${detailedPoke.hp}</span>
           </div>
-          <div class="stat-bar-bg"><div class="stat-bar-fill" style="width:${Math.min(poke.hp/2, 100)}%"></div></div>
+          <div class="stat-bar-bg"><div class="stat-bar-fill" style="width:${Math.min(detailedPoke.hp/2, 100)}%"></div></div>
         </div>
         <div class="stat-row">
           <div class="stat-header">
             <span class="stat-label">Attack</span>
-            <span class="stat-value">${poke.attack}</span>
+            <span class="stat-value">${detailedPoke.attack}</span>
           </div>
-          <div class="stat-bar-bg"><div class="stat-bar-fill" style="width:${Math.min(poke.attack/2, 100)}%"></div></div>
+          <div class="stat-bar-bg"><div class="stat-bar-fill" style="width:${Math.min(detailedPoke.attack/2, 100)}%"></div></div>
         </div>
         <div class="stat-row">
           <div class="stat-header">
             <span class="stat-label">Defense</span>
-            <span class="stat-value">${poke.defense}</span>
+            <span class="stat-value">${detailedPoke.defense}</span>
           </div>
-          <div class="stat-bar-bg"><div class="stat-bar-fill" style="width:${Math.min(poke.defense/2, 100)}%"></div></div>
+          <div class="stat-bar-bg"><div class="stat-bar-fill" style="width:${Math.min(detailedPoke.defense/2, 100)}%"></div></div>
         </div>
         <div class="stat-row">
           <div class="stat-header">
             <span class="stat-label">Sp. Attack</span>
-            <span class="stat-value">${poke.sp_atk}</span>
+            <span class="stat-value">${detailedPoke.sp_atk}</span>
           </div>
-          <div class="stat-bar-bg"><div class="stat-bar-fill" style="width:${Math.min(poke.sp_atk/2, 100)}%"></div></div>
+          <div class="stat-bar-bg"><div class="stat-bar-fill" style="width:${Math.min(detailedPoke.sp_atk/2, 100)}%"></div></div>
         </div>
         <div class="stat-row">
           <div class="stat-header">
             <span class="stat-label">Sp. Defense</span>
-            <span class="stat-value">${poke.sp_def}</span>
+            <span class="stat-value">${detailedPoke.sp_def}</span>
           </div>
-          <div class="stat-bar-bg"><div class="stat-bar-fill" style="width:${Math.min(poke.sp_def/2, 100)}%"></div></div>
+          <div class="stat-bar-bg"><div class="stat-bar-fill" style="width:${Math.min(detailedPoke.sp_def/2, 100)}%"></div></div>
         </div>
         <div class="stat-row">
           <div class="stat-header">
             <span class="stat-label">Speed</span>
-            <span class="stat-value">${poke.speed}</span>
+            <span class="stat-value">${detailedPoke.speed}</span>
           </div>
-          <div class="stat-bar-bg"><div class="stat-bar-fill" style="width:${Math.min(poke.speed/2, 100)}%"></div></div>
+          <div class="stat-bar-bg"><div class="stat-bar-fill" style="width:${Math.min(detailedPoke.speed/2, 100)}%"></div></div>
         </div>
       </div>
-    </div>
-    <div class="action-buttons">
-      <button class="compare-btn">Compare</button>
-      <button class="replace-btn" id="replace-btn">Replace</button>
+      <div class="details-physical">
+        <strong>Height:</strong> ${(detailedPoke.height_cm !== null && detailedPoke.height_cm !== undefined) ? detailedPoke.height_cm + ' cm' : 'Unknown'} | 
+        <strong>Weight:</strong> ${(detailedPoke.weight_kg !== null && detailedPoke.weight_kg !== undefined) ? detailedPoke.weight_kg + ' kg' : 'Unknown'}
+      </div>
+      <div class="details-generation"><strong>Generation:</strong> ${detailedPoke.gen || 'Unknown'}</div>
+      <div class="action-buttons">
+        <button class="compare-btn">Compare</button>
+        <button class="replace-btn" id="replace-btn">Replace</button>
+      </div>
+      <div class="details-moves">
+        ${detailedPoke.moves && detailedPoke.moves.length > 0 ? 
+          `<h4>Moves (${detailedPoke.moves.length})</h4>
+           <div class="moves-container">
+             ${detailedPoke.moves.map(move => 
+               `<span class="move-badge">${move.replace('-', ' ')}</span>`
+             ).join('')}
+           </div>` :
+          `<h4>Moves</h4><p style="color: var(--text-secondary); font-size: 14px;">No moves available</p>`
+        }
+      </div>
     </div>
     <div class="comparison-overlay" id="comparison-overlay">
       <div class="comparison-content">
@@ -341,17 +363,21 @@ function renderDetails(poke) {
   const compareBtn = document.querySelector('.compare-btn');
   const replaceBtn = document.querySelector('.replace-btn');
   
-  compareBtn.onclick = () => {
-    if (selectedTeamIdx !== null && team[selectedTeamIdx] && selectedPokeIdx !== null) {
-      showComparison(team[selectedTeamIdx], pokedex[selectedPokeIdx]);
-    } else {
-      alert('Please select both a team Pokemon and a selection Pokemon to compare!');
-    }
-  };
+  if (compareBtn) {
+    compareBtn.onclick = () => {
+      if (selectedTeamIdx !== null && team[selectedTeamIdx] && selectedPokeIdx !== null) {
+        showComparison(team[selectedTeamIdx], pokedex[selectedPokeIdx]);
+      } else {
+        alert('Please select both a team Pokemon and a selection Pokemon to compare!');
+      }
+    };
+  }
   
-  replaceBtn.onclick = () => {
-    replacePokemonInTeam();
-  };
+  if (replaceBtn) {
+    replaceBtn.onclick = () => {
+      replacePokemonInTeam();
+    };
+  }
   
   updateActionButtons();
 }
@@ -409,16 +435,8 @@ function showComparison(pokemon1, pokemon2) {
   const stats = ['hp', 'attack', 'defense', 'sp_atk', 'sp_def', 'speed'];
   const statLabels = ['HP', 'Attack', 'Defense', 'Sp. Attack', 'Sp. Defense', 'Speed'];
   
-  const typeColors = {
-    'fire': '#F08030', 'water': '#6890F0', 'grass': '#78C850', 'electric': '#F8D030',
-    'psychic': '#F85888', 'ice': '#98D8D8', 'dragon': '#7038F8', 'dark': '#705848',
-    'fairy': '#EE99AC', 'fighting': '#C03028', 'poison': '#A040A0', 'ground': '#E0C068',
-    'flying': '#A890F0', 'bug': '#A8B820', 'rock': '#B8A038', 'ghost': '#705898',
-    'steel': '#B8B8D0', 'normal': '#A8A878'
-  };
-  
   const typeDisplay = (pokemon1.type||[]).map(t => 
-    `<span class="type-badge" style="background-color:${typeColors[t.toLowerCase()] || '#888'}">${t}</span>`
+    `<span class="type-badge type-${t.toLowerCase()}">${t}</span>`
   ).join(' ');
   
   let statsHTML = '';
@@ -426,9 +444,14 @@ function showComparison(pokemon1, pokemon2) {
     const value1 = pokemon1[stat];
     const value2 = pokemon2[stat];
     const isWinner = value1 > value2;
+    const isLoser = value1 < value2;
+    
+    let statClass = '';
+    if (isWinner) statClass = 'winner';
+    else if (isLoser) statClass = 'loser';
     
     statsHTML += `
-      <div class="stat-row ${isWinner ? 'winner' : ''}">
+      <div class="stat-row ${statClass}">
         <div class="stat-header">
           <span class="stat-label">${statLabels[idx]}</span>
           <span class="stat-value">${value1}</span>
@@ -458,10 +481,17 @@ function showComparison(pokemon1, pokemon2) {
   
   // Add event listener for comparison replace button
   const comparisonReplaceBtn = document.getElementById('comparison-replace-btn');
+  
   comparisonReplaceBtn.onclick = () => {
     replacePokemonInTeam();
     hideComparison(); // Close comparison after replacement
   };
+  
+  // Hide main action buttons when comparison is active
+  const mainActionButtons = document.querySelector('.action-buttons');
+  if (mainActionButtons) {
+    mainActionButtons.style.display = 'none';
+  }
   
   overlay.style.display = 'block';
 }
@@ -470,6 +500,12 @@ function showComparison(pokemon1, pokemon2) {
 function hideComparison() {
   const overlay = document.getElementById('comparison-overlay');
   overlay.style.display = 'none';
+  
+  // Show main action buttons when comparison is closed
+  const mainActionButtons = document.querySelector('.action-buttons');
+  if (mainActionButtons) {
+    mainActionButtons.style.display = 'flex';
+  }
 }
 
 // Add cost tracker to team section

@@ -29,125 +29,7 @@ def get_pokemon_types(cur, pokemon_ids):
         types_map.setdefault(row['pokemon_id'], []).append(row['type_name'])
     return types_map
 
-def build_pokemon_result(rows, types_map):
-    """Builds the result list of Pokémon dicts."""
-    result = []
-    for row in rows:
-        result.append({
-            'id': row['pokemon_id'],
-            'name': row['name'],
-            'img': f"/static/images/{row['pokemon_id']}.png",
-            'cost': row['cost'],
-            'type': types_map.get(row['pokemon_id'], []),
-            'hp': row['hp'],
-            'attack': row['atk'],
-            'defense': row['def'],
-            'sp_atk': row['sp_atk'],
-            'sp_def': row['sp_def'],
-            'speed': row['speed'],
-            'gen': str(row['generation'])
-        })
-    return result
-
-def fetch_pokemon(filters=None):
-    """Fetch Pokémon from the database with optional filters."""
-    with get_db_connection() as conn:
-        cur = conn.cursor()
-        base_query = """
-            SELECT p.pokemon_id, p.name, p.generation, p.cost, p.hp, p.atk, p.def, p.sp_atk, p.sp_def, p.speed
-            FROM Pokemon p
-        """
-        join_clauses = ""
-        where_clauses = []
-        params = []
-
-        # Type filter
-        type_list = []
-        if filters and 'types' in filters and filters['types']:
-            type_list = [t.strip().lower() for t in filters['types'].split(',') if t.strip()]
-            if type_list:
-                join_clauses += " JOIN PokemonHasType pht ON p.pokemon_id = pht.pokemon_id JOIN Type t ON pht.type_id = t.type_id"
-                where_clauses.append(f"LOWER(t.type_name) IN ({','.join(['?']*len(type_list))})")
-                params.extend(type_list)
-                query = base_query + join_clauses
-                if where_clauses:
-                    query += " WHERE " + " AND ".join(where_clauses)
-                query += f" GROUP BY p.pokemon_id HAVING COUNT(DISTINCT LOWER(t.type_name)) = {len(type_list)}"
-                cur.execute(query, params)
-                pokemons = cur.fetchall()
-                pokemon_ids = [row['pokemon_id'] for row in pokemons]
-                types_map = get_pokemon_types(cur, pokemon_ids)
-                return build_pokemon_result(pokemons, types_map)
-
-        # Other filters
-        if filters:
-            if 'search' in filters and filters['search']:
-                where_clauses.append("LOWER(p.name) LIKE ?")
-                params.append(f"%{filters['search'].lower()}%")
-            if 'cost' in filters and filters['cost']:
-                where_clauses.append("p.cost = ?")
-                params.append(filters['cost'])
-            if 'cost_min' in filters and filters['cost_min'] is not None:
-                where_clauses.append("p.cost >= ?")
-                params.append(filters['cost_min'])
-            if 'cost_max' in filters and filters['cost_max'] is not None:
-                where_clauses.append("p.cost <= ?")
-                params.append(filters['cost_max'])
-            if 'generations' in filters and filters['generations']:
-                gen_list = [int(g.strip()) for g in filters['generations'].split(',') if g.strip().isdigit()]
-                if gen_list:
-                    where_clauses.append(f"p.generation IN ({','.join(['?']*len(gen_list))})")
-                    params.extend(gen_list)
-            for stat in ['hp', 'atk', 'def', 'sp_atk', 'sp_def', 'speed']:
-                min_key = f'{stat}_min'
-                max_key = f'{stat}_max'
-                if min_key in filters and filters[min_key] is not None:
-                    where_clauses.append(f"p.{stat} >= ?")
-                    params.append(filters[min_key])
-                if max_key in filters and filters[max_key] is not None:
-                    where_clauses.append(f"p.{stat} <= ?")
-                    params.append(filters[max_key])
-
-        query = base_query + join_clauses
-        if where_clauses:
-            query += " WHERE " + " AND ".join(where_clauses)
-        cur.execute(query, params)
-        pokemons = cur.fetchall()
-        pokemon_ids = [row['pokemon_id'] for row in pokemons]
-        types_map = get_pokemon_types(cur, pokemon_ids)
-        return build_pokemon_result(pokemons, types_map)
-
-def fetch_pokemon_by_id(pokemon_id):
-    """Fetch a single Pokémon by its ID."""
-    with get_db_connection() as conn:
-        cur = conn.cursor()
-        cur.execute("""
-            SELECT p.pokemon_id, p.name, p.generation, p.cost, p.hp, p.atk, p.def, p.sp_atk, p.sp_def, p.speed
-            FROM Pokemon p WHERE p.pokemon_id = ?
-        """, (pokemon_id,))
-        row = cur.fetchone()
-        if not row:
-            return None
-        cur.execute("""
-            SELECT t.type_name FROM PokemonHasType pht
-            JOIN Type t ON pht.type_id = t.type_id
-            WHERE pht.pokemon_id = ? ORDER BY t.type_name
-        """, (pokemon_id,))
-        types = [r['type_name'] for r in cur.fetchall()]
-        return {
-            'id': row['pokemon_id'],
-            'name': row['name'],
-            'img': f"/static/images/{row['pokemon_id']}.png",
-            'cost': row['cost'],
-            'type': types,
-            'hp': row['hp'],
-            'attack': row['atk'],
-            'defense': row['def'],
-            'sp_atk': row['sp_atk'],
-            'sp_def': row['sp_def'],
-            'speed': row['speed'],
-            'gen': str(row['generation'])
-        }
+# Removed redundant local functions - using the enhanced versions from app.db
 
 
 
@@ -209,8 +91,8 @@ def register_routes(app):
     def get_pokemon_detail(pokemon_id):
         pokemon = fetch_pokemon_by_id(pokemon_id)
         if pokemon:
-            return jsonify(pokemon)
-        return jsonify({'error': 'Pokemon not found'}), 404
+            return jsonify({'success': True, 'pokemon': pokemon})
+        return jsonify({'success': False, 'error': 'Pokemon not found'}), 404
 
     @app.route('/api/team/validate', methods=['POST'])
     def validate_team():

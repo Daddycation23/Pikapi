@@ -1,9 +1,4 @@
-body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    margin: 0;
-    padding: 0;
-    background-color: #f0f2f5;
-}
+/* Page-specific styles for edit_team.html - body uses common.css */
 .edit-team-container {
     display: flex;
     height: 100vh;
@@ -48,40 +43,18 @@ body {
     display: flex;
     flex-direction: column;
 }
-.cost-filter {
-    display: flex;
-    gap: 8px;
-    margin-bottom: 18px;
-}
-.cost-btn {
-    padding: 6px 16px;
-    border: none;
-    border-radius: 6px;
-    background: #e0e0e0;
-    color: #333;
-    cursor: pointer;
-    font-size: 15px;
-    transition: background 0.2s;
-}
+/* Cost filter uses common.css */
 .cost-btn + .cost-btn {
     margin-left: 10px;
-}
-
-.cost-btn.active {
-    background: #4CAF50;
-    color: #fff;
 }
 .search-filter-row {
     display: flex;
     gap: 10px;
     margin-bottom: 18px;
 }
+/* Search input uses common.css */
 .search-input {
     flex: 1;
-    padding: 8px 12px;
-    border: 1.5px solid #ccc;
-    border-radius: 6px;
-    font-size: 15px;
 }
 .type-select {
     padding: 8px 12px;
@@ -89,42 +62,7 @@ body {
     border: 1.5px solid #ccc;
     font-size: 15px;
 }
-.advanced-filter-btn {
-    padding: 8px 16px;
-    border-radius: 8px;
-    border: 2px solid #4CAF50;
-    background: linear-gradient(135deg, #4CAF50, #45a049);
-    color: white;
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    transition: all 0.3s ease;
-    box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
-}
-.advanced-filter-btn:hover {
-    background: linear-gradient(135deg, #45a049, #4CAF50);
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(76, 175, 80, 0.4);
-}
-.filter-icon {
-    font-size: 16px;
-}
-.filter-count {
-    background: #ff5722;
-    color: white;
-    border-radius: 12px;
-    padding: 2px 8px;
-    font-size: 12px;
-    min-width: 20px;
-    text-align: center;
-    display: none;
-}
-.filter-count.active {
-    display: inline-block;
-}
+/* Advanced filter button uses common.css */
 .pokemon-selection-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
@@ -163,9 +101,11 @@ body {
 }
 .details-right {
     width: 50%;
-    padding: 40px 20px 80px 20px;
+    padding: 40px 20px 20px 20px;
     display: flex;
     flex-direction: column;
+    overflow-y: auto;
+    max-height: calc(100vh - 40px);
 }
 
 .details-img {
@@ -183,7 +123,7 @@ body {
 .details-name {
     font-size: 1.8em;
     font-weight: bold;
-    color: #2c3e50;
+    color: var(--text-primary);
     margin-bottom: 8px;
 }
 .details-type {
@@ -192,18 +132,59 @@ body {
     margin-bottom: 8px;
     flex-wrap: wrap;
 }
+/* Type badges use common.css */
 .type-badge {
     padding: 4px 10px;
-    border-radius: 12px;
     font-size: 13px;
-    color: #fff;
-    background: #888;
     opacity: 0.8;
 }
 .details-cost {
-    color: #e74c3c;
+    color: var(--danger-color);
     font-weight: bold;
     margin-bottom: 8px;
+}
+
+.details-physical {
+    color: var(--text-secondary);
+    font-size: 14px;
+    margin-bottom: 8px;
+}
+
+.details-generation {
+    color: var(--text-secondary);
+    font-size: 14px;
+    margin-bottom: 8px;
+}
+
+.details-moves {
+    margin-top: 15px;
+}
+
+.details-moves h4 {
+    color: var(--text-primary);
+    font-size: 16px;
+    margin-bottom: 10px;
+    margin-top: 0;
+}
+
+.moves-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    max-height: 150px;
+    overflow-y: auto;
+    padding-bottom: 10px;
+}
+
+.move-badge {
+    background: linear-gradient(135deg, #6c757d, #5a6268);
+    color: white;
+    padding: 4px 8px;
+    border-radius: var(--border-radius-sm);
+    font-size: 12px;
+    font-weight: 500;
+    white-space: nowrap;
+    text-transform: capitalize;
 }
 .details-stats {
     display: grid;
@@ -229,17 +210,7 @@ body {
     font-weight: bold;
     color: #2c3e50;
 }
-.stat-bar-bg {
-    width: 100%;
-    height: 8px;
-    background: #e9ecef;
-    border-radius: 4px;
-}
-.stat-bar-fill {
-    height: 100%;
-    background: #4CAF50;
-    border-radius: 4px;
-}
+/* Stat bars use common.css */
 .stat-row.winner {
     background: rgba(76, 175, 80, 0.2);
     border-radius: 4px;
@@ -281,6 +252,8 @@ body {
     display: flex;
     flex-direction: column;
 }
+
+
 .comparison-close {
     position: absolute;
     top: 10px;
@@ -314,11 +287,10 @@ body {
     color: #495057;
 }
 .action-buttons {
-    position: absolute;
-    right: 20px;
-    bottom: 30px;
     display: flex;
     gap: 15px;
+    margin: 15px 0;
+    justify-content: center;
 }
 .compare-btn, .replace-btn {
     padding: 14px 32px;
@@ -349,83 +321,7 @@ body {
     cursor: not-allowed;
 }
 
-/* Advanced Filter Modal Styles */
-.filter-modal {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.8);
-    z-index: 2000;
-    backdrop-filter: blur(4px);
-}
-.filter-modal-content {
-    background: linear-gradient(135deg, #2c3e50, #34495e);
-    margin: 2% auto;
-    padding: 0;
-    border-radius: 16px;
-    width: 85%;
-    max-width: 1000px;
-    max-height: 90vh;
-    overflow: hidden;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-    animation: modalSlideIn 0.3s ease-out;
-}
-@keyframes modalSlideIn {
-    from { transform: translateY(-50px); opacity: 0; }
-    to { transform: translateY(0); opacity: 1; }
-}
-.filter-header {
-    background: linear-gradient(135deg, #3498db, #2980b9);
-    color: white;
-    padding: 20px 30px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-.filter-header h2 {
-    margin: 0;
-    font-size: 1.8em;
-    font-weight: 700;
-}
-.filter-close {
-    background: none;
-    border: none;
-    color: white;
-    font-size: 32px;
-    cursor: pointer;
-    line-height: 1;
-    padding: 0 5px;
-    border-radius: 50%;
-    transition: background 0.2s;
-}
-.filter-close:hover {
-    background: rgba(255, 255, 255, 0.2);
-}
-.filter-body {
-    padding: 30px;
-    max-height: 60vh;
-    overflow-y: auto;
-    color: white;
-}
-.filter-section {
-    margin-bottom: 35px;
-}
-.filter-section h3 {
-    color: #ecf0f1;
-    font-size: 1.3em;
-    margin-bottom: 15px;
-    padding-bottom: 8px;
-    border-bottom: 2px solid #3498db;
-    font-weight: 600;
-}
-.filter-grid {
-    display: grid;
-    gap: 10px;
-    margin-bottom: 20px;
-}
+/* Filter modal base styles use common.css */
 .type-grid {
     grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
 }
@@ -435,29 +331,7 @@ body {
 .special-grid {
     grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
 }
-.filter-toggle-btn {
-    padding: 12px 16px;
-    border: 2px solid #7f8c8d;
-    background: #34495e;
-    color: #ecf0f1;
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 14px;
-    font-weight: 500;
-    transition: all 0.3s ease;
-    text-transform: capitalize;
-}
-.filter-toggle-btn:hover {
-    border-color: #3498db;
-    background: #4a5568;
-    transform: translateY(-1px);
-}
-.filter-toggle-btn.active {
-    border-color: #e74c3c;
-    background: linear-gradient(135deg, #e74c3c, #c0392b);
-    color: white;
-    box-shadow: 0 4px 15px rgba(231, 76, 60, 0.4);
-}
+/* Filter toggle buttons use common.css */
 .type-btn.active {
     border-color: #f39c12;
     background: linear-gradient(135deg, #f39c12, #e67e22);
@@ -530,38 +404,4 @@ body {
     border-radius: 10px;
     border: 2px solid #7f8c8d;
 }
-.filter-footer {
-    background: #2c3e50;
-    padding: 20px 30px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-top: 1px solid #34495e;
-}
-.filter-clear-btn, .filter-apply-btn {
-    padding: 14px 32px;
-    border: none;
-    border-radius: 8px;
-    font-size: 16px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
-.filter-clear-btn {
-    background: linear-gradient(135deg, #95a5a6, #7f8c8d);
-    color: white;
-}
-.filter-clear-btn:hover {
-    background: linear-gradient(135deg, #7f8c8d, #95a5a6);
-    transform: translateY(-2px);
-}
-.filter-apply-btn {
-    background: linear-gradient(135deg, #27ae60, #2ecc71);
-    color: white;
-    box-shadow: 0 4px 15px rgba(46, 204, 113, 0.3);
-}
-.filter-apply-btn:hover {
-    background: linear-gradient(135deg, #2ecc71, #27ae60);
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(46, 204, 113, 0.4);
-}
+/* Filter footer buttons use common.css */

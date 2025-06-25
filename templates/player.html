@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pokemon Team Builder</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='index.css')}}"> 
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Pokemon Team Builder</h1>
+            <div class="auth-section" id="auth-section">
+                <button class="auth-button login-btn" id="login-btn">Login</button>
+                <button class="auth-button register-btn" id="register-btn">Register</button>
+            </div>
+        </div>
+
+        <div class="team-section">
+            <div class="team-tabs">
+                <div class="team-tab active">Team 1</div>
+                <div class="team-tab">Team 2</div>
+                <div class="team-tab">Team 3</div>
+                <button class="auth-button edit-team-btn" style="margin-left: auto;">Edit Team</button>
+            </div>
+            <div class="team-grid">
+                <div class="pokemon-slot edit-team-btn">
+                    <div class="pokemon-image"></div>
+                    <p>Add Pokemon</p>
+                </div>
+                <div class="pokemon-slot edit-team-btn">
+                    <div class="pokemon-image"></div>
+                    <p>Add Pokemon</p>
+                </div>
+                <div class="pokemon-slot edit-team-btn">
+                    <div class="pokemon-image"></div>
+                    <p>Add Pokemon</p>
+                </div>
+            </div>
+            <div class="cost-tracker">
+                <h3>Team Cost: <span id="current-cost">0</span>/10</h3>
+                <div class="cost-bar">
+                    <div class="cost-fill" style="width: 0%"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pokemon Detail Modal -->
+    <div id="pokemon-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <div class="pokemon-detail">
+                <div class="detail-image"></div>
+                <div class="detail-info">
+                    <h2>Pikachu</h2>
+                    <div class="pokemon-cost">Cost: 3</div>
+                    <div class="pokemon-types">
+                        <span class="type-badge" style="background-color: #F7D02C;">Electric</span>
+                    </div>
+                    <div class="detail-stats">
+                        <div>
+                            <h4>HP</h4>
+                            <div class="stat-bar">
+                                <div class="stat-fill" style="width: 35%"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <h4>Attack</h4>
+                            <div class="stat-bar">
+                                <div class="stat-fill" style="width: 55%"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <h4>Defense</h4>
+                            <div class="stat-bar">
+                                <div class="stat-fill" style="width: 40%"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <h4>Special Attack</h4>
+                            <div class="stat-bar">
+                                <div class="stat-fill" style="width: 50%"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <h4>Special Defense</h4>
+                            <div class="stat-bar">
+                                <div class="stat-fill" style="width: 50%"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <h4>Speed</h4>
+                            <div class="stat-bar">
+                                <div class="stat-fill" style="width: 90%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Login Modal -->
+    <div id="login-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" id="login-close">&times;</span>
+            <h2>Login</h2>
+            <form id="login-form">
+                <input type="text" id="login-username" placeholder="Username" required style="width:100%;margin-bottom:10px;padding:8px;">
+                <input type="password" id="login-password" placeholder="Password" required style="width:100%;margin-bottom:10px;padding:8px;">
+                <button type="submit" class="auth-button login-btn" style="width:100%;">Login</button>
+                <div id="login-error" style="color:red;margin-top:10px;"></div>
+            </form>
+        </div>
+    </div>
+    <!-- Register Modal -->
+    <div id="register-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" id="register-close">&times;</span>
+            <h2>Register</h2>
+            <form id="register-form">
+                <input type="text" id="register-username" placeholder="Username" required style="width:100%;margin-bottom:10px;padding:8px;">
+                <input type="password" id="register-password" placeholder="Password" required style="width:100%;margin-bottom:10px;padding:8px;">
+                <button type="submit" class="auth-button register-btn" style="width:100%;">Register</button>
+                <div id="register-error" style="color:red;margin-top:10px;"></div>
+            </form>
+        </div>
+    </div>
+    <script src="{{ url_for('static', filename='index.js') }}"></script>
+</body>
+</html> 
