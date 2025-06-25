@@ -807,6 +807,7 @@
           img.src = team[i].img;
           img.alt = team[i].name;
           img.className = 'team-pokemon-img';
+          img.loading = 'lazy'; 
           slot.appendChild(img);
           
           // Add remove button
@@ -854,14 +855,14 @@
         img.alt = poke.name;
         img.style.width = '60px';
         img.style.height = '60px';
+        img.setAttribute('loading', 'lazy'); 
+        card.appendChild(img);
         
         // Add cost badge
         const costBadge = document.createElement('div');
         costBadge.textContent = poke.cost;
         costBadge.style.cssText = 'position:absolute; top:2px; left:2px; background:#e74c3c; color:white; border-radius:50%; width:18px; height:18px; text-align:center; font-size:12px; line-height:18px;';
         
-        card.appendChild(img);
-        card.style.position = 'relative';
         card.appendChild(costBadge);
         
         // Double click to add to team
@@ -1034,7 +1035,7 @@
       detailsColumn.innerHTML = `
         <div class="details-left">
           <div class="details-img">
-            <img src="${poke.img}" alt="${poke.name}" style="width:160px;height:160px;object-fit:contain;">
+            <img src="${poke.img}" alt="${poke.name}" style="width:160px;height:160px;object-fit:contain;" loading="lazy">
           </div>
         </div>
         <div class="details-right">
@@ -1570,4 +1571,4 @@
     });
     </script>
 </body>
-</html> 
+</html>
