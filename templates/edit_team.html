@@ -608,6 +608,10 @@
             <div class="pokemon-selection-grid">
                 <!-- More cards will be generated dynamically -->
             </div>
+            <div style="margin-top: 20px; text-align: center;">
+                <button id="save-team-btn" class="auth-button" style="background:#2196F3;color:white;padding:10px 30px;border-radius:8px;font-size:16px;">Save Team</button>
+                <div id="save-team-msg" style="margin-top:10px;font-weight:bold;"></div>
+            </div>
         </div>
         <!-- Right: Details Panel -->
         <div class="details-column">
@@ -771,7 +775,10 @@
     // Fetch team and pokedex data from backend
     async function fetchData() {
       // Team data is passed from Flask as a Jinja variable
-      team = {{ team|tojson }};
+      let loadedTeam = {{ team|tojson }};
+      // Pad team to length 3 with nulls
+      while (loadedTeam.length < 3) loadedTeam.push(null);
+      team = loadedTeam.slice(0, 3);
       await fetchPokemon();
       renderTeam();
       renderSelection();
@@ -1531,6 +1538,35 @@
       addCostTracker();
       updateActionButtons();
       setupAdvancedFilters();
+
+      // Save Team button logic
+      const saveBtn = document.getElementById('save-team-btn');
+      if (saveBtn) {
+        saveBtn.onclick = async function() {
+          // Collect current team Pokémon IDs (filter out nulls)
+          const teamIds = (window.team || team || []).filter(p => p && p.id).map(p => p.id);
+          if (!teamIds.length) {
+            document.getElementById('save-team-msg').style.color = 'red';
+            document.getElementById('save-team-msg').textContent = 'No Pokémon in team!';
+            return;
+          }
+          // Optional: prompt for team name or use default
+          const teamName = 'Team 1';
+          const res = await fetch('/api/team/save', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ pokemon_ids: teamIds, team_name: teamName })
+          });
+          const data = await res.json();
+          if (data.success) {
+            document.getElementById('save-team-msg').style.color = 'green';
+            document.getElementById('save-team-msg').textContent = 'Team saved!';
+          } else {
+            document.getElementById('save-team-msg').style.color = 'red';
+            document.getElementById('save-team-msg').textContent = data.error || 'Failed to save team.';
+          }
+        };
+      }
     });
     </script>
 </body>

@@ -1,5 +1,8 @@
-from flask import render_template, request, jsonify
+from flask import render_template, request, jsonify, session
 from db import fetch_pokemon, fetch_pokemon_by_id
+import bcrypt
+from mongo_client import get_player_profiles_collection, get_teams_collection
+from datetime import datetime
 
 def register_routes(app):
     @app.route('/')
@@ -8,8 +11,20 @@ def register_routes(app):
 
     @app.route('/edit_team')
     def edit_team():
-        team_ids = [25, 10, 133]  # Pikachu, Caterpie, Eevee
-        team = [fetch_pokemon_by_id(pid) for pid in team_ids]
+        # Remove default team, fetch from MongoDB if logged in
+        def get_current_user():
+            user_id = session.get('user_id')
+            username = session.get('username')
+            if not user_id or not username:
+                return None
+            return {'_id': user_id, 'username': username}
+        user = get_current_user()
+        team = []
+        if user:
+            teams = get_teams_collection()
+            team_doc = teams.find_one({'player_id': user['_id']})
+            if team_doc and team_doc.get('pokemon_ids'):
+                team = [fetch_pokemon_by_id(pid) for pid in team_doc['pokemon_ids']]
         return render_template('edit_team.html', team=team)
 
     @app.route('/api/pokemon')
@@ -64,4 +79,115 @@ def register_routes(app):
             'total_cost': total_cost,
             'max_cost': max_cost,
             'remaining_cost': max_cost - total_cost
-        }) 
+        })
+
+    # User Registration
+    @app.route('/api/register', methods=['POST'])
+    def register():
+        data = request.json
+        username = data.get('username')
+        password = data.get('password')
+        if not username or not password:
+            return jsonify({'error': 'Username and password required'}), 400
+
+        profiles = get_player_profiles_collection()
+        if profiles.find_one({'username': username}):
+            return jsonify({'error': 'Username already exists'}), 409
+
+        password_hash = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
+        profiles.insert_one({
+            'username': username,
+            'password_hash': password_hash,
+            'registration_date': datetime.utcnow()
+        })
+        return jsonify({'success': True})
+
+    # User Login
+    @app.route('/api/login', methods=['POST'])
+    def login():
+        data = request.json
+        username = data.get('username')
+        password = data.get('password')
+        if not username or not password:
+            return jsonify({'error': 'Username and password required'}), 400
+
+        profiles = get_player_profiles_collection()
+        user = profiles.find_one({'username': username})
+        if not user or not bcrypt.checkpw(password.encode('utf-8'), user['password_hash']):
+            return jsonify({'error': 'Invalid credentials'}), 401
+
+        session['user_id'] = str(user['_id'])
+        session['username'] = user['username']
+        return jsonify({'success': True, 'username': user['username']})
+
+    # User Logout
+    @app.route('/api/logout', methods=['POST'])
+    def logout():
+        session.clear()
+        return jsonify({'success': True})
+
+    # Helper to get current user
+    def get_current_user():
+        user_id = session.get('user_id')
+        username = session.get('username')
+        if not user_id or not username:
+            return None
+        return {'_id': user_id, 'username': username}
+
+    # --- Save Team Endpoint ---
+    @app.route('/api/team/save', methods=['POST'])
+    def save_team():
+        user = get_current_user()
+        if not user:
+            return jsonify({'error': 'Not logged in'}), 401
+
+        data = request.json
+        pokemon_ids = data.get('pokemon_ids', [])
+        team_name = data.get('team_name', 'Team 1')
+
+        # Validate Pokémon IDs using SQLite
+        if not pokemon_ids or not isinstance(pokemon_ids, list):
+            return jsonify({'error': 'Invalid team data'}), 400
+        from db import get_db_connection
+        conn = get_db_connection()
+        cur = conn.cursor()
+        q_marks = ','.join(['?']*len(pokemon_ids))
+        cur.execute(f"SELECT pokemon_id FROM Pokemon WHERE pokemon_id IN ({q_marks})", pokemon_ids)
+        valid_ids = {row['pokemon_id'] for row in cur.fetchall()}
+        conn.close()
+        if set(pokemon_ids) != valid_ids:
+            return jsonify({'error': 'Invalid Pokémon in team'}), 400
+
+        # Save to MongoDB (one team per user for now)
+        teams = get_teams_collection()
+        teams.update_one(
+            {'player_id': user['_id']},
+            {'$set': {
+                'pokemon_ids': pokemon_ids,
+                'team_name': team_name,
+                'updated_at': datetime.utcnow()
+            }, '$setOnInsert': {
+                'created_at': datetime.utcnow()
+            }},
+            upsert=True
+        )
+        return jsonify({'success': True})
+
+    @app.route('/api/team', methods=['GET'])
+    def get_team():
+        user = get_current_user()
+        if not user:
+            return jsonify({'team': []})
+        teams = get_teams_collection()
+        team_doc = teams.find_one({'player_id': user['_id']})
+        if not team_doc or not team_doc.get('pokemon_ids'):
+            return jsonify({'team': []})
+        team = [fetch_pokemon_by_id(pid) for pid in team_doc['pokemon_ids']]
+        return jsonify({'team': team})
+
+    @app.route('/api/me')
+    def get_me():
+        user = get_current_user()
+        if user:
+            return jsonify({'username': user['username']})
+        return jsonify({'username': None}) 
