@@ -73,7 +73,7 @@ def fetch_pokemon(filters=None):
                 result.append({
                     'id': row['pokemon_id'],
                     'name': row['name'],
-                    'img': f"/static/images/{row['pokemon_id']}.png",
+                    'img': f"/pokemon_image/{row['pokemon_id']}",
                     'cost': row['cost'],
                     'type': types_map.get(row['pokemon_id'], []),
                     'hp': row['hp'],
