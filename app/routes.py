@@ -1,7 +1,7 @@
 from flask import render_template, request, jsonify, session
-from db import fetch_pokemon, fetch_pokemon_by_id
+from app.db import fetch_pokemon, fetch_pokemon_by_id, get_db_connection
+from app.mongo_client import get_player_profiles_collection, get_teams_collection
 import bcrypt
-from mongo_client import get_player_profiles_collection, get_teams_collection
 from datetime import datetime
 
 def register_routes(app):
@@ -11,7 +11,6 @@ def register_routes(app):
 
     @app.route('/edit_team')
     def edit_team():
-        # Remove default team, fetch from MongoDB if logged in
         def get_current_user():
             user_id = session.get('user_id')
             username = session.get('username')
@@ -66,7 +65,6 @@ def register_routes(app):
         ids = [p.get('id') for p in team_data if p.get('id')]
         if not ids:
             return jsonify({'valid': True, 'total_cost': 0, 'max_cost': 10, 'remaining_cost': 10})
-        from db import get_db_connection
         conn = get_db_connection()
         cur = conn.cursor()
         q_marks = ','.join(['?']*len(ids))
@@ -81,7 +79,6 @@ def register_routes(app):
             'remaining_cost': max_cost - total_cost
         })
 
-    # User Registration
     @app.route('/api/register', methods=['POST'])
     def register():
         data = request.json
@@ -102,7 +99,6 @@ def register_routes(app):
         })
         return jsonify({'success': True})
 
-    # User Login
     @app.route('/api/login', methods=['POST'])
     def login():
         data = request.json
@@ -120,13 +116,11 @@ def register_routes(app):
         session['username'] = user['username']
         return jsonify({'success': True, 'username': user['username']})
 
-    # User Logout
     @app.route('/api/logout', methods=['POST'])
     def logout():
         session.clear()
         return jsonify({'success': True})
 
-    # Helper to get current user
     def get_current_user():
         user_id = session.get('user_id')
         username = session.get('username')
@@ -134,7 +128,6 @@ def register_routes(app):
             return None
         return {'_id': user_id, 'username': username}
 
-    # --- Save Team Endpoint ---
     @app.route('/api/team/save', methods=['POST'])
     def save_team():
         user = get_current_user()
@@ -145,10 +138,8 @@ def register_routes(app):
         pokemon_ids = data.get('pokemon_ids', [])
         team_name = data.get('team_name', 'Team 1')
 
-        # Validate Pokémon IDs using SQLite
         if not pokemon_ids or not isinstance(pokemon_ids, list):
             return jsonify({'error': 'Invalid team data'}), 400
-        from db import get_db_connection
         conn = get_db_connection()
         cur = conn.cursor()
         q_marks = ','.join(['?']*len(pokemon_ids))
@@ -158,7 +149,6 @@ def register_routes(app):
         if set(pokemon_ids) != valid_ids:
             return jsonify({'error': 'Invalid Pokémon in team'}), 400
 
-        # Save to MongoDB (one team per user for now)
         teams = get_teams_collection()
         teams.update_one(
             {'player_id': user['_id']},
@@ -190,4 +180,4 @@ def register_routes(app):
         user = get_current_user()
         if user:
             return jsonify({'username': user['username']})
-        return jsonify({'username': None}) 
+        return jsonify({'username': None})
