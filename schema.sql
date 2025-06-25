@@ -10,7 +10,8 @@ CREATE TABLE IF NOT EXISTS Pokemon (
     def SMALLINT NOT NULL,
     sp_atk SMALLINT NOT NULL,
     sp_def SMALLINT NOT NULL,
-    speed SMALLINT NOT NULL
+    speed SMALLINT NOT NULL,
+    image BLOB
 );
 
 CREATE TABLE IF NOT EXISTS Type (
@@ -50,4 +51,13 @@ CREATE TABLE IF NOT EXISTS PokemonHasMove (
     PRIMARY KEY (move_id, pokemon_id),
     FOREIGN KEY (move_id) REFERENCES Move(move_id),
     FOREIGN KEY (pokemon_id) REFERENCES Pokemon(pokemon_id)
+)
+
+CREATE TABLE IF NOT EXISTS Player{
+  player_id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  username VARCHAR(50)  NOT NULL UNIQUE,
+  email    VARCHAR(100) NOT NULL UNIQUE,
+  password_hash CHAR(60) NOT NULL,
+  registration_date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (player_id)
 )
