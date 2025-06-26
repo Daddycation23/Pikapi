@@ -206,17 +206,18 @@ def register_routes(app):
         data = request.json
         pokemon_ids = data.get('pokemon_ids', [])
         team_id = data.get('team_id', None)
-        if not pokemon_ids or not isinstance(pokemon_ids, list):
+        if not isinstance(pokemon_ids, list):
             return jsonify({'error': 'Invalid team data'}), 400
-        # Validate Pokémon IDs
-        conn = get_db_connection()
-        cur = conn.cursor()
-        q_marks = ','.join(['?']*len(pokemon_ids))
-        cur.execute(f"SELECT pokemon_id FROM Pokemon WHERE pokemon_id IN ({q_marks})", pokemon_ids)
-        valid_ids = {row['pokemon_id'] for row in cur.fetchall()}
-        conn.close()
-        if set(pokemon_ids) != valid_ids:
-            return jsonify({'error': 'Invalid Pokémon in team'}), 400
+        # Validate Pokémon IDs only if the list is not empty
+        if pokemon_ids:
+            conn = get_db_connection()
+            cur = conn.cursor()
+            q_marks = ','.join(['?']*len(pokemon_ids))
+            cur.execute(f"SELECT pokemon_id FROM Pokemon WHERE pokemon_id IN ({q_marks})", pokemon_ids)
+            valid_ids = {row['pokemon_id'] for row in cur.fetchall()}
+            conn.close()
+            if set(pokemon_ids) != valid_ids:
+                return jsonify({'error': 'Invalid Pokémon in team'}), 400
         if team_id is None:
             # Create a new team if not provided (should not happen in normal UI)
             team_id = create_team(int(user['_id']))
