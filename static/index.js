@@ -196,6 +196,11 @@ async function loadAllPokemon(filters = null) {
         params.append('generations', filters.generations.join(','));
       }
       
+      // Add rarity filters
+      if (filters.special && filters.special.length > 0) {
+        params.append('rarity', filters.special.join(','));
+      }
+      
       // Add stat range filters
       if (filters.stats) {
         Object.entries(filters.stats).forEach(([stat, range]) => {

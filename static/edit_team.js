@@ -810,9 +810,9 @@ async function applyAdvancedFilters() {
     params.append('generations', activeFilters.generations.join(','));
   }
   
-  // Add special property filters
+  // Add rarity filters
   if (activeFilters.special.length > 0) {
-    params.append('special', activeFilters.special.join(','));
+    params.append('rarity', activeFilters.special.join(','));
   }
   
   // Add stat range filters

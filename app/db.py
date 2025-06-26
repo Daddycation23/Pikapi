@@ -14,7 +14,7 @@ def fetch_pokemon(filters=None):
     conn = get_db_connection()
     cur = conn.cursor()
     base_query = """
-        SELECT p.pokemon_id, p.name, p.generation, p.cost, p.height_cm, p.weight_kg, p.hp, p.atk, p.def, p.sp_atk, p.sp_def, p.speed
+        SELECT p.pokemon_id, p.name, p.generation, p.cost, p.height_cm, p.weight_kg, p.hp, p.atk, p.def, p.sp_atk, p.sp_def, p.speed, p.rarity
         FROM Pokemon p
     """
     join_clauses = ""
@@ -50,6 +50,30 @@ def fetch_pokemon(filters=None):
             if gen_list:
                 where_clauses.append(f"p.generation IN ({','.join(['?']*len(gen_list))})")
                 params.extend(gen_list)
+        if 'rarity' in filters and filters['rarity']:
+            rarity_list = [r.strip() for r in filters['rarity'].split(',') if r.strip()]
+            if rarity_list:
+                # Handle special cases for rarity mapping
+                rarity_mapping = {
+                    'non-special': None,  # This will match NULL/None values in database
+                    'pseudo-legendary': 'Pseudo-Legendary',
+                    'legendary': 'Legendary',
+                    'mythical': 'Mythical',
+                    'paradox': 'Paradox',
+                    'ultra-beast': 'Ultra-Beast'
+                }
+                mapped_rarities = []
+                for rarity in rarity_list:
+                    mapped_rarity = rarity_mapping.get(rarity, rarity)
+                    if mapped_rarity is None:
+                        # Handle None values specially
+                        where_clauses.append("p.rarity IS NULL")
+                    else:
+                        mapped_rarities.append(mapped_rarity)
+                
+                if mapped_rarities:
+                    where_clauses.append(f"p.rarity IN ({','.join(['?']*len(mapped_rarities))})")
+                    params.extend(mapped_rarities)
         for stat in ['hp', 'atk', 'def', 'sp_atk', 'sp_def', 'speed']:
             min_key = f'{stat}_min'
             max_key = f'{stat}_max'
@@ -118,6 +142,7 @@ def fetch_pokemon(filters=None):
             'gen': str(row['generation']),
             'height_cm': row['height_cm'],
             'weight_kg': row['weight_kg'],
+            'rarity': row['rarity'],
             'moves': moves_map.get(row['pokemon_id'], [])
         })
     conn.close()
@@ -127,7 +152,7 @@ def fetch_pokemon_by_id(pokemon_id):
     conn = get_db_connection()
     cur = conn.cursor()
     cur.execute("""
-        SELECT p.pokemon_id, p.name, p.generation, p.cost, p.height_cm, p.weight_kg, p.hp, p.atk, p.def, p.sp_atk, p.sp_def, p.speed
+        SELECT p.pokemon_id, p.name, p.generation, p.cost, p.height_cm, p.weight_kg, p.hp, p.atk, p.def, p.sp_atk, p.sp_def, p.speed, p.rarity
         FROM Pokemon p WHERE p.pokemon_id = ?
     """, (pokemon_id,))
     row = cur.fetchone()
@@ -164,6 +189,7 @@ def fetch_pokemon_by_id(pokemon_id):
         'gen': str(row['generation']),
         'height_cm': row['height_cm'],
         'weight_kg': row['weight_kg'],
+        'rarity': row['rarity'],
         'moves': moves
     }
     conn.close()

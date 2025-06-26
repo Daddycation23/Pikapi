@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS Pokemon (
     sp_atk SMALLINT NOT NULL,
     sp_def SMALLINT NOT NULL,
     speed SMALLINT NOT NULL,
+    rarity VARCHAR(32),
     image BLOB
 );
 

@@ -71,13 +71,14 @@ def load_pokemon():
             cost = 5
         height_cm = row.get('height_cm', None)
         weight_kg = row.get('weight_kg', None)
+        rarity = row.get('Rarity', None)
         cur.execute('SELECT 1 FROM Pokemon WHERE pokemon_id = ?', (pokemon_id,))
         if cur.fetchone():
             continue
         cur.execute('''
-            INSERT INTO Pokemon (pokemon_id, name, generation, cost, height_cm, weight_kg, hp, atk, def, sp_atk, sp_def, speed)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ''', (pokemon_id, name, generation, cost, height_cm, weight_kg, hp, atk, defense, sp_atk, sp_def, speed))
+            INSERT INTO Pokemon (pokemon_id, name, generation, cost, height_cm, weight_kg, hp, atk, def, sp_atk, sp_def, speed, rarity)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (pokemon_id, name, generation, cost, height_cm, weight_kg, hp, atk, defense, sp_atk, sp_def, speed, rarity))
         inserted += 1
     conn.commit()
     conn.close()

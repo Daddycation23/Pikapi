@@ -63,6 +63,7 @@ def register_routes(app):
             'cost_max': request.args.get('cost_max', type=int),
             'generations': request.args.get('generations', ''),
             'types': request.args.get('types', ''),
+            'rarity': request.args.get('rarity', ''),
             'hp_min': request.args.get('hp_min', type=int),
             'hp_max': request.args.get('hp_max', type=int),
             'atk_min': request.args.get('attack_min', type=int),
