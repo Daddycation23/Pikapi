@@ -4,6 +4,7 @@ from app.db import fetch_pokemon, fetch_pokemon_by_id, get_db_connection, save_t
 import bcrypt
 from datetime import datetime
 import sqlite3
+import random
 
 
 DB_PATH = 'pokemon.db'
@@ -245,3 +246,115 @@ def register_routes(app):
                 return response
             else:
                 abort(404)
+
+    @app.route('/battle')
+    def battle():
+        return render_template('battle.html')
+
+    @app.route('/api/battle/random-pokemon')
+    def get_random_pokemon():
+        try:
+            # Get random Pokemon from database
+            conn = get_db_connection()
+            cur = conn.cursor()
+            
+            # Get total count of Pokemon
+            cur.execute("SELECT COUNT(*) FROM Pokemon")
+            total_pokemon = cur.fetchone()[0]
+            
+            # Generate random Pokemon IDs
+            player_pokemon_id = random.randint(1, min(total_pokemon, 1000))  # Limit to first 1000 for now
+            enemy_pokemon_id = random.randint(1, min(total_pokemon, 1000))
+            
+            # Get player Pokemon
+            cur.execute("""
+                SELECT p.pokemon_id, p.name, p.hp, p.atk, p.def, p.sp_atk, p.sp_def, p.speed
+                FROM Pokemon p WHERE p.pokemon_id = ?
+            """, (player_pokemon_id,))
+            player_data = cur.fetchone()
+            
+            # Get enemy Pokemon
+            cur.execute("""
+                SELECT p.pokemon_id, p.name, p.hp, p.atk, p.def, p.sp_atk, p.sp_def, p.speed
+                FROM Pokemon p WHERE p.pokemon_id = ?
+            """, (enemy_pokemon_id,))
+            enemy_data = cur.fetchone()
+            
+            if not player_data or not enemy_data:
+                conn.close()
+                return jsonify({'success': False, 'error': 'Pokemon not found'})
+            
+            # Get moves for player Pokemon
+            cur.execute("""
+                SELECT m.move_name FROM PokemonHasMove phm
+                JOIN Move m ON phm.move_id = m.move_id
+                WHERE phm.pokemon_id = ? ORDER BY RANDOM() LIMIT 4
+            """, (player_pokemon_id,))
+            player_moves = [row[0] for row in cur.fetchall()]
+            
+            # Get moves for enemy Pokemon
+            cur.execute("""
+                SELECT m.move_name FROM PokemonHasMove phm
+                JOIN Move m ON phm.move_id = m.move_id
+                WHERE phm.pokemon_id = ? ORDER BY RANDOM() LIMIT 4
+            """, (enemy_pokemon_id,))
+            enemy_moves = [row[0] for row in cur.fetchall()]
+            
+            # Generate additional Pokemon for player team
+            team_pokemon_ids = [player_pokemon_id]
+            for _ in range(3):  # Add 3 more Pokemon to team
+                team_id = random.randint(1, min(total_pokemon, 1000))
+                if team_id not in team_pokemon_ids:
+                    team_pokemon_ids.append(team_id)
+            
+            # Get team Pokemon data
+            team_pokemon = []
+            for pokemon_id in team_pokemon_ids:
+                cur.execute("""
+                    SELECT p.pokemon_id, p.name, p.hp, p.atk, p.def, p.sp_atk, p.sp_def, p.speed
+                    FROM Pokemon p WHERE p.pokemon_id = ?
+                """, (pokemon_id,))
+                pokemon_data = cur.fetchone()
+                if pokemon_data:
+                    # Get moves for this Pokemon
+                    cur.execute("""
+                        SELECT m.move_name FROM PokemonHasMove phm
+                        JOIN Move m ON phm.move_id = m.move_id
+                        WHERE phm.pokemon_id = ? ORDER BY RANDOM() LIMIT 4
+                    """, (pokemon_id,))
+                    moves = [row[0] for row in cur.fetchall()]
+                    
+                    team_pokemon.append({
+                        'id': pokemon_data[0],
+                        'name': pokemon_data[1],
+                        'hp': pokemon_data[2] * 2,  # Scale HP for battle
+                        'maxHp': pokemon_data[2] * 2,
+                        'level': 50,
+                        'moves': moves
+                    })
+            
+            conn.close()
+            
+            return jsonify({
+                'success': True,
+                'playerPokemon': {
+                    'id': player_data[0],
+                    'name': player_data[1],
+                    'hp': player_data[2] * 2,
+                    'maxHp': player_data[2] * 2,
+                    'level': 50,
+                    'moves': player_moves
+                },
+                'enemyPokemon': {
+                    'id': enemy_data[0],
+                    'name': enemy_data[1],
+                    'hp': enemy_data[2] * 2,
+                    'maxHp': enemy_data[2] * 2,
+                    'level': 50,
+                    'moves': enemy_moves
+                },
+                'playerTeam': team_pokemon
+            })
+            
+        except Exception as e:
+            return jsonify({'success': False, 'error': str(e)})

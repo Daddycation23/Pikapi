@@ -425,4 +425,48 @@ body {
     white-space: nowrap;
 }
 
+.advanced-filter-btn {
+    background: var(--background-card);
+    border: 2px solid var(--border-color);
+    border-radius: var(--border-radius-lg);
+    padding: 8px 12px;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 14px;
+    color: var(--text-primary);
+}
+
+.advanced-filter-btn:hover {
+    border-color: var(--primary-color);
+    background: var(--background-hover);
+}
+
+.battle-btn {
+    background: var(--danger-color);
+    border: 2px solid var(--danger-color);
+    border-radius: var(--border-radius-lg);
+    padding: 8px 16px;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 14px;
+    color: white;
+    font-weight: 600;
+}
+
+.battle-btn:hover {
+    background: #c0392b;
+    border-color: #c0392b;
+    transform: translateY(-1px);
+}
+
+.battle-icon {
+    font-size: 16px;
+}
+
 

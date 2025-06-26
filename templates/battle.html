@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pokemon Battle - Pikapi</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='battle.css') }}">
+</head>
+<body>
+    <div class="battle-container">
+        <!-- Battle Scene -->
+        <div class="battle-scene">
+            <!-- Enemy Pokemon -->
+            <div class="enemy-pokemon">
+                <div class="pokemon-sprite">
+                    <img id="enemy-sprite" src="/static/images/placeholder.png" alt="Enemy Pokemon">
+                </div>
+                <div class="pokemon-info">
+                    <div class="pokemon-name" id="enemy-name">Enemy Pokemon</div>
+                    <div class="pokemon-level" id="enemy-level">Lv. 50</div>
+                    <div class="health-bar">
+                        <div class="health-fill" id="enemy-health-fill" style="width: 100%"></div>
+                    </div>
+                    <div class="health-text" id="enemy-health-text">100/100</div>
+                </div>
+            </div>
+
+            <!-- Player Pokemon -->
+            <div class="player-pokemon">
+                <div class="pokemon-sprite">
+                    <img id="player-sprite" src="/static/images/placeholder.png" alt="Player Pokemon">
+                </div>
+                <div class="pokemon-info">
+                    <div class="pokemon-name" id="player-name">Your Pokemon</div>
+                    <div class="pokemon-level" id="player-level">Lv. 50</div>
+                    <div class="health-bar">
+                        <div class="health-fill" id="player-health-fill" style="width: 100%"></div>
+                    </div>
+                    <div class="health-text" id="player-health-text">100/100</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Battle Menu -->
+        <div class="battle-menu">
+            <div class="menu-buttons">
+                <button class="menu-btn battle-btn" id="fight-btn" onclick="alert('Fight button works!'); document.getElementById('move-selection').style.display='block'; document.getElementById('battle-menu').style.display='none';">FIGHT</button>
+                <button class="menu-btn pokemon-btn" id="pokemon-btn">POKEMON</button>
+            </div>
+        </div>
+
+        <!-- Move Selection (hidden by default) -->
+        <div class="move-selection" id="move-selection" style="display: none;">
+            <div class="move-grid">
+                <button class="move-btn" data-move="0" id="move-1">Move 1</button>
+                <button class="move-btn" data-move="1" id="move-2">Move 2</button>
+                <button class="move-btn" data-move="2" id="move-3">Move 3</button>
+                <button class="move-btn" data-move="3" id="move-4">Move 4</button>
+            </div>
+            <button class="back-btn" id="back-to-menu">BACK</button>
+        </div>
+
+        <!-- Pokemon Selection (hidden by default) -->
+        <div class="pokemon-selection" id="pokemon-selection" style="display: none;">
+            <div class="pokemon-list" id="pokemon-list">
+                <!-- Pokemon will be populated here -->
+            </div>
+            <button class="back-btn" id="back-to-menu-pokemon">BACK</button>
+        </div>
+
+        <!-- Battle Log -->
+        <div class="battle-log" id="battle-log">
+            <div class="log-message">A wild Pokemon appeared!</div>
+        </div>
+
+        <!-- Back to Main Menu -->
+        <div class="back-to-main">
+            <button class="main-menu-btn" onclick="window.location.href='/'">← Back to Main Menu</button>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='battle.js') }}"></script>
+</body>
+</html> 
