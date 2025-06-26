@@ -30,65 +30,6 @@ def fetch_pokemon(filters=None):
             # Use GROUP BY and HAVING to ensure Pokémon have ALL selected types
             where_clauses.append(f"LOWER(t.type_name) IN ({','.join(['?']*len(type_list))})")
             params.extend(type_list)
-            # Add GROUP BY and HAVING clause to ensure all types are present
-            query = base_query + join_clauses
-            if where_clauses:
-                query += " WHERE " + " AND ".join(where_clauses)
-            query += f" GROUP BY p.pokemon_id HAVING COUNT(DISTINCT LOWER(t.type_name)) = {len(type_list)}"
-            cur.execute(query, params)
-            pokemons = cur.fetchall()
-            # Fetch types for all pokemon in one go
-            pokemon_ids = [row['pokemon_id'] for row in pokemons]
-            types_map = {}
-            if pokemon_ids:
-                q_marks = ','.join(['?']*len(pokemon_ids))
-                cur.execute(f"""
-                    SELECT pht.pokemon_id, t.type_name
-                    FROM PokemonHasType pht
-                    JOIN Type t ON pht.type_id = t.type_id
-                    WHERE pht.pokemon_id IN ({q_marks})
-                    ORDER BY t.type_name
-                """, pokemon_ids)
-                for row in cur.fetchall():
-                    types_map.setdefault(row['pokemon_id'], []).append(row['type_name'])
-            
-            # Fetch moves for all pokemon in bulk (only for smaller result sets)
-            moves_map = {}
-            if len(pokemon_ids) <= 50:  # Only fetch moves for smaller result sets to avoid performance issues
-                if pokemon_ids:
-                    q_marks = ','.join(['?']*len(pokemon_ids))
-                    cur.execute(f"""
-                        SELECT phm.pokemon_id, m.move_name
-                        FROM PokemonHasMove phm
-                        JOIN Move m ON phm.move_id = m.move_id
-                        WHERE phm.pokemon_id IN ({q_marks})
-                        ORDER BY phm.pokemon_id, m.move_name
-                    """, pokemon_ids)
-                    for row in cur.fetchall():
-                        moves_map.setdefault(row['pokemon_id'], []).append(row['move_name'])
-            
-            # Build output
-            result = []
-            for row in pokemons:
-                result.append({
-                    'id': row['pokemon_id'],
-                    'name': row['name'],
-                    'img': f"/api/pokemon_image/{row['pokemon_id']}",
-                    'cost': row['cost'],
-                    'type': types_map.get(row['pokemon_id'], []),
-                    'hp': row['hp'],
-                    'attack': row['atk'],
-                    'defense': row['def'],
-                    'sp_atk': row['sp_atk'],
-                    'sp_def': row['sp_def'],
-                    'speed': row['speed'],
-                    'gen': str(row['generation']),
-                    'height_cm': row['height_cm'],
-                    'weight_kg': row['weight_kg'],
-                    'moves': moves_map.get(row['pokemon_id'], [])
-                })
-            conn.close()
-            return result
 
     # Other filters
     if filters:
@@ -122,8 +63,14 @@ def fetch_pokemon(filters=None):
     query = base_query + join_clauses
     if where_clauses:
         query += " WHERE " + " AND ".join(where_clauses)
+    
+    # Add GROUP BY and HAVING clause for type filtering if needed
+    if type_list:
+        query += f" GROUP BY p.pokemon_id HAVING COUNT(DISTINCT LOWER(t.type_name)) = {len(type_list)}"
+    
     cur.execute(query, params)
     pokemons = cur.fetchall()
+    
     # Fetch types for all pokemon in one go
     pokemon_ids = [row['pokemon_id'] for row in pokemons]
     types_map = {}
@@ -138,8 +85,8 @@ def fetch_pokemon(filters=None):
         """, pokemon_ids)
         for row in cur.fetchall():
             types_map.setdefault(row['pokemon_id'], []).append(row['type_name'])
-    # Build output
-    # Fetch moves for all pokemon in bulk (only for detailed views)
+    
+    # Fetch moves for all pokemon in bulk (only for smaller result sets)
     moves_map = {}
     if len(pokemon_ids) <= 50:  # Only fetch moves for smaller result sets to avoid performance issues
         if pokemon_ids:
