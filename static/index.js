@@ -164,13 +164,65 @@ async function initPokedex() {
   applyFilters();
 }
 
-async function loadAllPokemon() {
+async function loadAllPokemon(filters = null) {
   try {
-    const res = await fetch('/api/pokemon');
+    let url = '/api/pokemon';
+    if (filters) {
+      const params = new URLSearchParams();
+      
+      // Add search filter
+      if (filters.search) {
+        params.append('search', filters.search);
+      }
+      
+      // Add cost filter
+      if (filters.cost && filters.cost !== 'all') {
+        params.append('cost', filters.cost);
+      }
+      
+      // Add cost range filters
+      if (filters.costRange) {
+        params.append('cost_min', filters.costRange[0]);
+        params.append('cost_max', filters.costRange[1]);
+      }
+      
+      // Add type filters
+      if (filters.types && filters.types.length > 0) {
+        params.append('types', filters.types.join(','));
+      }
+      
+      // Add generation filters
+      if (filters.generations && filters.generations.length > 0) {
+        params.append('generations', filters.generations.join(','));
+      }
+      
+      // Add stat range filters
+      if (filters.stats) {
+        Object.entries(filters.stats).forEach(([stat, range]) => {
+          if (range[0] !== 0) params.append(`${stat}_min`, range[0]);
+          if (range[1] !== 255) params.append(`${stat}_max`, range[1]);
+        });
+      }
+      
+      if (params.toString()) {
+        url += '?' + params.toString();
+      }
+    }
+    
+    const res = await fetch(url);
     const data = await res.json();
-    allPokemon = Array.isArray(data) ? data : (data.pokemon || []);
-    filteredPokemon = [...allPokemon];
-    console.log('Loaded Pokemon:', allPokemon.length, 'items');
+    const pokemonList = Array.isArray(data) ? data : (data.pokemon || []);
+    
+    if (filters) {
+      // If we're filtering, update the filtered list
+      filteredPokemon = pokemonList;
+    } else {
+      // If no filters, load all Pokémon
+      allPokemon = pokemonList;
+      filteredPokemon = [...allPokemon];
+    }
+    
+    console.log('Loaded Pokemon:', pokemonList.length, 'items');
   } catch (error) {
     console.error('Error loading Pokemon:', error);
   }
@@ -179,20 +231,24 @@ async function loadAllPokemon() {
 function setupPokedexEventListeners() {
   // Cost filter buttons
   document.querySelectorAll('.cost-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', async () => {
       document.querySelectorAll('.cost-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       activeFilters.cost = btn.textContent.toLowerCase();
-      applyFilters();
+      await applyFilters();
     });
   });
 
   // Search input
   const searchInput = document.querySelector('.search-input');
   if (searchInput) {
+    let searchTimeout;
     searchInput.addEventListener('input', (e) => {
-      activeFilters.search = e.target.value.toLowerCase();
-      applyFilters();
+      clearTimeout(searchTimeout);
+      searchTimeout = setTimeout(async () => {
+        activeFilters.search = e.target.value.toLowerCase();
+        await applyFilters();
+      }, 300); // Debounce search to avoid too many API calls
     });
   }
 
@@ -216,15 +272,15 @@ function setupPokedexEventListeners() {
   }
 
   if (filterApply) {
-    filterApply.addEventListener('click', () => {
-      applyAdvancedFilters();
+    filterApply.addEventListener('click', async () => {
+      await applyAdvancedFilters();
       filterModal.style.display = 'none';
     });
   }
 
   if (filterClear) {
-    filterClear.addEventListener('click', () => {
-      clearAllFilters();
+    filterClear.addEventListener('click', async () => {
+      await clearAllFilters();
     });
   }
 
@@ -309,14 +365,18 @@ function setupStatRangeSliders() {
   }
 }
 
-function applyAdvancedFilters() {
+async function applyAdvancedFilters() {
   // Get selected types
   activeFilters.types = Array.from(document.querySelectorAll('.type-btn.active'))
     .map(btn => btn.dataset.type);
 
-  // Get selected generations
+  // Get selected generations and convert Roman numerals to numbers
+  const romanToNumber = {
+    'I': '1', 'II': '2', 'III': '3', 'IV': '4', 
+    'V': '5', 'VI': '6', 'VII': '7', 'VIII': '8'
+  };
   activeFilters.generations = Array.from(document.querySelectorAll('.gen-btn.active'))
-    .map(btn => btn.dataset.gen);
+    .map(btn => romanToNumber[btn.dataset.gen]);
 
   // Get selected special properties
   activeFilters.special = Array.from(document.querySelectorAll('.special-btn.active'))
@@ -339,11 +399,11 @@ function applyAdvancedFilters() {
     activeFilters.costRange = [parseInt(costMinSlider.value), parseInt(costMaxSlider.value)];
   }
 
-  applyFilters();
+  await applyFilters();
   updateFilterCount();
 }
 
-function clearAllFilters() {
+async function clearAllFilters() {
   // Clear type filters
   document.querySelectorAll('.type-btn').forEach(btn => btn.classList.remove('active'));
   
@@ -394,7 +454,7 @@ function clearAllFilters() {
     costRange: [1, 5]
   };
 
-  applyFilters();
+  await applyFilters();
   updateFilterCount();
 }
 
@@ -412,76 +472,9 @@ function updateFilterCount() {
   }
 }
 
-function applyFilters() {
-  filteredPokemon = allPokemon.filter(pokemon => {
-    // Cost filter
-    if (activeFilters.cost !== 'all' && pokemon.cost !== parseInt(activeFilters.cost)) {
-      return false;
-    }
-
-    // Search filter
-    if (activeFilters.search && !pokemon.name.toLowerCase().includes(activeFilters.search)) {
-      return false;
-    }
-
-    // Type filter
-    if (activeFilters.types.length > 0) {
-      const pokemonTypes = (pokemon.type || []).map(t => t.toLowerCase());
-      if (!activeFilters.types.some(type => pokemonTypes.includes(type))) {
-        return false;
-      }
-    }
-
-    // Generation filter
-    if (activeFilters.generations.length > 0) {
-      if (!activeFilters.generations.includes(pokemon.gen)) {
-        return false;
-      }
-    }
-
-    // Special property filter
-    if (activeFilters.special.length > 0) {
-      const hasSpecialProperty = activeFilters.special.some(special => {
-        switch (special) {
-          case 'legendary': return pokemon.is_legendary;
-          case 'mythical': return pokemon.is_mythical;
-          case 'sublegendary': return pokemon.is_sublegendary;
-          case 'mega': return pokemon.name.includes('Mega');
-          case 'gigantamax': return pokemon.name.includes('Gigantamax');
-          default: return false;
-        }
-      });
-      if (!hasSpecialProperty) {
-        return false;
-      }
-    }
-
-    // Stat range filters
-    const statKeys = {
-      'hp': 'hp',
-      'attack': 'attack',
-      'defense': 'defense',
-      'sp-attack': 'sp_atk',
-      'sp-defense': 'sp_def',
-      'speed': 'speed'
-    };
-
-    for (const [filterKey, pokemonKey] of Object.entries(statKeys)) {
-      const range = activeFilters.stats[filterKey];
-      const pokemonStat = pokemon[pokemonKey] || 0;
-      if (pokemonStat < range[0] || pokemonStat > range[1]) {
-        return false;
-      }
-    }
-
-    // Cost range filter
-    if (pokemon.cost < activeFilters.costRange[0] || pokemon.cost > activeFilters.costRange[1]) {
-      return false;
-    }
-
-    return true;
-  });
-
+async function applyFilters() {
+  // Use server-side filtering for better performance and accuracy
+  await loadAllPokemon(activeFilters);
   renderPokemonGrid();
 }
 
