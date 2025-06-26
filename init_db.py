@@ -2,13 +2,28 @@ import pandas as pd
 import sqlite3
 import os
 
-DB_PATH = 'pokemon.db'
+DB_NAME = 'pokemon.db'
+SCHEMA_FILE = './schema.sql'
+
+def create_database():
+    """Create the database and tables from schema"""
+    print(f"Connecting to database '{DB_NAME}'...")
+    conn = sqlite3.connect(DB_NAME)
+    try:
+        print("Creating tables...")
+        with open(SCHEMA_FILE, 'r', encoding='utf-8') as f:
+            schema_sql = f.read()
+        conn.executescript(schema_sql)
+        print("All tables created successfully.")
+    finally:
+        conn.close()
+        print("Database schema setup complete.")
 
 # --- Loader for Type.csv ---
 def load_types():
     CSV_PATH = os.path.join('CSV', 'Type.csv')
     df = pd.read_csv(CSV_PATH)
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(DB_NAME)
     cur = conn.cursor()
     inserted = 0
     for _, row in df.iterrows():
@@ -27,23 +42,10 @@ def load_types():
     print(f"Inserted {inserted} new types into the database.")
 
 # --- Loader for Pokemon.csv ---
-def calculate_cost(row):
-    total_stats = row['HP'] + row['Attack'] + row['Defense'] + row['Sp. Atk'] + row['Sp. Def'] + row['Speed']
-    if total_stats < 300:
-        return 1
-    elif total_stats < 400:
-        return 2
-    elif total_stats < 500:
-        return 3
-    elif total_stats < 600:
-        return 4
-    else:
-        return 5
-
 def load_pokemon():
     CSV_PATH = os.path.join('CSV', 'Pokemon_new.csv')
     df = pd.read_csv(CSV_PATH)
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(DB_NAME)
     cur = conn.cursor()
     inserted = 0
     for _, row in df.iterrows():
@@ -85,7 +87,7 @@ def load_pokemon():
 def load_moves():
     CSV_PATH = os.path.join('CSV', 'moves_cleaned.csv')
     df = pd.read_csv(CSV_PATH)
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(DB_NAME)
     cur = conn.cursor()
     inserted = 0
     for _, row in df.iterrows():
@@ -110,7 +112,7 @@ def load_moves():
 def load_pokemonhastype():
     CSV_PATH = os.path.join('CSV', 'PokemonHasType.csv')
     df = pd.read_csv(CSV_PATH)
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(DB_NAME)
     cur = conn.cursor()
     inserted = 0
     for _, row in df.iterrows():
@@ -132,7 +134,7 @@ def load_pokemonhastype():
 def load_typeeffectiveness():
     CSV_PATH = os.path.join('CSV', 'TypeEffectiveness.csv')
     df = pd.read_csv(CSV_PATH)
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(DB_NAME)
     cur = conn.cursor()
     inserted = 0
     for _, row in df.iterrows():
@@ -155,7 +157,7 @@ def load_typeeffectiveness():
 def load_pokemon_moves():
     CSV_PATH = os.path.join('CSV', 'pokemon_moves.csv')
     df = pd.read_csv(CSV_PATH, usecols=['pokemon_id', 'move_id'])
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(DB_NAME)
     cur = conn.cursor()
     inserted = 0
     for _, row in df.iterrows():
@@ -173,11 +175,10 @@ def load_pokemon_moves():
     conn.close()
     print(f"Inserted {inserted} new Pokémon-move relations into the database.")
 
-
-IMAGES_DIR = os.path.join('static', 'images')
-
 def insert_images():
-    conn = sqlite3.connect(DB_PATH)
+    """Insert Pokémon images from static/images folder"""
+    IMAGES_DIR = os.path.join('static', 'images')
+    conn = sqlite3.connect(DB_NAME)
     cur = conn.cursor()
     count = 0
     for filename in os.listdir(IMAGES_DIR):
@@ -199,15 +200,31 @@ def insert_images():
     conn.close()
     print(f"Inserted images for {count} Pokémon.")
 
-# --- Main function to run all loaders in order ---
 def main():
+    """Main function to initialize the complete database"""
+    print("=== Pokémon Database Initialization ===")
+    print()
+    
+    # Step 1: Create database schema
+    create_database()
+    print()
+    
+    # Step 2: Load all CSV data
+    print("Loading CSV data...")
     load_types()
     load_pokemon()
     load_moves()
     load_pokemonhastype()
     load_typeeffectiveness()
     load_pokemon_moves()
-    insert_images() 
+    print()
+    
+    # Step 3: Insert images
+    print("Loading images...")
+    insert_images()
+    print()
+    
+    print("=== Database initialization complete! ===")
 
 if __name__ == '__main__':
     main() 
