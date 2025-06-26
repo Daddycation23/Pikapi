@@ -1,4 +1,4 @@
-ID,Name,Total,HP,Attack,Defense,Sp. Atk,Sp. Def,Speed,Generation,height (cm),weight (kg)
+ID,Name,Total,HP,Attack,Defense,Sp. Atk,Sp. Def,Speed,Generation,height_cm,weight_kg
 1,Bulbasaur,318,45,49,49,65,65,45,1,70,6.9
 2,Ivysaur,405,60,62,63,80,80,60,1,100,13
 3,Venusaur,525,80,82,83,100,100,80,1,200,100
