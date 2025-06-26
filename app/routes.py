@@ -1,5 +1,5 @@
 from flask import render_template, request, jsonify, session, Response, abort, make_response, redirect, url_for
-from app.db import fetch_pokemon, fetch_pokemon_by_id, get_db_connection
+from app.db import fetch_pokemon, fetch_pokemon_by_id, get_db_connection, save_team as db_save_team, get_team as db_get_team
 #from app.mongo_client import get_player_profiles_collection, get_teams_collection
 import bcrypt
 from datetime import datetime
@@ -187,6 +187,7 @@ def register_routes(app):
 
         if not pokemon_ids or not isinstance(pokemon_ids, list):
             return jsonify({'error': 'Invalid team data'}), 400
+        # Validate Pokémon IDs
         conn = get_db_connection()
         cur = conn.cursor()
         q_marks = ','.join(['?']*len(pokemon_ids))
@@ -196,18 +197,8 @@ def register_routes(app):
         if set(pokemon_ids) != valid_ids:
             return jsonify({'error': 'Invalid Pokémon in team'}), 400
 
-        #teams = get_teams_collection()
-        teams.update_one(
-            {'player_id': user['_id']},
-            {'$set': {
-                'pokemon_ids': pokemon_ids,
-                'team_name': team_name,
-                'updated_at': datetime.utcnow()
-            }, '$setOnInsert': {
-                'created_at': datetime.utcnow()
-            }},
-            upsert=True
-        )
+        # Save team using SQLite
+        db_save_team(int(user['_id']), pokemon_ids, team_name)
         return jsonify({'success': True})
 
     @app.route('/api/team', methods=['GET'])
@@ -215,15 +206,9 @@ def register_routes(app):
         user = get_current_user()
         if not user:
             return jsonify({'team': []})
-        with get_db_connection() as conn:
-            cur = conn.cursor()
-            cur.execute("SELECT pokemon_ids FROM PlayerTeam WHERE player_id = ?", (user['_id'],))
-            row = cur.fetchone()
-            if not row or not row['pokemon_ids']:
-                return jsonify({'team': []})
-            team_ids = [int(pid) for pid in row['pokemon_ids'].split(',') if pid]
-            team = [fetch_pokemon_by_id(pid) for pid in team_ids]
-            return jsonify({'team': team})
+        pokemon_ids = db_get_team(int(user['_id']))
+        team = [fetch_pokemon_by_id(pid) for pid in pokemon_ids]
+        return jsonify({'team': team})
 
     @app.route('/api/me')
     def get_me():

@@ -168,3 +168,46 @@ def fetch_pokemon_by_id(pokemon_id):
     }
     conn.close()
     return result 
+
+def save_team(player_id, pokemon_ids, team_name='Team 1', budget=10):
+    """
+    Upsert a team for the player and update the Pokémon in the team.
+    """
+    conn = get_db_connection()
+    cur = conn.cursor()
+    # Check if team exists for player
+    cur.execute("SELECT team_id FROM Team WHERE player_id = ?", (player_id,))
+    row = cur.fetchone()
+    if row:
+        team_id = row['team_id']
+        # Update team name and updated_at (if you add updated_at column)
+        cur.execute("UPDATE Team SET budget = ? WHERE team_id = ?", (budget, team_id))
+    else:
+        cur.execute("INSERT INTO Team (budget, player_id) VALUES (?, ?)", (budget, player_id))
+        team_id = cur.lastrowid
+    # Remove old team Pokémon
+    cur.execute("DELETE FROM TeamPokemon WHERE team_id = ?", (team_id,))
+    # Insert new team Pokémon
+    for slot, pokemon_id in enumerate(pokemon_ids):
+        cur.execute("INSERT INTO TeamPokemon (team_id, pokemon_id, slot) VALUES (?, ?, ?)", (team_id, pokemon_id, slot))
+    conn.commit()
+    conn.close()
+    return True
+
+
+def get_team(player_id):
+    """
+    Get the player's team as a list of Pokémon IDs (ordered by slot).
+    """
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT team_id FROM Team WHERE player_id = ?", (player_id,))
+    row = cur.fetchone()
+    if not row:
+        conn.close()
+        return []
+    team_id = row['team_id']
+    cur.execute("SELECT pokemon_id FROM TeamPokemon WHERE team_id = ? ORDER BY slot", (team_id,))
+    pokemon_ids = [r['pokemon_id'] for r in cur.fetchall()]
+    conn.close()
+    return pokemon_ids 

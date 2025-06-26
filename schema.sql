@@ -60,3 +60,21 @@ CREATE TABLE IF NOT EXISTS Player (
   password_hash CHAR(60) NOT NULL,
   registration_date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE TABLE IF NOT EXISTS Team (
+    team_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    budget INTEGER NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    player_id INTEGER NOT NULL,
+    FOREIGN KEY (player_id) REFERENCES Player(player_id)
+);
+
+CREATE TABLE IF NOT EXISTS TeamPokemon (
+    team_id INTEGER NOT NULL,
+    pokemon_id INTEGER NOT NULL,
+    slot TINYINT NOT NULL,
+    PRIMARY KEY (team_id, pokemon_id),
+    FOREIGN KEY (team_id) REFERENCES Team(team_id),
+    FOREIGN KEY (pokemon_id) REFERENCES Pokemon(pokemon_id)
+);
+
