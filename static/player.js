@@ -1,6 +1,9 @@
 // Player page JavaScript - Team Building Interface
 const authSection = document.getElementById('auth-section');
 
+let teamsList = [];
+let currentTeamIndex = 0;
+
 // Update UI for logged-in user
 function updateAuthUI(username) {
   if (username) {
@@ -18,41 +21,46 @@ function updateAuthUI(username) {
   }
 }
 
-// Check session on load
-async function checkSessionAndInit() {
-  const res = await fetch('/api/me');
+// Fetch all teams for the user
+async function fetchTeams() {
+  const res = await fetch('/api/teams');
   const data = await res.json();
-  updateAuthUI(data.username);
-  loadTeam();
+  teamsList = data.teams || [];
+  // If less than 3 teams, create empty slots for UI
+  while (teamsList.length < 3) {
+    teamsList.push(null);
+  }
 }
 
-// Load team data
-async function loadTeam() {
-  try {
-    const res = await fetch('/api/team');
-    const data = await res.json();
-    const team = data.team || [];
-    const slots = document.querySelectorAll('.team-grid .pokemon-slot');
-    
-    for (let i = 0; i < 3; i++) {
-      const poke = team[i];
-      if (poke && slots[i]) {
-        slots[i].innerHTML = `
-          <div class="pokemon-image" style="background-image:url('/api/pokemon_image/${poke.id}');background-size:contain;background-repeat:no-repeat;background-position:center;"></div>
-          <div class="pokemon-name">${poke.name}</div>
-          <div class="pokemon-cost">Cost: ${poke.cost}</div>
-          <div class="pokemon-types">${(poke.type||[]).map(t => `<span class="type-badge type-${t.toLowerCase()}">${t}</span>`).join(' ')}</div>
-        `;
-      } else if (slots[i]) {
-        slots[i].innerHTML = `<div class='pokemon-image'></div><p>Add Pokemon</p>`;
-      }
+// Load team data for a given tab index
+async function loadTeam(index = 0) {
+  currentTeamIndex = index;
+  let teamId = teamsList[index] && teamsList[index].team_id;
+  let team = [];
+  if (teamId) {
+    try {
+      const res = await fetch(`/api/team?team_id=${teamId}`);
+      const data = await res.json();
+      team = data.team || [];
+    } catch (error) {
+      console.error('Error loading team:', error);
     }
-    
-    // Update team cost bar
-    updateCostTracker(team);
-  } catch (error) {
-    console.error('Error loading team:', error);
   }
+  const slots = document.querySelectorAll('.team-grid .pokemon-slot');
+  for (let i = 0; i < 3; i++) {
+    const poke = team[i];
+    if (poke && slots[i]) {
+      slots[i].innerHTML = `
+        <div class="pokemon-image" style="background-image:url('/api/pokemon_image/${poke.id}');background-size:contain;background-repeat:no-repeat;background-position:center;"></div>
+        <div class="pokemon-name">${poke.name}</div>
+        <div class="pokemon-cost">Cost: ${poke.cost}</div>
+        <div class="pokemon-types">${(poke.type||[]).map(t => `<span class="type-badge type-${t.toLowerCase()}">${t}</span>`).join(' ')}</div>
+      `;
+    } else if (slots[i]) {
+      slots[i].innerHTML = `<div class='pokemon-image'></div><p>Add Pokemon</p>`;
+    }
+  }
+  updateCostTracker(team);
 }
 
 // Update cost tracker
@@ -75,14 +83,9 @@ function setupTeamTabs() {
   const teamTabs = document.querySelectorAll('.team-tab');
   teamTabs.forEach((tab, index) => {
     tab.addEventListener('click', () => {
-      // Remove active class from all tabs
       teamTabs.forEach(t => t.classList.remove('active'));
-      // Add active class to clicked tab
       tab.classList.add('active');
-      // Load team for this tab (for now just Team 1)
-      if (index === 0) {
-        loadTeam();
-      }
+      loadTeam(index);
     });
   });
 }
@@ -91,9 +94,24 @@ function setupTeamTabs() {
 function setupEditTeamButtons() {
   document.querySelectorAll('.edit-team-btn').forEach(btn => {
     btn.addEventListener('click', function() {
-      window.location.href = '/edit_team';
+      // Pass team_id as query param to edit_team if available
+      let teamId = teamsList[currentTeamIndex] && teamsList[currentTeamIndex].team_id;
+      if (teamId) {
+        window.location.href = `/edit_team?team_id=${teamId}`;
+      } else {
+        window.location.href = '/edit_team';
+      }
     });
   });
+}
+
+// Check session on load
+async function checkSessionAndInit() {
+  const res = await fetch('/api/me');
+  const data = await res.json();
+  updateAuthUI(data.username);
+  await fetchTeams();
+  loadTeam(0);
 }
 
 // Initialize page

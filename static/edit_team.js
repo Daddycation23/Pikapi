@@ -5,11 +5,26 @@ let selectedTeamIdx = null;
 let selectedPokeIdx = null;
 let selectedPokemon = null;
 let maxCost = 10;
+let teamId = null;
+
+// Parse team_id from URL
+function getTeamIdFromUrl() {
+  const params = new URLSearchParams(window.location.search);
+  return params.get('team_id');
+}
 
 // Fetch team and pokedex data from backend
 async function fetchData() {
-  // Team data is passed from Flask as a Jinja variable
-  team = window.team || [];
+  teamId = getTeamIdFromUrl();
+  if (teamId) {
+    // Fetch team from backend
+    const res = await fetch(`/api/team?team_id=${teamId}`);
+    const data = await res.json();
+    team = data.team || [];
+  } else {
+    // Team data is passed from Flask as a Jinja variable
+    team = window.team || [];
+  }
   // Pad team to length 3 with nulls
   while (team.length < 3) team.push(null);
   team = team.slice(0, 3);
@@ -826,15 +841,14 @@ async function saveTeam() {
   try {
     const validTeam = team.filter(p => p !== null);
     const pokemonIds = validTeam.map(p => p.id);
-    
+    const payload = { pokemon_ids: pokemonIds };
+    if (teamId) payload.team_id = parseInt(teamId);
     const res = await fetch('/api/team/save', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ pokemon_ids: pokemonIds })
+      body: JSON.stringify(payload)
     });
-    
     const result = await res.json();
-    
     if (result.success) {
       alert('Team saved successfully!');
     } else {

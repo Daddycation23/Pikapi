@@ -211,3 +211,50 @@ def get_team(player_id):
     pokemon_ids = [r['pokemon_id'] for r in cur.fetchall()]
     conn.close()
     return pokemon_ids 
+
+def list_teams(player_id):
+    """
+    List all teams for a player, returning [{'team_id': ..., 'team_name': ..., 'created_at': ...}, ...]
+    """
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT team_id, created_at FROM Team WHERE player_id = ? ORDER BY team_id", (player_id,))
+    teams = [{'team_id': row['team_id'], 'team_name': f'Team {i+1}', 'created_at': row['created_at']} for i, row in enumerate(cur.fetchall())]
+    conn.close()
+    return teams
+
+def get_team_by_id(team_id):
+    """
+    Get the team as a list of Pokémon IDs (ordered by slot) for a given team_id.
+    """
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT pokemon_id FROM TeamPokemon WHERE team_id = ? ORDER BY slot", (team_id,))
+    pokemon_ids = [r['pokemon_id'] for r in cur.fetchall()]
+    conn.close()
+    return pokemon_ids
+
+def save_team_by_id(team_id, pokemon_ids):
+    """
+    Update the Pokémon in the team for a given team_id.
+    """
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("DELETE FROM TeamPokemon WHERE team_id = ?", (team_id,))
+    for slot, pokemon_id in enumerate(pokemon_ids):
+        cur.execute("INSERT INTO TeamPokemon (team_id, pokemon_id, slot) VALUES (?, ?, ?)", (team_id, pokemon_id, slot))
+    conn.commit()
+    conn.close()
+    return True
+
+def create_team(player_id, budget=10):
+    """
+    Create a new team for the player and return its team_id.
+    """
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("INSERT INTO Team (budget, player_id) VALUES (?, ?)", (budget, player_id))
+    team_id = cur.lastrowid
+    conn.commit()
+    conn.close()
+    return team_id 

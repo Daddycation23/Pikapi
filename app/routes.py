@@ -1,5 +1,5 @@
 from flask import render_template, request, jsonify, session, Response, abort, make_response, redirect, url_for
-from app.db import fetch_pokemon, fetch_pokemon_by_id, get_db_connection, save_team as db_save_team, get_team as db_get_team
+from app.db import fetch_pokemon, fetch_pokemon_by_id, get_db_connection, save_team as db_save_team, get_team as db_get_team, list_teams, get_team_by_id, save_team_by_id, create_team
 #from app.mongo_client import get_player_profiles_collection, get_teams_collection
 import bcrypt
 from datetime import datetime
@@ -175,16 +175,37 @@ def register_routes(app):
             return None
         return {'_id': user_id, 'username': username}
 
+    @app.route('/api/teams', methods=['GET'])
+    def api_list_teams():
+        user = get_current_user()
+        if not user:
+            return jsonify({'teams': []})
+        teams = list_teams(int(user['_id']))
+        return jsonify({'teams': teams})
+
+    @app.route('/api/team', methods=['GET'])
+    def get_team():
+        user = get_current_user()
+        if not user:
+            return jsonify({'team': []})
+        team_id = request.args.get('team_id', type=int)
+        if team_id is None:
+            teams = list_teams(int(user['_id']))
+            if not teams:
+                return jsonify({'team': []})
+            team_id = teams[0]['team_id']
+        pokemon_ids = get_team_by_id(team_id)
+        team = [fetch_pokemon_by_id(pid) for pid in pokemon_ids]
+        return jsonify({'team': team})
+
     @app.route('/api/team/save', methods=['POST'])
     def save_team():
         user = get_current_user()
         if not user:
             return jsonify({'error': 'Not logged in'}), 401
-
         data = request.json
         pokemon_ids = data.get('pokemon_ids', [])
-        team_name = data.get('team_name', 'Team 1')
-
+        team_id = data.get('team_id', None)
         if not pokemon_ids or not isinstance(pokemon_ids, list):
             return jsonify({'error': 'Invalid team data'}), 400
         # Validate Pokémon IDs
@@ -196,19 +217,11 @@ def register_routes(app):
         conn.close()
         if set(pokemon_ids) != valid_ids:
             return jsonify({'error': 'Invalid Pokémon in team'}), 400
-
-        # Save team using SQLite
-        db_save_team(int(user['_id']), pokemon_ids, team_name)
-        return jsonify({'success': True})
-
-    @app.route('/api/team', methods=['GET'])
-    def get_team():
-        user = get_current_user()
-        if not user:
-            return jsonify({'team': []})
-        pokemon_ids = db_get_team(int(user['_id']))
-        team = [fetch_pokemon_by_id(pid) for pid in pokemon_ids]
-        return jsonify({'team': team})
+        if team_id is None:
+            # Create a new team if not provided (should not happen in normal UI)
+            team_id = create_team(int(user['_id']))
+        save_team_by_id(team_id, pokemon_ids)
+        return jsonify({'success': True, 'team_id': team_id})
 
     @app.route('/api/me')
     def get_me():
