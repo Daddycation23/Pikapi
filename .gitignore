@@ -1,12 +1,8 @@
 # Ignore python environment
 venv/
-<<<<<<< HEAD
 pokemon.db
 *.venv*
-=======
-.venv/
 *.pyc
 __pycache__/
 pokemon.db
 flask_session/
->>>>>>> 8b062fe21229fbe789b1386957ae2ef8613e9eb9
