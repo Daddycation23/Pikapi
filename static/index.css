@@ -36,6 +36,7 @@ body {
     border-radius: var(--border-radius-lg);
     box-shadow: var(--shadow-medium);
     margin-bottom: 30px;
+    background: rgba(255, 255, 255, 0.7);
 }
 .pokedex-section h2 {
     color: var(--text-primary);
@@ -153,6 +154,7 @@ body {
     text-align: center;
     cursor: pointer;
     transition: transform 0.2s;
+    opacity: 1!important;
 }
 .pokemon-card:hover {
     transform: translateY(-5px);
@@ -375,7 +377,7 @@ body {
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(0,0,0,0.15);
     border-color: #4CAF50;
-}
+}   
 
 .pokedex-section .pokemon-card-image {
     margin-bottom: 8px;
@@ -468,6 +470,21 @@ body {
 
 .battle-icon {
     font-size: 16px;
+}   
+
+body.index-pokemon-bg {
+    background: url('https://wallpaperaccess.com/full/487227.jpg') center/cover fixed no-repeat;
+}
+
+body.index-pokemon-bg::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.5);
+    z-index: -1;
 }
 
 

@@ -1,12 +1,26 @@
 /* Page-specific styles for edit_team.html - body uses common.css */
+body.edit-team-pokemon-bg {
+    /* background: url('https://wallpaperaccess.com/full/487276.jpg') center/cover fixed no-repeat; */
+    background: url('https://wallpaperaccess.com/full/21000.jpg') center/cover fixed no-repeat;
+}
+
+body.edit-team-pokemon-bg::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.3);
+    z-index: -1;
+}
+
 .edit-team-container {
     display: flex;
     height: 100vh;
 }
+
 /* Left: Current Team */
 .team-column {
     width: 18%;
-    background: #fff;
+    background: rgba(255, 255, 255);
     border-right: 1px solid #e0e0e0;
     display: flex;
     flex-direction: column;
@@ -16,7 +30,7 @@
 .team-pokemon-slot {
     width: 90px;
     height: 90px;
-    background: #e9ecef;
+    background: #e1e5e2;
     border-radius: 16px;
     margin-bottom: 30px;
     display: flex;
@@ -37,7 +51,7 @@
 /* Middle: Selection Panel */
 .selection-column {
     width: 34%;
-    background: #f8f9fa;
+    background: rgba(255, 255, 255, 0.85);
     border-right: 1px solid #e0e0e0;
     padding: 30px 20px;
     display: flex;
@@ -88,7 +102,7 @@
 /* Right: Details Panel */
 .details-column {
     width: 48%;
-    background: #fff;
+    background: rgba(255, 255, 255, 0.85);
     position: relative;
     display: flex;
 }

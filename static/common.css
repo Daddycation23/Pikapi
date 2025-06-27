@@ -570,4 +570,68 @@ body {
 .gap-5 { gap: 5px; }
 .gap-10 { gap: 10px; }
 .gap-15 { gap: 15px; }
-.gap-20 { gap: 20px; } 
+.gap-20 { gap: 20px; }
+
+/* ---------------------------------
+   Auth Modal (Login & Register)
+   --------------------------------- */
+.auth-modal-content {
+    padding: 40px 30px;
+    max-width: 420px;
+    width: 90%;
+    margin: 8% auto;
+    border-radius: var(--border-radius-xl);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+    animation: authModalPop var(--transition-medium) ease-out;
+}
+
+@keyframes authModalPop {
+    from { transform: translateY(-20px) scale(0.95); opacity: 0; }
+    to   { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+.auth-modal-content h2 {
+    margin: 0 0 25px 0;
+    font-size: 1.8em;
+    font-weight: 700;
+    text-align: center;
+    color: var(--text-primary);
+}
+
+/* Form layout */
+.auth-form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.auth-form input {
+    width: 100%;
+    padding: 12px 16px;
+    border: 1.5px solid var(--border-color);
+    border-radius: var(--border-radius-md);
+    font-size: 15px;
+    transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+    box-sizing: border-box;
+}
+
+.auth-form input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.15);
+}
+
+/* Submit button inside auth form */
+.auth-form .auth-button {
+    width: 100%;
+    padding: 12px 20px;
+    font-size: 16px;
+}
+
+/* Error / success message */
+.auth-error {
+    margin-top: 5px;
+    font-size: 14px;
+    color: var(--danger-color);
+    text-align: center;
+} 
