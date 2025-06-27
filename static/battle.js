@@ -1,9 +1,5 @@
-// Battle System JavaScript - Simplified Version
-let playerPokemon = null;
-let enemyPokemon = null;
-let playerTeam = [];
-let currentPlayerIndex = 0;
-let battleState = 'menu';
+// Battle System JavaScript - Flask-based Version
+let battleState = null;
 
 // Initialize when page loads
 document.addEventListener('DOMContentLoaded', () => {
@@ -12,41 +8,54 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function initializeBattle() {
-    // Use fallback Pokemon
-    const randomPokemon = [
-        { id: 25, name: 'Pikachu', hp: 100, maxHp: 100, level: 50, moves: ['Thunderbolt', 'Quick Attack', 'Thunder Wave', 'Iron Tail'] },
-        { id: 6, name: 'Charizard', hp: 120, maxHp: 120, level: 50, moves: ['Flamethrower', 'Air Slash', 'Dragon Claw', 'Earthquake'] },
-        { id: 9, name: 'Blastoise', hp: 110, maxHp: 110, level: 50, moves: ['Hydro Pump', 'Ice Beam', 'Skull Bash', 'Flash Cannon'] },
-        { id: 3, name: 'Venusaur', hp: 115, maxHp: 115, level: 50, moves: ['Solar Beam', 'Sludge Bomb', 'Sleep Powder', 'Earthquake'] }
-    ];
-
-    playerPokemon = { ...randomPokemon[Math.floor(Math.random() * randomPokemon.length)] };
-    enemyPokemon = { ...randomPokemon[Math.floor(Math.random() * randomPokemon.length)] };
-    playerTeam = [playerPokemon, ...randomPokemon.slice(0, 3)];
-    
-    updateBattleDisplay();
-    addLogMessage(`A wild ${enemyPokemon.name} appeared!`);
+    // Start a new battle with the server
+    fetch('/api/battle/start', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) {
+            console.error('Battle start error:', data.error);
+            return;
+        }
+        
+        battleState = data;
+        updateBattleDisplay();
+        updateBattleLog();
+    })
+    .catch(error => {
+        console.error('Error starting battle:', error);
+    });
 }
 
 function updateBattleDisplay() {
+    if (!battleState) return;
+    
     // Update player Pokemon display
-    document.getElementById('player-name').textContent = playerPokemon.name;
-    document.getElementById('player-level').textContent = `Lv. ${playerPokemon.level}`;
-    document.getElementById('player-sprite').src = `/api/pokemon_image/${playerPokemon.id}`;
-    updateHealthBar('player', playerPokemon.hp, playerPokemon.maxHp);
+    const player = battleState.player_pokemon;
+    document.getElementById('player-name').textContent = player.name;
+    document.getElementById('player-level').textContent = `Lv. ${player.level || 50}`;
+    document.getElementById('player-sprite').src = `/api/pokemon_image/${player.id}`;
+    updateHealthBar('player', player.hp, player.hp);
 
     // Update enemy Pokemon display
-    document.getElementById('enemy-name').textContent = enemyPokemon.name;
-    document.getElementById('enemy-level').textContent = `Lv. ${enemyPokemon.level}`;
-    document.getElementById('enemy-sprite').src = `/api/pokemon_image/${enemyPokemon.id}`;
-    updateHealthBar('enemy', enemyPokemon.hp, enemyPokemon.maxHp);
+    const enemy = battleState.enemy_pokemon;
+    document.getElementById('enemy-name').textContent = enemy.name;
+    document.getElementById('enemy-level').textContent = `Lv. ${enemy.level || 50}`;
+    document.getElementById('enemy-sprite').src = `/api/pokemon_image/${enemy.id}`;
+    updateHealthBar('enemy', enemy.hp, enemy.hp);
 
     // Update move buttons
     updateMoveButtons();
 }
 
 function updateMoveButtons() {
-    const moves = playerPokemon.moves || ['Tackle', 'Growl', 'Scratch', 'Leer'];
+    if (!battleState || !battleState.player_pokemon) return;
+    
+    const moves = battleState.player_pokemon.moves || ['Tackle', 'Growl', 'Scratch', 'Leer'];
     for (let i = 0; i < 4; i++) {
         const moveBtn = document.getElementById(`move-${i + 1}`);
         if (moveBtn) {
@@ -74,6 +83,23 @@ function updateHealthBar(target, currentHp, maxHp) {
             healthFill.style.background = 'linear-gradient(90deg, #ff4444, #ff6666)';
         }
     }
+}
+
+function updateBattleLog() {
+    if (!battleState || !battleState.battle_log) return;
+    
+    const battleLog = document.getElementById('battle-log');
+    battleLog.innerHTML = '';
+    
+    battleState.battle_log.forEach(message => {
+        const logMessage = document.createElement('div');
+        logMessage.className = 'log-message';
+        logMessage.textContent = message;
+        battleLog.appendChild(logMessage);
+    });
+    
+    // Auto-scroll to bottom
+    battleLog.scrollTop = battleLog.scrollHeight;
 }
 
 function setupEventListeners() {
@@ -121,14 +147,12 @@ function setupEventListeners() {
 }
 
 function showMainMenu() {
-    battleState = 'menu';
     document.getElementById('battle-menu').style.display = 'block';
     document.getElementById('move-selection').style.display = 'none';
     document.getElementById('pokemon-selection').style.display = 'none';
 }
 
 function showMoveSelection() {
-    battleState = 'move-selection';
     document.getElementById('battle-menu').style.display = 'none';
     document.getElementById('move-selection').style.display = 'block';
     document.getElementById('pokemon-selection').style.display = 'none';
@@ -152,27 +176,28 @@ function showMoveSelection() {
 }
 
 function showPokemonSelection() {
-    battleState = 'pokemon-selection';
     document.getElementById('battle-menu').style.display = 'none';
     document.getElementById('pokemon-selection').style.display = 'block';
     populatePokemonList();
 }
 
 function populatePokemonList() {
+    if (!battleState || !battleState.player_team) return;
+    
     const pokemonList = document.getElementById('pokemon-list');
     pokemonList.innerHTML = '';
 
-    playerTeam.forEach((pokemon, index) => {
+    battleState.player_team.forEach((pokemon, index) => {
         const pokemonItem = document.createElement('div');
         pokemonItem.className = 'pokemon-item';
         pokemonItem.innerHTML = `
             <img src="/api/pokemon_image/${pokemon.id}" alt="${pokemon.name}" onerror="this.src='/static/images/placeholder.png'">
             <div class="name">${pokemon.name}</div>
-            <div class="health">${pokemon.hp}/${pokemon.maxHp}</div>
+            <div class="health">${pokemon.hp}/${pokemon.hp}</div>
         `;
         
         if (pokemon.hp > 0) {
-            if (index === currentPlayerIndex) {
+            if (index === battleState.current_player_index) {
                 pokemonItem.style.opacity = '0.5';
                 pokemonItem.style.cursor = 'not-allowed';
                 pokemonItem.innerHTML += '<div style="color: #666; font-size: 12px;">Current</div>';
@@ -193,119 +218,86 @@ function populatePokemonList() {
 }
 
 function useMove(moveIndex) {
-    const moves = playerPokemon.moves || ['Tackle', 'Growl', 'Scratch', 'Leer'];
-    const selectedMove = moves[moveIndex];
-    
-    if (!selectedMove) {
-        return;
-    }
-    
-    addLogMessage(`${playerPokemon.name} used ${selectedMove}!`);
-    attack(selectedMove);
-}
-
-function attack(selectedMove = null) {
-    // Player attacks
-    const moves = playerPokemon.moves || ['Tackle', 'Growl', 'Scratch', 'Leer'];
-    const playerMove = selectedMove || moves[Math.floor(Math.random() * moves.length)];
-    
-    const playerDamage = Math.floor(Math.random() * 20) + 10;
-    enemyPokemon.hp = Math.max(0, enemyPokemon.hp - playerDamage);
-    updateHealthBar('enemy', enemyPokemon.hp, enemyPokemon.maxHp);
-    addLogMessage(`${playerPokemon.name} used ${playerMove}!`);
-    addLogMessage(`It dealt ${playerDamage} damage!`);
-
-    // Check if enemy fainted
-    if (enemyPokemon.hp <= 0) {
-        addLogMessage(`${enemyPokemon.name} fainted!`);
-        addLogMessage('You won the battle!');
-        setTimeout(() => {
-            if (confirm('Battle won! Start a new battle?')) {
-                startNewBattle();
-            }
-        }, 2000);
-        return;
-    }
-
-    // Enemy attacks
-    setTimeout(() => {
-        const enemyMoves = enemyPokemon.moves || ['Tackle', 'Growl', 'Scratch', 'Leer'];
-        const enemyMove = enemyMoves[Math.floor(Math.random() * enemyMoves.length)];
-        const enemyDamage = Math.floor(Math.random() * 20) + 10;
-        playerPokemon.hp = Math.max(0, playerPokemon.hp - enemyDamage);
-        updateHealthBar('player', playerPokemon.hp, playerPokemon.maxHp);
-        addLogMessage(`${enemyPokemon.name} used ${enemyMove}!`);
-        addLogMessage(`It dealt ${enemyDamage} damage!`);
-
-        // Check if player fainted
-        if (playerPokemon.hp <= 0) {
-            addLogMessage(`${playerPokemon.name} fainted!`);
-            addLogMessage('You lost the battle!');
-            setTimeout(() => {
-                if (confirm('Battle lost! Start a new battle?')) {
-                    startNewBattle();
-                }
-            }, 2000);
+    fetch('/api/battle/use-move', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            move_index: moveIndex
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) {
+            console.error('Move error:', data.error);
             return;
         }
-
-        // Return to menu for next turn
-        showMainMenu();
-    }, 1000);
+        
+        battleState = data;
+        updateBattleDisplay();
+        updateBattleLog();
+        
+        if (data.battle_ended) {
+            handleBattleEnd(data.winner);
+        } else {
+            showMainMenu();
+        }
+    })
+    .catch(error => {
+        console.error('Error using move:', error);
+    });
 }
 
-function switchPokemon(index) {
-    if (index === currentPlayerIndex || playerTeam[index].hp <= 0) return;
-    
-    currentPlayerIndex = index;
-    playerPokemon = playerTeam[index];
-    updateBattleDisplay();
-    addLogMessage(`Go! ${playerPokemon.name}!`);
-    
-    showMainMenu();
-    
-    // Enemy gets a free turn
-    setTimeout(() => enemyTurn(), 1000);
+function switchPokemon(pokemonIndex) {
+    fetch('/api/battle/switch-pokemon', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            pokemon_index: pokemonIndex
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) {
+            console.error('Switch error:', data.error);
+            return;
+        }
+        
+        battleState = data;
+        updateBattleDisplay();
+        updateBattleLog();
+        
+        if (data.battle_ended) {
+            handleBattleEnd(data.winner);
+        } else {
+            showMainMenu();
+        }
+    })
+    .catch(error => {
+        console.error('Error switching Pokemon:', error);
+    });
 }
 
-function enemyTurn() {
-    const enemyMoves = enemyPokemon.moves || ['Tackle', 'Growl', 'Scratch', 'Leer'];
-    const enemyMove = enemyMoves[Math.floor(Math.random() * enemyMoves.length)];
-    const enemyDamage = Math.floor(Math.random() * 20) + 10;
-    playerPokemon.hp = Math.max(0, playerPokemon.hp - enemyDamage);
-    updateHealthBar('player', playerPokemon.hp, playerPokemon.maxHp);
-    addLogMessage(`${enemyPokemon.name} used ${enemyMove}!`);
-
-    // Check if player fainted
-    if (playerPokemon.hp <= 0) {
-        addLogMessage(`${playerPokemon.name} fainted!`);
-        addLogMessage('You lost the battle!');
-        setTimeout(() => {
-            if (confirm('Battle lost! Start a new battle?')) {
-                startNewBattle();
-            }
-        }, 2000);
-        return;
-    }
-}
-
-function startNewBattle() {
-    location.reload();
-}
-
-function addLogMessage(message) {
-    const battleLog = document.getElementById('battle-log');
-    const logMessage = document.createElement('div');
-    logMessage.className = 'log-message';
-    logMessage.textContent = message;
-    
-    battleLog.appendChild(logMessage);
-    
-    // Remove old messages if too many
-    while (battleLog.children.length > 3) {
-        battleLog.removeChild(battleLog.firstChild);
-    }
-    
-    // Auto-scroll to bottom
-    battleLog.scrollTop = battleLog.scrollHeight;
+function handleBattleEnd(winner) {
+    setTimeout(() => {
+        const message = winner === 'player' ? 'Battle won! Start a new battle?' : 'Battle lost! Start a new battle?';
+        if (confirm(message)) {
+            // End current battle and start new one
+            fetch('/api/battle/end', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(() => {
+                initializeBattle();
+            })
+            .catch(error => {
+                console.error('Error ending battle:', error);
+            });
+        }
+    }, 2000);
 } 

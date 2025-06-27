@@ -249,7 +249,210 @@ def register_routes(app):
 
     @app.route('/battle')
     def battle():
+        user = get_current_user()
+        if not user:
+            return redirect(url_for('home'))
         return render_template('battle.html')
+
+    @app.route('/api/battle/start', methods=['POST'])
+    def start_battle():
+        user = get_current_user()
+        if not user:
+            return jsonify({'error': 'Not authenticated'}), 401
+        
+        # Get user's team
+        team_ids = get_team_by_id(1)  # Default team for now
+        if not team_ids:
+            # Create a default team if user doesn't have one
+            default_pokemon_ids = [25, 6, 9]  # Pikachu, Charizard, Blastoise
+            player_team = [fetch_pokemon_by_id(pid) for pid in default_pokemon_ids]
+        else:
+            player_team = [fetch_pokemon_by_id(pid) for pid in team_ids]
+        
+        if not player_team:
+            return jsonify({'error': 'Invalid team'}), 400
+        
+        # Generate random enemy Pokemon
+        enemy_pokemon = fetch_pokemon_by_id(random.randint(1, 151))  # Gen 1 Pokemon
+        
+        # Initialize battle state with proper field names
+        battle_state = {
+            'player_team': player_team,
+            'enemy_pokemon': enemy_pokemon,
+            'current_player_index': 0,
+            'player_pokemon': player_team[0],
+            'turn': 1,
+            'battle_log': [f"A wild {enemy_pokemon['name']} appeared!"]
+        }
+        
+        session['battle_state'] = battle_state
+        return jsonify({
+            'player_pokemon': battle_state['player_pokemon'],
+            'enemy_pokemon': battle_state['enemy_pokemon'],
+            'player_team': battle_state['player_team'],
+            'current_player_index': battle_state['current_player_index'],
+            'battle_log': battle_state['battle_log']
+        })
+
+    @app.route('/api/battle/use-move', methods=['POST'])
+    def use_move():
+        user = get_current_user()
+        if not user:
+            return jsonify({'error': 'Not authenticated'}), 401
+        
+        battle_state = session.get('battle_state')
+        if not battle_state:
+            return jsonify({'error': 'No active battle'}), 400
+        
+        data = request.json
+        move_index = data.get('move_index', 0)
+        
+        player_pokemon = battle_state['player_pokemon']
+        enemy_pokemon = battle_state['enemy_pokemon']
+        
+        # Get move name from database moves
+        moves = player_pokemon.get('moves', ['Tackle', 'Growl', 'Scratch', 'Leer'])
+        if move_index >= len(moves):
+            return jsonify({'error': 'Invalid move'}), 400
+        
+        selected_move = moves[move_index]
+        
+        # Calculate damage based on Pokemon stats
+        player_damage = calculate_damage(player_pokemon, enemy_pokemon, selected_move)
+        enemy_pokemon['hp'] = max(0, enemy_pokemon['hp'] - player_damage)
+        
+        battle_state['battle_log'].append(f"{player_pokemon['name']} used {selected_move}!")
+        battle_state['battle_log'].append(f"It dealt {player_damage} damage!")
+        
+        # Check if enemy fainted
+        if enemy_pokemon['hp'] <= 0:
+            battle_state['battle_log'].append(f"{enemy_pokemon['name']} fainted!")
+            battle_state['battle_log'].append("You won the battle!")
+            session['battle_state'] = battle_state
+            return jsonify({
+                'enemy_pokemon': enemy_pokemon,
+                'battle_log': battle_state['battle_log'],
+                'battle_ended': True,
+                'winner': 'player'
+            })
+        
+        # Enemy turn
+        enemy_moves = enemy_pokemon.get('moves', ['Tackle', 'Growl', 'Scratch', 'Leer'])
+        enemy_move = random.choice(enemy_moves)
+        enemy_damage = calculate_damage(enemy_pokemon, player_pokemon, enemy_move)
+        player_pokemon['hp'] = max(0, player_pokemon['hp'] - enemy_damage)
+        
+        battle_state['battle_log'].append(f"{enemy_pokemon['name']} used {enemy_move}!")
+        battle_state['battle_log'].append(f"It dealt {enemy_damage} damage!")
+        
+        # Check if player fainted
+        if player_pokemon['hp'] <= 0:
+            battle_state['battle_log'].append(f"{player_pokemon['name']} fainted!")
+            battle_state['battle_log'].append("You lost the battle!")
+            session['battle_state'] = battle_state
+            return jsonify({
+                'player_pokemon': player_pokemon,
+                'battle_log': battle_state['battle_log'],
+                'battle_ended': True,
+                'winner': 'enemy'
+            })
+        
+        battle_state['turn'] += 1
+        session['battle_state'] = battle_state
+        
+        return jsonify({
+            'player_pokemon': player_pokemon,
+            'enemy_pokemon': enemy_pokemon,
+            'battle_log': battle_state['battle_log'],
+            'battle_ended': False
+        })
+
+    @app.route('/api/battle/switch-pokemon', methods=['POST'])
+    def switch_pokemon():
+        user = get_current_user()
+        if not user:
+            return jsonify({'error': 'Not authenticated'}), 401
+        
+        battle_state = session.get('battle_state')
+        if not battle_state:
+            return jsonify({'error': 'No active battle'}), 400
+        
+        data = request.json
+        pokemon_index = data.get('pokemon_index', 0)
+        
+        if pokemon_index >= len(battle_state['player_team']):
+            return jsonify({'error': 'Invalid Pokemon index'}), 400
+        
+        new_pokemon = battle_state['player_team'][pokemon_index]
+        if new_pokemon['hp'] <= 0:
+            return jsonify({'error': 'Pokemon is fainted'}), 400
+        
+        if pokemon_index == battle_state['current_player_index']:
+            return jsonify({'error': 'Pokemon is already active'}), 400
+        
+        # Switch Pokemon
+        battle_state['current_player_index'] = pokemon_index
+        battle_state['player_pokemon'] = new_pokemon
+        battle_state['battle_log'].append(f"Go! {new_pokemon['name']}!")
+        
+        # Enemy gets a free turn
+        enemy_pokemon = battle_state['enemy_pokemon']
+        enemy_moves = enemy_pokemon.get('moves', ['Tackle', 'Growl', 'Scratch', 'Leer'])
+        enemy_move = random.choice(enemy_moves)
+        enemy_damage = calculate_damage(enemy_pokemon, new_pokemon, enemy_move)
+        new_pokemon['hp'] = max(0, new_pokemon['hp'] - enemy_damage)
+        
+        battle_state['battle_log'].append(f"{enemy_pokemon['name']} used {enemy_move}!")
+        battle_state['battle_log'].append(f"It dealt {enemy_damage} damage!")
+        
+        # Check if player fainted after switch
+        if new_pokemon['hp'] <= 0:
+            battle_state['battle_log'].append(f"{new_pokemon['name']} fainted!")
+            battle_state['battle_log'].append("You lost the battle!")
+            session['battle_state'] = battle_state
+            return jsonify({
+                'player_pokemon': new_pokemon,
+                'battle_log': battle_state['battle_log'],
+                'battle_ended': True,
+                'winner': 'enemy'
+            })
+        
+        session['battle_state'] = battle_state
+        
+        return jsonify({
+            'player_pokemon': new_pokemon,
+            'enemy_pokemon': enemy_pokemon,
+            'battle_log': battle_state['battle_log'],
+            'battle_ended': False
+        })
+
+    @app.route('/api/battle/state')
+    def get_battle_state():
+        user = get_current_user()
+        if not user:
+            return jsonify({'error': 'Not authenticated'}), 401
+        
+        battle_state = session.get('battle_state')
+        if not battle_state:
+            return jsonify({'error': 'No active battle'}), 400
+        
+        return jsonify({
+            'player_pokemon': battle_state['player_pokemon'],
+            'enemy_pokemon': battle_state['enemy_pokemon'],
+            'player_team': battle_state['player_team'],
+            'current_player_index': battle_state['current_player_index'],
+            'battle_log': battle_state['battle_log'],
+            'turn': battle_state['turn']
+        })
+
+    @app.route('/api/battle/end', methods=['POST'])
+    def end_battle():
+        user = get_current_user()
+        if not user:
+            return jsonify({'error': 'Not authenticated'}), 401
+        
+        session.pop('battle_state', None)
+        return jsonify({'success': True})
 
     @app.route('/api/battle/random-pokemon')
     def get_random_pokemon():
@@ -358,3 +561,15 @@ def register_routes(app):
             
         except Exception as e:
             return jsonify({'success': False, 'error': str(e)})
+
+def calculate_damage(attacker, defender, move_name):
+    """Calculate damage based on Pokemon stats and move type"""
+    # Base damage calculation (simplified)
+    base_damage = random.randint(10, 30)
+    
+    # Add attack stat influence
+    attack_bonus = attacker.get('attack', 50) // 10
+    defense_reduction = defender.get('defense', 50) // 20
+    
+    final_damage = max(1, base_damage + attack_bonus - defense_reduction)
+    return final_damage
