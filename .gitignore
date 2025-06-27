@@ -3,6 +3,6 @@ venv/
 pokemon.db
 *.venv*
 *.pyc
-__pycache__/
+*__pycache__/
 pokemon.db
 flask_session/

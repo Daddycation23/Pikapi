@@ -27,6 +27,7 @@ body {
 .auth-section {
     display: flex;
     gap: 15px;
+    align-items: center;
 }
 /* Auth buttons use common styles from common.css */
 .team-section, .pokedex-section {

@@ -95,6 +95,18 @@ body {
     background-color: var(--secondary-hover);
 }
 
+/* -----------------------------
+   Logout button variant
+   ----------------------------- */
+#logout-btn {
+    background-color: #ff867c; /* Light red */
+    color: white;
+}
+
+#logout-btn:hover {
+    background-color: #ff534e; /* Darker red on hover */
+}
+
 /* Cost filter buttons */
 .cost-btn {
     padding: 6px 16px;
