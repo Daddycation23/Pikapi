@@ -7,15 +7,11 @@ let battleState = 'menu';
 
 // Initialize when page loads
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('DOM Content Loaded - Starting battle system');
     initializeBattle();
     setupEventListeners();
-    console.log('Battle system ready');
 });
 
 function initializeBattle() {
-    console.log('Initializing battle...');
-    
     // Use fallback Pokemon
     const randomPokemon = [
         { id: 25, name: 'Pikachu', hp: 100, maxHp: 100, level: 50, moves: ['Thunderbolt', 'Quick Attack', 'Thunder Wave', 'Iron Tail'] },
@@ -30,7 +26,6 @@ function initializeBattle() {
     
     updateBattleDisplay();
     addLogMessage(`A wild ${enemyPokemon.name} appeared!`);
-    console.log('Battle initialized');
 }
 
 function updateBattleDisplay() {
@@ -82,57 +77,50 @@ function updateHealthBar(target, currentHp, maxHp) {
 }
 
 function setupEventListeners() {
-    console.log('Setting up event listeners...');
-    
     // Menu buttons
     const fightBtn = document.getElementById('fight-btn');
     const pokemonBtn = document.getElementById('pokemon-btn');
     
-    console.log('Fight button found:', fightBtn);
-    console.log('Pokemon button found:', pokemonBtn);
-    
     if (fightBtn) {
-        fightBtn.onclick = function() {
-            console.log('Fight button clicked!');
+        fightBtn.addEventListener('click', function() {
             showMoveSelection();
-        };
+        });
     }
     
     if (pokemonBtn) {
-        pokemonBtn.onclick = function() {
-            console.log('Pokemon button clicked!');
+        pokemonBtn.addEventListener('click', function() {
             showPokemonSelection();
-        };
+        });
     }
 
     // Move selection
     const backToMenuBtn = document.getElementById('back-to-menu');
     if (backToMenuBtn) {
-        backToMenuBtn.onclick = function() {
+        backToMenuBtn.addEventListener('click', function() {
             showMainMenu();
-        };
+        });
     }
     
-    const moveBtns = document.querySelectorAll('.move-btn');
-    console.log('Move buttons found:', moveBtns.length);
-    moveBtns.forEach(btn => {
-        btn.onclick = function(e) {
-            console.log('Move button clicked:', e.target.dataset.move);
-            useMove(parseInt(e.target.dataset.move));
-        };
-    });
+    // Set up move button event listeners
+    setTimeout(() => {
+        const moveBtns = document.querySelectorAll('.move-btn');
+        moveBtns.forEach((btn, index) => {
+            btn.addEventListener('click', function(e) {
+                useMove(index);
+            });
+        });
+    }, 100);
 
     // Pokemon selection
     const backToMenuPokemonBtn = document.getElementById('back-to-menu-pokemon');
     if (backToMenuPokemonBtn) {
-        backToMenuPokemonBtn.onclick = function() {
+        backToMenuPokemonBtn.addEventListener('click', function() {
             showMainMenu();
-        };
+        });
     }
 }
 
 function showMainMenu() {
-    console.log('Showing main menu');
     battleState = 'menu';
     document.getElementById('battle-menu').style.display = 'block';
     document.getElementById('move-selection').style.display = 'none';
@@ -140,15 +128,30 @@ function showMainMenu() {
 }
 
 function showMoveSelection() {
-    console.log('Showing move selection');
     battleState = 'move-selection';
     document.getElementById('battle-menu').style.display = 'none';
     document.getElementById('move-selection').style.display = 'block';
     document.getElementById('pokemon-selection').style.display = 'none';
+    
+    // Re-setup move button event listeners
+    setTimeout(() => {
+        const moveBtns = document.querySelectorAll('.move-btn');
+        moveBtns.forEach((btn, index) => {
+            // Remove existing listeners to prevent duplicates
+            btn.replaceWith(btn.cloneNode(true));
+        });
+        
+        // Re-get the buttons and add listeners
+        const newMoveBtns = document.querySelectorAll('.move-btn');
+        newMoveBtns.forEach((btn, index) => {
+            btn.addEventListener('click', function(e) {
+                useMove(index);
+            });
+        });
+    }, 50);
 }
 
 function showPokemonSelection() {
-    console.log('Showing pokemon selection');
     battleState = 'pokemon-selection';
     document.getElementById('battle-menu').style.display = 'none';
     document.getElementById('pokemon-selection').style.display = 'block';
@@ -174,9 +177,9 @@ function populatePokemonList() {
                 pokemonItem.style.cursor = 'not-allowed';
                 pokemonItem.innerHTML += '<div style="color: #666; font-size: 12px;">Current</div>';
             } else {
-                pokemonItem.onclick = function() {
+                pokemonItem.addEventListener('click', function() {
                     switchPokemon(index);
-                };
+                });
                 pokemonItem.style.cursor = 'pointer';
             }
         } else {
@@ -193,15 +196,15 @@ function useMove(moveIndex) {
     const moves = playerPokemon.moves || ['Tackle', 'Growl', 'Scratch', 'Leer'];
     const selectedMove = moves[moveIndex];
     
-    if (!selectedMove) return;
+    if (!selectedMove) {
+        return;
+    }
     
     addLogMessage(`${playerPokemon.name} used ${selectedMove}!`);
     attack(selectedMove);
 }
 
 function attack(selectedMove = null) {
-    if (battleState !== 'menu' && battleState !== 'move-selection') return;
-
     // Player attacks
     const moves = playerPokemon.moves || ['Tackle', 'Growl', 'Scratch', 'Leer'];
     const playerMove = selectedMove || moves[Math.floor(Math.random() * moves.length)];
@@ -210,6 +213,7 @@ function attack(selectedMove = null) {
     enemyPokemon.hp = Math.max(0, enemyPokemon.hp - playerDamage);
     updateHealthBar('enemy', enemyPokemon.hp, enemyPokemon.maxHp);
     addLogMessage(`${playerPokemon.name} used ${playerMove}!`);
+    addLogMessage(`It dealt ${playerDamage} damage!`);
 
     // Check if enemy fainted
     if (enemyPokemon.hp <= 0) {
@@ -231,6 +235,7 @@ function attack(selectedMove = null) {
         playerPokemon.hp = Math.max(0, playerPokemon.hp - enemyDamage);
         updateHealthBar('player', playerPokemon.hp, playerPokemon.maxHp);
         addLogMessage(`${enemyPokemon.name} used ${enemyMove}!`);
+        addLogMessage(`It dealt ${enemyDamage} damage!`);
 
         // Check if player fainted
         if (playerPokemon.hp <= 0) {
