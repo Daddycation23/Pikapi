@@ -35,6 +35,12 @@ function initializeBattle() {
 function updateBattleDisplay() {
     if (!battleState) return;
     
+    console.log('Updating battle display with state:', {
+        player: battleState.player_pokemon?.name,
+        enemy: battleState.enemy_pokemon?.name,
+        enemy_index: battleState.current_enemy_index
+    });
+    
     // Update player Pokemon display
     const player = battleState.player_pokemon;
     document.getElementById('player-name').textContent = player.name;
@@ -42,7 +48,7 @@ function updateBattleDisplay() {
     document.getElementById('player-sprite').src = `/api/pokemon_image/${player.id}`;
     
     // Use current_hp and max_hp from server, fallback to hp if not available
-    const playerCurrentHp = Math.max(0, player.current_hp || player.hp || 100); // Ensure HP doesn't go below 0
+    const playerCurrentHp = (typeof player.current_hp === 'number') ? Math.max(0, player.current_hp) : 0;
     const playerMaxHp = player.max_hp || player.hp || 100;
     updateHealthBar('player', playerCurrentHp, playerMaxHp);
 
@@ -53,7 +59,7 @@ function updateBattleDisplay() {
     document.getElementById('enemy-sprite').src = `/api/pokemon_image/${enemy.id}`;
     
     // Use current_hp and max_hp from server, fallback to hp if not available
-    const enemyCurrentHp = Math.max(0, enemy.current_hp || enemy.hp || 100); // Ensure HP doesn't go below 0
+    const enemyCurrentHp = (typeof enemy.current_hp === 'number') ? Math.max(0, enemy.current_hp) : 0;
     const enemyMaxHp = enemy.max_hp || enemy.hp || 100;
     updateHealthBar('enemy', enemyCurrentHp, enemyMaxHp);
 
@@ -62,10 +68,18 @@ function updateBattleDisplay() {
 
     // Update move buttons
     updateMoveButtons();
+    
+    console.log('Battle display updated successfully');
 }
 
 function updateEnemyTeamDisplay() {
     if (!battleState || !battleState.enemy_team) return;
+    
+    console.log('Updating enemy team display:', {
+        team_size: battleState.enemy_team.length,
+        current_index: battleState.current_enemy_index,
+        active_pokemon: battleState.enemy_team[battleState.current_enemy_index]?.name
+    });
     
     const enemyTeamList = document.getElementById('enemy-team-list');
     if (!enemyTeamList) return;
@@ -77,7 +91,7 @@ function updateEnemyTeamDisplay() {
         teamItem.className = 'enemy-team-item';
         
         // Use current_hp and max_hp from server, fallback to hp if not available
-        const currentHp = Math.max(0, pokemon.current_hp || pokemon.hp || 100); // Ensure HP doesn't go below 0
+        const currentHp = (typeof pokemon.current_hp === 'number') ? Math.max(0, pokemon.current_hp) : 0;
         const maxHp = pokemon.max_hp || pokemon.hp || 100;
         
         // Determine if this Pokemon is active or fainted
@@ -97,6 +111,8 @@ function updateEnemyTeamDisplay() {
         
         enemyTeamList.appendChild(teamItem);
     });
+    
+    console.log('Enemy team display updated successfully');
 }
 
 function updateMoveButtons() {
@@ -208,16 +224,15 @@ function showMoveSelection() {
 }
 
 function showPokemonSelection() {
+    // Only show the pokemon selection overlay, do not hide the rest of the UI
     document.getElementById('battle-menu').style.display = 'none';
+    document.getElementById('move-selection').style.display = 'none';
     document.getElementById('pokemon-selection').style.display = 'block';
-    
     // Check if current Pokemon fainted - if so, disable back button
     const currentPokemon = battleState.player_pokemon;
     const backBtn = document.getElementById('back-to-menu-pokemon');
     if (currentPokemon && currentPokemon.current_hp <= 0) {
-        console.log('Pokemon fainted, disabling back button');
         backBtn.style.display = 'none'; // Hide the back button
-        
         // Add a message to inform the player they must choose
         const pokemonList = document.getElementById('pokemon-list');
         const messageDiv = document.createElement('div');
@@ -226,9 +241,8 @@ function showPokemonSelection() {
         messageDiv.style.cssText = 'text-align: center; color: #ff4444; font-weight: bold; margin-bottom: 10px; padding: 10px; background: #ffeeee; border-radius: 5px;';
         pokemonList.insertBefore(messageDiv, pokemonList.firstChild);
     } else {
-        backBtn.style.display = 'block'; // Show the back button
+        backBtn.style.display = 'block';
     }
-    
     populatePokemonList();
 }
 
@@ -243,7 +257,7 @@ function populatePokemonList() {
         pokemonItem.className = 'pokemon-item';
         
         // Use current_hp and max_hp from server, fallback to hp if not available
-        const currentHp = Math.max(0, pokemon.current_hp || pokemon.hp || 100); // Ensure HP doesn't go below 0
+        const currentHp = (typeof pokemon.current_hp === 'number') ? Math.max(0, pokemon.current_hp) : 0;
         const maxHp = pokemon.max_hp || pokemon.hp || 100;
         
         pokemonItem.innerHTML = `
@@ -275,11 +289,9 @@ function populatePokemonList() {
 
 function useMove(moveIndex) {
     console.log('Using move:', moveIndex);
-    
     // Disable move buttons to prevent spam
     const moveBtns = document.querySelectorAll('.move-btn');
     moveBtns.forEach(btn => btn.disabled = true);
-    
     fetch('/api/battle/use-move', {
         method: 'POST',
         headers: {
@@ -292,6 +304,9 @@ function useMove(moveIndex) {
     .then(response => response.json())
     .then(data => {
         console.log('Move response:', data);
+        console.log('DEBUG: Received enemy_pokemon:', data.enemy_pokemon);
+        console.log('DEBUG: Received current_enemy_index:', data.current_enemy_index);
+        console.log('DEBUG: Received enemy_team:', data.enemy_team);
         
         if (data.error) {
             console.error('Move error:', data.error);
@@ -299,27 +314,31 @@ function useMove(moveIndex) {
             moveBtns.forEach(btn => btn.disabled = false);
             return;
         }
-        
         battleState = data;
+        
+        // Always update display and log first, regardless of what happens next
         updateBattleDisplay();
         updateBattleLog();
         
-        if (data.battle_ended) {
-            console.log('Battle ended, handling...');
-            handleBattleEnd(data.winner);
-        } else {
-            // Check if player's Pokemon fainted and they need to choose next Pokemon
-            const playerPokemon = data.player_pokemon;
-            if (playerPokemon.current_hp <= 0) {
-                console.log('Player Pokemon fainted, forcing Pokemon selection');
-                showPokemonSelection();
+        // Add a small delay to ensure UI updates are visible before any menu changes
+        setTimeout(() => {
+            if (data.battle_ended) {
+                console.log('Battle ended, handling...');
+                handleBattleEnd(data.winner);
             } else {
-                console.log('Battle continues, showing main menu');
-                showMainMenu();
+                // Check if player's Pokemon fainted and they need to choose next Pokemon
+                const playerPokemon = data.player_pokemon;
+                if (playerPokemon.current_hp <= 0) {
+                    console.log('Player Pokemon fainted, forcing Pokemon selection');
+                    showPokemonSelection();
+                } else {
+                    console.log('Battle continues, showing main menu');
+                    showMainMenu();
+                }
             }
             // Re-enable buttons for next turn
             moveBtns.forEach(btn => btn.disabled = false);
-        }
+        }, 100); // Small delay to ensure UI updates are visible
     })
     .catch(error => {
         console.error('Error using move:', error);
@@ -344,23 +363,18 @@ function switchPokemon(pokemonIndex) {
             console.error('Switch error:', data.error);
             return;
         }
-        
         battleState = data;
         updateBattleDisplay();
         updateBattleLog();
-        
         if (data.battle_ended) {
             handleBattleEnd(data.winner);
         } else {
-            // Check if the switched Pokemon fainted
             const playerPokemon = data.player_pokemon;
             if (playerPokemon.current_hp <= 0) {
-                console.log('Switched Pokemon fainted, forcing Pokemon selection');
                 showPokemonSelection();
             } else {
-                // Pokemon switch was successful, show main menu and re-enable back button
                 const backBtn = document.getElementById('back-to-menu-pokemon');
-                backBtn.style.display = 'block'; // Re-enable the back button
+                backBtn.style.display = 'block';
                 showMainMenu();
             }
         }

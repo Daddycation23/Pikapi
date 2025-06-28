@@ -40,4 +40,8 @@ def get_player_profiles_collection():
     return get_db()['player_profiles']
 
 def get_teams_collection():
-    return get_db()['teams'] 
+    return get_db()['teams']
+
+def get_battles_collection():
+    """Returns the battles collection for storing battle state."""
+    return get_db()['battles'] 
