@@ -272,17 +272,32 @@ def register_routes(app):
         if not player_team:
             return jsonify({'error': 'Invalid team'}), 400
         
-        # Generate random enemy Pokemon
-        enemy_pokemon = fetch_pokemon_by_id(random.randint(1, 151))  # Gen 1 Pokemon
+        # Generate enemy team of 3 Pokemon
+        enemy_team = []
+        for _ in range(3):
+            enemy_pokemon = fetch_pokemon_by_id(random.randint(1, 151))  # Gen 1 Pokemon
+            enemy_team.append(enemy_pokemon)
+        
+        # Initialize HP values properly for player team
+        for pokemon in player_team:
+            pokemon['max_hp'] = pokemon['hp']  # Set max HP to original HP
+            pokemon['current_hp'] = pokemon['hp']  # Set current HP to max initially
+        
+        # Initialize HP values properly for enemy team
+        for pokemon in enemy_team:
+            pokemon['max_hp'] = pokemon['hp']  # Set max HP to original HP
+            pokemon['current_hp'] = pokemon['hp']  # Set current HP to max initially
         
         # Initialize battle state with proper field names
         battle_state = {
             'player_team': player_team,
-            'enemy_pokemon': enemy_pokemon,
+            'enemy_team': enemy_team,
             'current_player_index': 0,
+            'current_enemy_index': 0,
             'player_pokemon': player_team[0],
+            'enemy_pokemon': enemy_team[0],
             'turn': 1,
-            'battle_log': [f"A wild {enemy_pokemon['name']} appeared!"]
+            'battle_log': [f"A wild {enemy_team[0]['name']} appeared!"]
         }
         
         session['battle_state'] = battle_state
@@ -290,7 +305,9 @@ def register_routes(app):
             'player_pokemon': battle_state['player_pokemon'],
             'enemy_pokemon': battle_state['enemy_pokemon'],
             'player_team': battle_state['player_team'],
+            'enemy_team': battle_state['enemy_team'],
             'current_player_index': battle_state['current_player_index'],
+            'current_enemy_index': battle_state['current_enemy_index'],
             'battle_log': battle_state['battle_log']
         })
 
@@ -319,52 +336,155 @@ def register_routes(app):
         
         # Calculate damage based on Pokemon stats
         player_damage = calculate_damage(player_pokemon, enemy_pokemon, selected_move)
-        enemy_pokemon['hp'] = max(0, enemy_pokemon['hp'] - player_damage)
+        enemy_pokemon['current_hp'] = max(0, enemy_pokemon['current_hp'] - player_damage)
+        
+        # Update enemy team array to reflect the damage
+        battle_state['enemy_team'][battle_state['current_enemy_index']] = enemy_pokemon
         
         battle_state['battle_log'].append(f"{player_pokemon['name']} used {selected_move}!")
         battle_state['battle_log'].append(f"It dealt {player_damage} damage!")
         
         # Check if enemy fainted
-        if enemy_pokemon['hp'] <= 0:
+        if enemy_pokemon['current_hp'] <= 0:
             battle_state['battle_log'].append(f"{enemy_pokemon['name']} fainted!")
-            battle_state['battle_log'].append("You won the battle!")
-            session['battle_state'] = battle_state
-            return jsonify({
-                'enemy_pokemon': enemy_pokemon,
-                'battle_log': battle_state['battle_log'],
-                'battle_ended': True,
-                'winner': 'player'
-            })
+            
+            # Check if enemy has more Pokemon
+            if battle_state['current_enemy_index'] < len(battle_state['enemy_team']) - 1:
+                # Enemy switches to next Pokemon
+                battle_state['current_enemy_index'] += 1
+                new_enemy = battle_state['enemy_team'][battle_state['current_enemy_index']]
+                battle_state['enemy_pokemon'] = new_enemy
+                battle_state['battle_log'].append(f"Enemy sent out {new_enemy['name']}!")
+                
+                # Enemy gets a free turn
+                enemy_moves = new_enemy.get('moves', ['Tackle', 'Growl', 'Scratch', 'Leer'])
+                enemy_move = random.choice(enemy_moves)
+                enemy_damage = calculate_damage(new_enemy, player_pokemon, enemy_move)
+                player_pokemon['current_hp'] = max(0, player_pokemon['current_hp'] - enemy_damage)
+                
+                # Update player team array to reflect the damage
+                battle_state['player_team'][battle_state['current_player_index']] = player_pokemon
+                
+                battle_state['battle_log'].append(f"{new_enemy['name']} used {enemy_move}!")
+                battle_state['battle_log'].append(f"It dealt {enemy_damage} damage!")
+                
+                # Check if player fainted after enemy attack
+                if player_pokemon['current_hp'] <= 0:
+                    battle_state['battle_log'].append(f"{player_pokemon['name']} fainted!")
+                    # Check if player has more Pokemon
+                    if battle_state['current_player_index'] < len(battle_state['player_team']) - 1:
+                        battle_state['battle_log'].append("Choose your next Pokemon!")
+                        session['battle_state'] = battle_state
+                        battle_state = sync_battle_state(battle_state)
+                        return jsonify({
+                            'player_pokemon': battle_state['player_pokemon'],
+                            'enemy_pokemon': battle_state['enemy_pokemon'],
+                            'player_team': battle_state['player_team'],
+                            'enemy_team': battle_state['enemy_team'],
+                            'current_player_index': battle_state['current_player_index'],
+                            'current_enemy_index': battle_state['current_enemy_index'],
+                            'battle_log': battle_state['battle_log'],
+                            'battle_ended': False,
+                            'turn': battle_state['turn']
+                        })
+                    else:
+                        battle_state['battle_log'].append("You lost the battle!")
+                        session['battle_state'] = battle_state
+                        battle_state = sync_battle_state(battle_state)
+                        return jsonify({
+                            'player_pokemon': battle_state['player_pokemon'],
+                            'enemy_pokemon': battle_state['enemy_pokemon'],
+                            'player_team': battle_state['player_team'],
+                            'enemy_team': battle_state['enemy_team'],
+                            'current_player_index': battle_state['current_player_index'],
+                            'current_enemy_index': battle_state['current_enemy_index'],
+                            'battle_log': battle_state['battle_log'],
+                            'battle_ended': True,
+                            'winner': 'enemy',
+                            'turn': battle_state['turn']
+                        })
+            else:
+                # Enemy has no more Pokemon
+                battle_state['battle_log'].append("You won the battle!")
+                session['battle_state'] = battle_state
+                battle_state = sync_battle_state(battle_state)
+                return jsonify({
+                    'player_pokemon': battle_state['player_pokemon'],
+                    'enemy_pokemon': battle_state['enemy_pokemon'],
+                    'player_team': battle_state['player_team'],
+                    'enemy_team': battle_state['enemy_team'],
+                    'current_player_index': battle_state['current_player_index'],
+                    'current_enemy_index': battle_state['current_enemy_index'],
+                    'battle_log': battle_state['battle_log'],
+                    'battle_ended': True,
+                    'winner': 'player',
+                    'turn': battle_state['turn']
+                })
         
-        # Enemy turn
+        # Enemy turn (if not already handled above)
         enemy_moves = enemy_pokemon.get('moves', ['Tackle', 'Growl', 'Scratch', 'Leer'])
         enemy_move = random.choice(enemy_moves)
         enemy_damage = calculate_damage(enemy_pokemon, player_pokemon, enemy_move)
-        player_pokemon['hp'] = max(0, player_pokemon['hp'] - enemy_damage)
+        player_pokemon['current_hp'] = max(0, player_pokemon['current_hp'] - enemy_damage)
+        
+        # Update player team array to reflect the damage
+        battle_state['player_team'][battle_state['current_player_index']] = player_pokemon
         
         battle_state['battle_log'].append(f"{enemy_pokemon['name']} used {enemy_move}!")
         battle_state['battle_log'].append(f"It dealt {enemy_damage} damage!")
         
         # Check if player fainted
-        if player_pokemon['hp'] <= 0:
+        if player_pokemon['current_hp'] <= 0:
             battle_state['battle_log'].append(f"{player_pokemon['name']} fainted!")
-            battle_state['battle_log'].append("You lost the battle!")
-            session['battle_state'] = battle_state
-            return jsonify({
-                'player_pokemon': player_pokemon,
-                'battle_log': battle_state['battle_log'],
-                'battle_ended': True,
-                'winner': 'enemy'
-            })
+            # Check if player has more Pokemon
+            if battle_state['current_player_index'] < len(battle_state['player_team']) - 1:
+                battle_state['battle_log'].append("Choose your next Pokemon!")
+                session['battle_state'] = battle_state
+                battle_state = sync_battle_state(battle_state)
+                return jsonify({
+                    'player_pokemon': battle_state['player_pokemon'],
+                    'enemy_pokemon': battle_state['enemy_pokemon'],
+                    'player_team': battle_state['player_team'],
+                    'enemy_team': battle_state['enemy_team'],
+                    'current_player_index': battle_state['current_player_index'],
+                    'current_enemy_index': battle_state['current_enemy_index'],
+                    'battle_log': battle_state['battle_log'],
+                    'battle_ended': False,
+                    'turn': battle_state['turn']
+                })
+            else:
+                battle_state['battle_log'].append("You lost the battle!")
+                session['battle_state'] = battle_state
+                battle_state = sync_battle_state(battle_state)
+                return jsonify({
+                    'player_pokemon': battle_state['player_pokemon'],
+                    'enemy_pokemon': battle_state['enemy_pokemon'],
+                    'player_team': battle_state['player_team'],
+                    'enemy_team': battle_state['enemy_team'],
+                    'current_player_index': battle_state['current_player_index'],
+                    'current_enemy_index': battle_state['current_enemy_index'],
+                    'battle_log': battle_state['battle_log'],
+                    'battle_ended': True,
+                    'winner': 'enemy',
+                    'turn': battle_state['turn']
+                })
         
         battle_state['turn'] += 1
         session['battle_state'] = battle_state
         
+        # Ensure battle state is synchronized before returning
+        battle_state = sync_battle_state(battle_state)
+        
         return jsonify({
-            'player_pokemon': player_pokemon,
-            'enemy_pokemon': enemy_pokemon,
+            'player_pokemon': battle_state['player_pokemon'],
+            'enemy_pokemon': battle_state['enemy_pokemon'],
+            'player_team': battle_state['player_team'],
+            'enemy_team': battle_state['enemy_team'],
+            'current_player_index': battle_state['current_player_index'],
+            'current_enemy_index': battle_state['current_enemy_index'],
             'battle_log': battle_state['battle_log'],
-            'battle_ended': False
+            'battle_ended': False,
+            'turn': battle_state['turn']
         })
 
     @app.route('/api/battle/switch-pokemon', methods=['POST'])
@@ -384,7 +504,7 @@ def register_routes(app):
             return jsonify({'error': 'Invalid Pokemon index'}), 400
         
         new_pokemon = battle_state['player_team'][pokemon_index]
-        if new_pokemon['hp'] <= 0:
+        if new_pokemon['current_hp'] <= 0:
             return jsonify({'error': 'Pokemon is fainted'}), 400
         
         if pokemon_index == battle_state['current_player_index']:
@@ -400,30 +520,65 @@ def register_routes(app):
         enemy_moves = enemy_pokemon.get('moves', ['Tackle', 'Growl', 'Scratch', 'Leer'])
         enemy_move = random.choice(enemy_moves)
         enemy_damage = calculate_damage(enemy_pokemon, new_pokemon, enemy_move)
-        new_pokemon['hp'] = max(0, new_pokemon['hp'] - enemy_damage)
+        new_pokemon['current_hp'] = max(0, new_pokemon['current_hp'] - enemy_damage)
+        
+        # Update player team array to reflect the damage
+        battle_state['player_team'][battle_state['current_player_index']] = new_pokemon
         
         battle_state['battle_log'].append(f"{enemy_pokemon['name']} used {enemy_move}!")
         battle_state['battle_log'].append(f"It dealt {enemy_damage} damage!")
         
         # Check if player fainted after switch
-        if new_pokemon['hp'] <= 0:
+        if new_pokemon['current_hp'] <= 0:
             battle_state['battle_log'].append(f"{new_pokemon['name']} fainted!")
-            battle_state['battle_log'].append("You lost the battle!")
-            session['battle_state'] = battle_state
-            return jsonify({
-                'player_pokemon': new_pokemon,
-                'battle_log': battle_state['battle_log'],
-                'battle_ended': True,
-                'winner': 'enemy'
-            })
+            # Check if player has more Pokemon
+            if battle_state['current_player_index'] < len(battle_state['player_team']) - 1:
+                battle_state['battle_log'].append("Choose your next Pokemon!")
+                session['battle_state'] = battle_state
+                battle_state = sync_battle_state(battle_state)
+                return jsonify({
+                    'player_pokemon': new_pokemon,
+                    'enemy_pokemon': enemy_pokemon,
+                    'player_team': battle_state['player_team'],
+                    'enemy_team': battle_state['enemy_team'],
+                    'current_player_index': battle_state['current_player_index'],
+                    'current_enemy_index': battle_state['current_enemy_index'],
+                    'battle_log': battle_state['battle_log'],
+                    'battle_ended': False,
+                    'turn': battle_state['turn']
+                })
+            else:
+                battle_state['battle_log'].append("You lost the battle!")
+                session['battle_state'] = battle_state
+                battle_state = sync_battle_state(battle_state)
+                return jsonify({
+                    'player_pokemon': new_pokemon,
+                    'enemy_pokemon': enemy_pokemon,
+                    'player_team': battle_state['player_team'],
+                    'enemy_team': battle_state['enemy_team'],
+                    'current_player_index': battle_state['current_player_index'],
+                    'current_enemy_index': battle_state['current_enemy_index'],
+                    'battle_log': battle_state['battle_log'],
+                    'battle_ended': True,
+                    'winner': 'enemy',
+                    'turn': battle_state['turn']
+                })
         
         session['battle_state'] = battle_state
         
+        # Ensure battle state is synchronized before returning
+        battle_state = sync_battle_state(battle_state)
+        
         return jsonify({
-            'player_pokemon': new_pokemon,
-            'enemy_pokemon': enemy_pokemon,
+            'player_pokemon': battle_state['player_pokemon'],
+            'enemy_pokemon': battle_state['enemy_pokemon'],
+            'player_team': battle_state['player_team'],
+            'enemy_team': battle_state['enemy_team'],
+            'current_player_index': battle_state['current_player_index'],
+            'current_enemy_index': battle_state['current_enemy_index'],
             'battle_log': battle_state['battle_log'],
-            'battle_ended': False
+            'battle_ended': False,
+            'turn': battle_state['turn']
         })
 
     @app.route('/api/battle/state')
@@ -440,7 +595,9 @@ def register_routes(app):
             'player_pokemon': battle_state['player_pokemon'],
             'enemy_pokemon': battle_state['enemy_pokemon'],
             'player_team': battle_state['player_team'],
+            'enemy_team': battle_state['enemy_team'],
             'current_player_index': battle_state['current_player_index'],
+            'current_enemy_index': battle_state['current_enemy_index'],
             'battle_log': battle_state['battle_log'],
             'turn': battle_state['turn']
         })
@@ -563,13 +720,26 @@ def register_routes(app):
             return jsonify({'success': False, 'error': str(e)})
 
 def calculate_damage(attacker, defender, move_name):
-    """Calculate damage based on Pokemon stats and move type"""
-    # Base damage calculation (simplified)
-    base_damage = random.randint(10, 30)
+    """Calculate damage based on Pokemon stats and move"""
+    # Simple damage calculation
+    base_damage = 20
+    attack_stat = attacker.get('atk', 50)
+    defense_stat = defender.get('def', 50)
     
-    # Add attack stat influence
-    attack_bonus = attacker.get('attack', 50) // 10
-    defense_reduction = defender.get('defense', 50) // 20
+    # Damage formula: (attack_stat / defense_stat) * base_damage + random variation
+    damage = int((attack_stat / max(defense_stat, 1)) * base_damage)
+    damage = max(1, damage + random.randint(-5, 5))  # Add some randomness
     
-    final_damage = max(1, base_damage + attack_bonus - defense_reduction)
-    return final_damage
+    return damage
+
+def sync_battle_state(battle_state):
+    """Ensure battle state is properly synchronized"""
+    # Sync player_pokemon with player_team
+    if battle_state['player_team'] and battle_state['current_player_index'] < len(battle_state['player_team']):
+        battle_state['player_pokemon'] = battle_state['player_team'][battle_state['current_player_index']]
+    
+    # Sync enemy_pokemon with enemy_team
+    if battle_state['enemy_team'] and battle_state['current_enemy_index'] < len(battle_state['enemy_team']):
+        battle_state['enemy_pokemon'] = battle_state['enemy_team'][battle_state['current_enemy_index']]
+    
+    return battle_state

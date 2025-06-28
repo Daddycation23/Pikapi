@@ -1,5 +1,6 @@
-// Battle System JavaScript - Flask-based Version
+// Battle System JavaScript - Flask-based Version (Optimized)
 let battleState = null;
+let eventListenersSetup = false;
 
 // Initialize when page loads
 document.addEventListener('DOMContentLoaded', () => {
@@ -39,17 +40,63 @@ function updateBattleDisplay() {
     document.getElementById('player-name').textContent = player.name;
     document.getElementById('player-level').textContent = `Lv. ${player.level || 50}`;
     document.getElementById('player-sprite').src = `/api/pokemon_image/${player.id}`;
-    updateHealthBar('player', player.hp, player.hp);
+    
+    // Use current_hp and max_hp from server, fallback to hp if not available
+    const playerCurrentHp = Math.max(0, player.current_hp || player.hp || 100); // Ensure HP doesn't go below 0
+    const playerMaxHp = player.max_hp || player.hp || 100;
+    updateHealthBar('player', playerCurrentHp, playerMaxHp);
 
     // Update enemy Pokemon display
     const enemy = battleState.enemy_pokemon;
     document.getElementById('enemy-name').textContent = enemy.name;
     document.getElementById('enemy-level').textContent = `Lv. ${enemy.level || 50}`;
     document.getElementById('enemy-sprite').src = `/api/pokemon_image/${enemy.id}`;
-    updateHealthBar('enemy', enemy.hp, enemy.hp);
+    
+    // Use current_hp and max_hp from server, fallback to hp if not available
+    const enemyCurrentHp = Math.max(0, enemy.current_hp || enemy.hp || 100); // Ensure HP doesn't go below 0
+    const enemyMaxHp = enemy.max_hp || enemy.hp || 100;
+    updateHealthBar('enemy', enemyCurrentHp, enemyMaxHp);
+
+    // Update enemy team display
+    updateEnemyTeamDisplay();
 
     // Update move buttons
     updateMoveButtons();
+}
+
+function updateEnemyTeamDisplay() {
+    if (!battleState || !battleState.enemy_team) return;
+    
+    const enemyTeamList = document.getElementById('enemy-team-list');
+    if (!enemyTeamList) return;
+    
+    enemyTeamList.innerHTML = '';
+
+    battleState.enemy_team.forEach((pokemon, index) => {
+        const teamItem = document.createElement('div');
+        teamItem.className = 'enemy-team-item';
+        
+        // Use current_hp and max_hp from server, fallback to hp if not available
+        const currentHp = Math.max(0, pokemon.current_hp || pokemon.hp || 100); // Ensure HP doesn't go below 0
+        const maxHp = pokemon.max_hp || pokemon.hp || 100;
+        
+        // Determine if this Pokemon is active or fainted
+        const isActive = index === battleState.current_enemy_index;
+        const isFainted = currentHp <= 0;
+        
+        if (isActive) teamItem.classList.add('active');
+        if (isFainted) teamItem.classList.add('fainted');
+        
+        teamItem.innerHTML = `
+            <img src="/api/pokemon_image/${pokemon.id}" alt="${pokemon.name}" onerror="this.src='/static/images/placeholder.png'">
+            <div class="name">${pokemon.name}</div>
+            <div class="health">${currentHp}/${maxHp}</div>
+            ${isActive ? '<div class="status">ACTIVE</div>' : ''}
+            ${isFainted ? '<div class="status">FAINTED</div>' : ''}
+        `;
+        
+        enemyTeamList.appendChild(teamItem);
+    });
 }
 
 function updateMoveButtons() {
@@ -103,6 +150,8 @@ function updateBattleLog() {
 }
 
 function setupEventListeners() {
+    if (eventListenersSetup) return; // Prevent duplicate setup
+    
     // Menu buttons
     const fightBtn = document.getElementById('fight-btn');
     const pokemonBtn = document.getElementById('pokemon-btn');
@@ -127,15 +176,13 @@ function setupEventListeners() {
         });
     }
     
-    // Set up move button event listeners
-    setTimeout(() => {
-        const moveBtns = document.querySelectorAll('.move-btn');
-        moveBtns.forEach((btn, index) => {
-            btn.addEventListener('click', function(e) {
-                useMove(index);
-            });
+    // Set up move button event listeners once
+    const moveBtns = document.querySelectorAll('.move-btn');
+    moveBtns.forEach((btn, index) => {
+        btn.addEventListener('click', function(e) {
+            useMove(index);
         });
-    }, 100);
+    });
 
     // Pokemon selection
     const backToMenuPokemonBtn = document.getElementById('back-to-menu-pokemon');
@@ -144,6 +191,8 @@ function setupEventListeners() {
             showMainMenu();
         });
     }
+    
+    eventListenersSetup = true;
 }
 
 function showMainMenu() {
@@ -156,23 +205,6 @@ function showMoveSelection() {
     document.getElementById('battle-menu').style.display = 'none';
     document.getElementById('move-selection').style.display = 'block';
     document.getElementById('pokemon-selection').style.display = 'none';
-    
-    // Re-setup move button event listeners
-    setTimeout(() => {
-        const moveBtns = document.querySelectorAll('.move-btn');
-        moveBtns.forEach((btn, index) => {
-            // Remove existing listeners to prevent duplicates
-            btn.replaceWith(btn.cloneNode(true));
-        });
-        
-        // Re-get the buttons and add listeners
-        const newMoveBtns = document.querySelectorAll('.move-btn');
-        newMoveBtns.forEach((btn, index) => {
-            btn.addEventListener('click', function(e) {
-                useMove(index);
-            });
-        });
-    }, 50);
 }
 
 function showPokemonSelection() {
@@ -190,13 +222,18 @@ function populatePokemonList() {
     battleState.player_team.forEach((pokemon, index) => {
         const pokemonItem = document.createElement('div');
         pokemonItem.className = 'pokemon-item';
+        
+        // Use current_hp and max_hp from server, fallback to hp if not available
+        const currentHp = Math.max(0, pokemon.current_hp || pokemon.hp || 100); // Ensure HP doesn't go below 0
+        const maxHp = pokemon.max_hp || pokemon.hp || 100;
+        
         pokemonItem.innerHTML = `
             <img src="/api/pokemon_image/${pokemon.id}" alt="${pokemon.name}" onerror="this.src='/static/images/placeholder.png'">
             <div class="name">${pokemon.name}</div>
-            <div class="health">${pokemon.hp}/${pokemon.hp}</div>
+            <div class="health">${currentHp}/${maxHp}</div>
         `;
         
-        if (pokemon.hp > 0) {
+        if (currentHp > 0) {
             if (index === battleState.current_player_index) {
                 pokemonItem.style.opacity = '0.5';
                 pokemonItem.style.cursor = 'not-allowed';
@@ -218,6 +255,12 @@ function populatePokemonList() {
 }
 
 function useMove(moveIndex) {
+    console.log('Using move:', moveIndex);
+    
+    // Disable move buttons to prevent spam
+    const moveBtns = document.querySelectorAll('.move-btn');
+    moveBtns.forEach(btn => btn.disabled = true);
+    
     fetch('/api/battle/use-move', {
         method: 'POST',
         headers: {
@@ -229,8 +272,12 @@ function useMove(moveIndex) {
     })
     .then(response => response.json())
     .then(data => {
+        console.log('Move response:', data);
+        
         if (data.error) {
             console.error('Move error:', data.error);
+            // Re-enable buttons on error
+            moveBtns.forEach(btn => btn.disabled = false);
             return;
         }
         
@@ -239,13 +286,19 @@ function useMove(moveIndex) {
         updateBattleLog();
         
         if (data.battle_ended) {
+            console.log('Battle ended, handling...');
             handleBattleEnd(data.winner);
         } else {
+            console.log('Battle continues, showing main menu');
             showMainMenu();
+            // Re-enable buttons for next turn
+            moveBtns.forEach(btn => btn.disabled = false);
         }
     })
     .catch(error => {
         console.error('Error using move:', error);
+        // Re-enable buttons on error
+        moveBtns.forEach(btn => btn.disabled = false);
     });
 }
 
@@ -282,9 +335,21 @@ function switchPokemon(pokemonIndex) {
 }
 
 function handleBattleEnd(winner) {
-    setTimeout(() => {
+    console.log('Battle ended, winner:', winner);
+    console.log('Current battle state:', battleState);
+    
+    // Hide move selection and show main menu
+    showMainMenu();
+    
+    // Clear any existing timeouts
+    if (window.battleEndTimeout) {
+        clearTimeout(window.battleEndTimeout);
+    }
+    
+    window.battleEndTimeout = setTimeout(() => {
         const message = winner === 'player' ? 'Battle won! Start a new battle?' : 'Battle lost! Start a new battle?';
         if (confirm(message)) {
+            console.log('User chose to start new battle');
             // End current battle and start new one
             fetch('/api/battle/end', {
                 method: 'POST',
@@ -292,12 +357,46 @@ function handleBattleEnd(winner) {
                     'Content-Type': 'application/json',
                 }
             })
-            .then(() => {
+            .then(response => {
+                console.log('Battle end response:', response);
+                return response.json();
+            })
+            .then(data => {
+                console.log('Battle end data:', data);
                 initializeBattle();
             })
             .catch(error => {
                 console.error('Error ending battle:', error);
+                // Fallback: just reload the page
+                location.reload();
             });
+        } else {
+            console.log('User chose to return to main menu');
+            // User doesn't want to start new battle, redirect to main menu
+            window.location.href = '/';
         }
-    }, 2000);
-} 
+    }, 1000);
+}
+
+// Add error handling for network issues
+function handleNetworkError(error, context) {
+    console.error(`Network error in ${context}:`, error);
+    alert(`Connection error: ${error.message}. Please refresh the page.`);
+}
+
+// Add this to the end of the file for better debugging
+window.addEventListener('error', function(e) {
+    console.error('Global error:', e.error);
+    console.error('Error details:', {
+        message: e.message,
+        filename: e.filename,
+        lineno: e.lineno,
+        colno: e.colno
+    });
+});
+
+// Add unhandled promise rejection handler
+window.addEventListener('unhandledrejection', function(e) {
+    console.error('Unhandled promise rejection:', e.reason);
+    e.preventDefault();
+}); 
