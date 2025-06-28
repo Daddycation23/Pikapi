@@ -91,19 +91,30 @@ def load_moves():
     conn = sqlite3.connect(DB_NAME)
     cur = conn.cursor()
     inserted = 0
+    
+    # Define move categories based on type
+    # Physical types: Normal(1), Fighting(2), Flying(3), Poison(4), Ground(5), Rock(6), Bug(7), Ghost(8), Steel(9), Dark(17)
+    # Special types: Fire(10), Water(11), Electric(13), Grass(12), Ice(15), Psychic(14), Dragon(16), Fairy(18)
+    physical_types = {1, 2, 3, 4, 5, 6, 7, 8, 9, 17}
+    
     for _, row in df.iterrows():
         move_id = int(row['id'])
         type_id = int(row['type_id'])
         move_name = row['identifier']
         power = int(row['power']) if not pd.isna(row['power']) else 0
         accuracy = int(row['accuracy']) if not pd.isna(row['accuracy']) else 0
+        priority = int(row['priority']) if not pd.isna(row['priority']) else 0
+        
+        # Determine category based on type
+        category = 'physical' if type_id in physical_types else 'special'
+        
         cur.execute('SELECT 1 FROM Move WHERE move_id = ?', (move_id,))
         if cur.fetchone():
             continue
         cur.execute('''
-            INSERT INTO Move (move_id, type_id, move_name, power, accuracy)
-            VALUES (?, ?, ?, ?, ?)
-        ''', (move_id, type_id, move_name, power, accuracy))
+            INSERT INTO Move (move_id, type_id, move_name, power, accuracy, priority, category)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        ''', (move_id, type_id, move_name, power, accuracy, priority, category))
         inserted += 1
     conn.commit()
     conn.close()

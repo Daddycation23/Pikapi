@@ -26,6 +26,8 @@ CREATE TABLE IF NOT EXISTS Move (
     move_name VARCHAR(100) NOT NULL,
     power SMALLINT NOT NULL,
     accuracy TINYINT NOT NULL,
+    priority INTEGER DEFAULT 0,
+    category VARCHAR(20) DEFAULT 'physical',
     FOREIGN KEY (type_id) REFERENCES Type(type_id)
 );
 

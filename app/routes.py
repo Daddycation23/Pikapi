@@ -405,15 +405,24 @@ def register_routes(app):
         if not enemy_move:
             return jsonify({'error': 'Enemy move data error'}), 400
         
-        # Determine turn order by speed
-        player_speed = player_full['speed']
-        enemy_speed = enemy_full['speed']
-        if player_speed > enemy_speed:
+        # Determine turn order by move priority first, then speed as tiebreaker
+        player_move_priority = player_move['priority']
+        enemy_move_priority = enemy_move['priority']
+        
+        if player_move_priority > enemy_move_priority:
             turn_order = ['player', 'enemy']
-        elif enemy_speed > player_speed:
+        elif enemy_move_priority > player_move_priority:
             turn_order = ['enemy', 'player']
         else:
-            turn_order = random.sample(['player', 'enemy'], 2)
+            # Same priority, use speed as tiebreaker
+            player_speed = player_full['speed']
+            enemy_speed = enemy_full['speed']
+            if player_speed > enemy_speed:
+                turn_order = ['player', 'enemy']
+            elif enemy_speed > player_speed:
+                turn_order = ['enemy', 'player']
+            else:
+                turn_order = random.sample(['player', 'enemy'], 2)
         
         # Prepare log
         battle_log = battle_state['battle_log']
@@ -810,47 +819,63 @@ def calculate_damage(attacker, defender, move_name):
 
 def calculate_damage_advanced(attacker, defender, move_id, level=50):
     """
-    Calculate Pokémon damage using the real formula, including crit, STAB, type, accuracy, and random factor.
-    Returns (damage, is_crit, is_hit, effectiveness, log_details)
+    Advanced damage calculation using real Pokémon formula with move categories.
+    Returns (damage, critical_hit, hit, effectiveness, log_details)
     """
     from app.db import get_move_data, get_type_effectiveness
+    
+    move_data = get_move_data(move_id)
+    if not move_data:
+        return 0, False, False, 1.0, "Invalid move"
+    
+    # Get move properties
+    move_power = move_data['power']
+    move_accuracy = move_data['accuracy']
+    move_type = move_data['type_id']
+    move_category = move_data['category']
+    
+    # Determine attack and defense stats based on move category
+    if move_category == 'physical':
+        attack_stat = attacker['atk']
+        defense_stat = defender['def']
+        attack_name = 'Attack'
+        defense_name = 'Defense'
+    else:  # special
+        attack_stat = attacker['sp_atk']
+        defense_stat = defender['sp_def']
+        attack_name = 'Special Attack'
+        defense_name = 'Special Defense'
+    
+    # Check accuracy
+    if move_accuracy > 0:
+        import random
+        if random.randint(1, 100) > move_accuracy:
+            return 0, False, False, 1.0, f"Move missed (accuracy: {move_accuracy}%)"
+    
+    # Calculate type effectiveness
+    effectiveness = get_type_effectiveness(move_type, defender['types'])
+    
+    # Check for STAB (Same Type Attack Bonus)
+    stab = 1.5 if move_type in attacker['types'] else 1.0
+    
+    # Critical hit calculation (6.25% chance)
     import random
-
-    move = get_move_data(move_id)
-    if not move:
-        return 0, False, False, 1.0, 'Move not found.'
-
-    # Accuracy check
-    if random.randint(1, 100) > move['accuracy']:
-        return 0, False, False, 1.0, f"{move['move_name']} missed!"
-
-    # Determine if move is physical or special (for now, assume all are physical)
-    # TODO: Add move category to Move table for full support
-    is_special = False  # Placeholder: all moves are physical for now
-    A = attacker['atk'] if not is_special else attacker['sp_atk']
-    D = defender['def'] if not is_special else defender['sp_def']
-
-    # STAB
-    stab = 1.5 if move['type_id'] in attacker.get('types', []) else 1.0
-
-    # Type effectiveness
-    effectiveness = get_type_effectiveness(move['type_id'], defender.get('types', []))
-
-    # Critical hit
-    is_crit = (random.randint(1, 24) == 1)
-    crit = 1.5 if is_crit else 1.0
-
-    # Random factor
-    rand = random.uniform(0.85, 1.0)
-
-    # Damage formula
-    base = (((2 * level / 5 + 2) * move['power'] * (A / max(D, 1))) / 50) + 2
-    damage = base * stab * effectiveness * crit * rand
-    damage = int(max(1, round(damage)))
-
-    # Log details
-    log_details = f"{move['move_name']} | Power: {move['power']} | STAB: {stab} | Effectiveness: {effectiveness} | Crit: {is_crit} | Rand: {rand:.2f} | Damage: {damage}"
-    return damage, is_crit, True, effectiveness, log_details
+    critical_hit = random.randint(1, 100) <= 6.25
+    crit_multiplier = 2.0 if critical_hit else 1.0
+    
+    # Random factor (0.85 to 1.00)
+    random_factor = random.uniform(0.85, 1.00)
+    
+    # Calculate damage using the real Pokémon formula
+    if move_power > 0:
+        damage = int(((2 * level / 5 + 2) * move_power * attack_stat / defense_stat) / 50 + 2)
+        damage = int(damage * effectiveness * stab * crit_multiplier * random_factor)
+    else:
+        damage = 0
+    
+    log_details = f"Power: {move_power}, {attack_name}: {attack_stat}, {defense_name}: {defense_stat}, Effectiveness: {effectiveness:.2f}x, STAB: {stab:.1f}x"
+    
+    return damage, critical_hit, True, effectiveness, log_details
 
 # Helper to get battle state from MongoDB
 

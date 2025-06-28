@@ -335,18 +335,20 @@ def get_pokemon_full_data(pokemon_id):
 
 def get_move_data(move_id):
     """
-    Returns a dict with move power, type_id, accuracy, and name.
+    Returns a dict with move power, type, accuracy, priority, category, and name.
     {
         'move_id': int,
         'move_name': str,
         'type_id': int,
         'power': int,
-        'accuracy': int
+        'accuracy': int,
+        'priority': int,
+        'category': str
     }
     """
     conn = get_db_connection()
     cur = conn.cursor()
-    cur.execute("SELECT move_id, move_name, type_id, power, accuracy FROM Move WHERE move_id = ?", (move_id,))
+    cur.execute("SELECT move_id, move_name, type_id, power, accuracy, priority, category FROM Move WHERE move_id = ?", (move_id,))
     row = cur.fetchone()
     conn.close()
     if not row:
@@ -356,7 +358,9 @@ def get_move_data(move_id):
         'move_name': row['move_name'],
         'type_id': row['type_id'],
         'power': row['power'],
-        'accuracy': row['accuracy']
+        'accuracy': row['accuracy'],
+        'priority': row['priority'],
+        'category': row['category']
     }
 
 def get_type_effectiveness(attacking_type_id, defending_type_ids):
