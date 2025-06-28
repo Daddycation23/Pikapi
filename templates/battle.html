@@ -87,6 +87,10 @@
         </div>
     </div>
 
+    <script>
+        // Pass team_id from Flask template to JavaScript
+        window.teamId = {{ team_id if team_id else 'null' }};
+    </script>
     <script src="{{ url_for('static', filename='battle.js') }}"></script>
 </body>
 </html> 

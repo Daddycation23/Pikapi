@@ -9,12 +9,18 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function initializeBattle() {
+    // Get team_id from window object (passed from Flask template)
+    const teamId = window.teamId;
+    
     // Start a new battle with the server
     fetch('/api/battle/start', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-        }
+        },
+        body: JSON.stringify({
+            team_id: teamId
+        })
     })
     .then(response => response.json())
     .then(data => {
@@ -212,9 +218,25 @@ function setupEventListeners() {
 }
 
 function showMainMenu() {
-    document.getElementById('battle-menu').style.display = 'block';
+    // Clear any leftover selection messages
+    const pokemonList = document.getElementById('pokemon-list');
+    if (pokemonList) {
+        const messageDiv = pokemonList.querySelector('.selection-message');
+        if (messageDiv) {
+            messageDiv.remove();
+        }
+    }
+    
+    // Show main menu and hide others
+    document.getElementById('battle-menu').style.display = 'flex';
     document.getElementById('move-selection').style.display = 'none';
     document.getElementById('pokemon-selection').style.display = 'none';
+    
+    // Ensure back button is visible
+    const backBtn = document.getElementById('back-to-menu-pokemon');
+    if (backBtn) {
+        backBtn.style.display = 'block';
+    }
 }
 
 function showMoveSelection() {
@@ -413,6 +435,7 @@ function handleBattleEnd(winner) {
             })
             .then(data => {
                 console.log('Battle end data:', data);
+                // Preserve the team_id when starting a new battle
                 initializeBattle();
             })
             .catch(error => {

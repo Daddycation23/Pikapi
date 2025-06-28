@@ -253,7 +253,10 @@ def register_routes(app):
         user = get_current_user()
         if not user:
             return redirect(url_for('home'))
-        return render_template('battle.html')
+        
+        # Get team_id from query parameter, default to None
+        team_id = request.args.get('team_id', type=int)
+        return render_template('battle.html', team_id=team_id)
 
     @app.route('/api/battle/start', methods=['POST'])
     def start_battle():
@@ -261,8 +264,17 @@ def register_routes(app):
         if not user:
             return jsonify({'error': 'Not authenticated'}), 401
         
-        # Get user's actual team
-        player_team_ids = db_get_team(int(user['_id']))  # Use player's actual team
+        data = request.json
+        team_id = data.get('team_id')  # Get the team_id from the request
+        
+        # Get user's team based on team_id
+        if team_id:
+            # Use the specific team requested
+            player_team_ids = get_team_by_id(team_id)
+        else:
+            # Fallback to default team if no team_id provided
+            player_team_ids = db_get_team(int(user['_id']))
+        
         if not player_team_ids:
             # Create a default team if user doesn't have one
             default_pokemon_ids = [25, 6, 9]  # Pikachu, Charizard, Blastoise

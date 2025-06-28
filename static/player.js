@@ -105,6 +105,20 @@ function setupEditTeamButtons() {
   });
 }
 
+// Add this after setupEditTeamButtons()
+function setupBattleButton() {
+  const battleBtn = document.getElementById('battle-btn');
+  if (!battleBtn) return;
+  battleBtn.onclick = function() {
+    let teamId = teamsList[currentTeamIndex] && teamsList[currentTeamIndex].team_id;
+    if (teamId) {
+      window.location.href = `/battle?team_id=${teamId}`;
+    } else {
+      window.location.href = '/battle';
+    }
+  };
+}
+
 // Check session on load
 async function checkSessionAndInit() {
   const res = await fetch('/api/me');
@@ -119,4 +133,5 @@ document.addEventListener('DOMContentLoaded', () => {
   checkSessionAndInit();
   setupTeamTabs();
   setupEditTeamButtons();
+  setupBattleButton();
 }); 

@@ -126,12 +126,17 @@ body {
     display: flex;
     gap: 15px;
     justify-content: center;
+    align-items: center;
     margin-top: 20px;
+    position: relative;
+    z-index: 10;
 }
 
 .menu-buttons {
     display: flex;
     gap: 15px;
+    justify-content: center;
+    align-items: center;
 }
 
 .menu-btn {
@@ -177,6 +182,7 @@ body {
     flex-direction: column;
     gap: 15px;
     align-items: center;
+    justify-content: center;
     margin-top: 20px;
 }
 
@@ -186,6 +192,7 @@ body {
     gap: 15px;
     width: 100%;
     max-width: 400px;
+    margin: 0 auto;
 }
 
 .move-btn {
@@ -229,6 +236,8 @@ body {
     color: white;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    display: block;
+    margin: 20px auto 0 auto;
 }
 
 .back-btn:hover {
@@ -242,6 +251,7 @@ body {
     flex-direction: column;
     gap: 15px;
     align-items: center;
+    justify-content: center;
     margin-top: 20px;
 }
 
