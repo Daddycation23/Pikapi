@@ -124,14 +124,48 @@ function updateEnemyTeamDisplay() {
 function updateMoveButtons() {
     if (!battleState || !battleState.player_pokemon) return;
     
-    const moves = battleState.player_pokemon.moves || ['Tackle', 'Growl', 'Scratch', 'Leer'];
-    for (let i = 0; i < 4; i++) {
-        const moveBtn = document.getElementById(`move-${i + 1}`);
-        if (moveBtn) {
-            moveBtn.textContent = moves[i] || '---';
-            moveBtn.disabled = !moves[i];
-        }
-    }
+    // Get the assigned moves from the current player Pokemon
+    const assigned_moves = battleState.player_pokemon.assigned_moves || [];
+    console.log('DEBUG: Assigned moves for', battleState.player_pokemon.name, ':', assigned_moves);
+    
+    // Fetch move names for the assigned move IDs
+    const movePromises = assigned_moves.map(moveId => 
+        fetch(`/api/move/${moveId}`)
+            .then(response => response.json())
+            .then(data => {
+                console.log(`DEBUG: Move ${moveId} response:`, data);
+                return data.move_name || 'Unknown Move';
+            })
+            .catch(error => {
+                console.error(`DEBUG: Error fetching move ${moveId}:`, error);
+                return 'Unknown Move';
+            })
+    );
+    
+    Promise.all(movePromises)
+        .then(moveNames => {
+            console.log('DEBUG: Final move names:', moveNames);
+            // Update move buttons with the assigned move names
+            for (let i = 0; i < 4; i++) {
+                const moveBtn = document.getElementById(`move-${i + 1}`);
+                if (moveBtn) {
+                    moveBtn.textContent = moveNames[i] || '---';
+                    moveBtn.disabled = !moveNames[i];
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching move names:', error);
+            // Fallback to default moves
+            const moves = ['Tackle', 'Growl', 'Scratch', 'Leer'];
+            for (let i = 0; i < 4; i++) {
+                const moveBtn = document.getElementById(`move-${i + 1}`);
+                if (moveBtn) {
+                    moveBtn.textContent = moves[i] || '---';
+                    moveBtn.disabled = !moves[i];
+                }
+            }
+        });
 }
 
 function updateHealthBar(target, currentHp, maxHp) {

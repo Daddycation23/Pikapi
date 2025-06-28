@@ -284,3 +284,96 @@ def create_team(player_id, budget=10):
     conn.commit()
     conn.close()
     return team_id 
+
+# --- Advanced Battle Data Helpers ---
+
+def get_pokemon_full_data(pokemon_id):
+    """
+    Returns a dict with all stats, types, and move_ids for a Pokémon.
+    {
+        'pokemon_id': int,
+        'name': str,
+        'hp': int,
+        'atk': int,
+        'def': int,
+        'sp_atk': int,
+        'sp_def': int,
+        'speed': int,
+        'types': [type_id, ...],
+        'move_ids': [move_id, ...]
+    }
+    """
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT pokemon_id, name, hp, atk, def, sp_atk, sp_def, speed
+        FROM Pokemon WHERE pokemon_id = ?
+    """, (pokemon_id,))
+    row = cur.fetchone()
+    if not row:
+        conn.close()
+        return None
+    # Get types
+    cur.execute("SELECT type_id FROM PokemonHasType WHERE pokemon_id = ?", (pokemon_id,))
+    types = [r[0] for r in cur.fetchall()]
+    # Get move_ids
+    cur.execute("SELECT move_id FROM PokemonHasMove WHERE pokemon_id = ?", (pokemon_id,))
+    move_ids = [r[0] for r in cur.fetchall()]
+    conn.close()
+    return {
+        'pokemon_id': row['pokemon_id'],
+        'name': row['name'],
+        'hp': row['hp'],
+        'atk': row['atk'],
+        'def': row['def'],
+        'sp_atk': row['sp_atk'],
+        'sp_def': row['sp_def'],
+        'speed': row['speed'],
+        'types': types,
+        'move_ids': move_ids
+    }
+
+def get_move_data(move_id):
+    """
+    Returns a dict with move power, type_id, accuracy, and name.
+    {
+        'move_id': int,
+        'move_name': str,
+        'type_id': int,
+        'power': int,
+        'accuracy': int
+    }
+    """
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT move_id, move_name, type_id, power, accuracy FROM Move WHERE move_id = ?", (move_id,))
+    row = cur.fetchone()
+    conn.close()
+    if not row:
+        return None
+    return {
+        'move_id': row['move_id'],
+        'move_name': row['move_name'],
+        'type_id': row['type_id'],
+        'power': row['power'],
+        'accuracy': row['accuracy']
+    }
+
+def get_type_effectiveness(attacking_type_id, defending_type_ids):
+    """
+    Returns the total effectiveness multiplier for a move type against a list of defender types.
+    """
+    if not defending_type_ids:
+        return 1.0
+    conn = get_db_connection()
+    cur = conn.cursor()
+    multiplier = 1.0
+    for def_type_id in defending_type_ids:
+        cur.execute("SELECT effectiveness FROM TypeEffectiveness WHERE attacking_type_id = ? AND defending_type_id = ?", (attacking_type_id, def_type_id))
+        row = cur.fetchone()
+        if row:
+            multiplier *= float(row['effectiveness'])
+        else:
+            multiplier *= 1.0  # If not found, treat as neutral
+    conn.close()
+    return multiplier 
