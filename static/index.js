@@ -605,11 +605,30 @@ async function showPokemonDetails(pokemon) {
   // Set Pokemon moves
   if (detailMoves) {
     if (detailedPokemon.moves && detailedPokemon.moves.length > 0) {
+      // Fetch moves with type information
+      let movesWithTypes = [];
+      if (detailedPokemon.id) {
+        try {
+          const movesResponse = await fetch(`/api/pokemon/${detailedPokemon.id}/moves-with-types`);
+          const movesData = await movesResponse.json();
+          if (movesData.moves) {
+            movesWithTypes = movesData.moves;
+          }
+        } catch (error) {
+          console.error('Error fetching moves with types:', error);
+          // Fallback to basic moves if API fails
+          movesWithTypes = (detailedPokemon.moves || []).map(move => ({ name: move, type: 'Normal' }));
+        }
+      } else {
+        // Fallback for Pokemon without ID
+        movesWithTypes = (detailedPokemon.moves || []).map(move => ({ name: move, type: 'Normal' }));
+      }
+      
       detailMoves.innerHTML = `
-        <h4>Moves (${detailedPokemon.moves.length})</h4>
+        <h4>Moves (${movesWithTypes.length})</h4>
         <div class="moves-container">
-          ${detailedPokemon.moves.map(move => 
-            `<span class="move-badge">${move.replace('-', ' ')}</span>`
+          ${movesWithTypes.map(move => 
+            `<span class="move-badge type-${move.type.toLowerCase()}">${move.name.replace('-', ' ')}</span>`
           ).join('')}
         </div>
       `;

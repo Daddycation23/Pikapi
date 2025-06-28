@@ -69,6 +69,10 @@ function updateBattleDisplay() {
     const enemyMaxHp = enemy.max_hp || enemy.hp || 100;
     updateHealthBar('enemy', enemyCurrentHp, enemyMaxHp);
 
+    // Update type badges for both Pokémon
+    updatePokemonTypes('player', player.id);
+    updatePokemonTypes('enemy', enemy.id);
+
     // Update enemy team display
     updateEnemyTeamDisplay();
 
@@ -122,40 +126,67 @@ function updateEnemyTeamDisplay() {
 }
 
 function updateMoveButtons() {
-    if (!battleState || !battleState.player_pokemon) return;
-    
-    // Get the assigned moves from the current player Pokemon
-    const assigned_moves = battleState.player_pokemon.assigned_moves || [];
-    console.log('DEBUG: Assigned moves for', battleState.player_pokemon.name, ':', assigned_moves);
-    
-    // Fetch move names for the assigned move IDs
-    const movePromises = assigned_moves.map(moveId => 
+    if (!battleState || !battleState.player_pokemon || !battleState.player_pokemon.assigned_moves) {
+        console.log('DEBUG: No battle state or assigned moves found');
+        return;
+    }
+
+    const assignedMoves = battleState.player_pokemon.assigned_moves;
+    console.log('DEBUG: Assigned moves:', assignedMoves);
+
+    // Fetch move data with type information for each move
+    const movePromises = assignedMoves.map(moveId =>
         fetch(`/api/move/${moveId}`)
             .then(response => response.json())
-            .then(data => {
-                console.log(`DEBUG: Move ${moveId} response:`, data);
-                return data.move_name || 'Unknown Move';
+            .then(moveData => {
+                console.log(`DEBUG: Move data for ${moveId}:`, moveData);
+                return {
+                    name: moveData.move_name || 'Unknown Move',
+                    type: moveData.type_id || 1 // Default to Normal type
+                };
             })
             .catch(error => {
                 console.error(`DEBUG: Error fetching move ${moveId}:`, error);
-                return 'Unknown Move';
+                return { name: 'Unknown Move', type: 1 };
             })
     );
     
     Promise.all(movePromises)
-        .then(moveNames => {
-            console.log('DEBUG: Final move names:', moveNames);
-            // Update move buttons with the assigned move names
+        .then(moveData => {
+            console.log('DEBUG: Final move data:', moveData);
+            
+            // Get type names for the move types
+            const typePromises = moveData.map(move => {
+                if (move.type === 1) return Promise.resolve('Normal');
+                return fetch(`/api/type/${move.type}`)
+                    .then(response => response.json())
+                    .then(typeData => typeData.type_name || 'Normal')
+                    .catch(() => 'Normal');
+            });
+            
+            return Promise.all(typePromises).then(typeNames => {
+                return moveData.map((move, index) => ({
+                    name: move.name,
+                    type: typeNames[index]
+                }));
+            });
+        })
+        .then(movesWithTypes => {
+            // Update move buttons with the assigned move names and type colors
             for (let i = 0; i < 4; i++) {
                 const moveBtn = document.getElementById(`move-${i + 1}`);
-                if (moveBtn) {
-                    moveBtn.textContent = moveNames[i] || '---';
-                    moveBtn.disabled = !moveNames[i];
+                if (moveBtn && movesWithTypes[i]) {
+                    const move = movesWithTypes[i];
+                    moveBtn.textContent = move.name || '---';
+                    moveBtn.disabled = !move.name;
+                    
+                    // Apply type color styling
+                    moveBtn.className = `move-btn type-${move.type.toLowerCase()}`;
                 }
             }
         })
         .catch(error => {
-            console.error('Error fetching move names:', error);
+            console.error('Error fetching move data:', error);
             // Fallback to default moves
             const moves = ['Tackle', 'Growl', 'Scratch', 'Leer'];
             for (let i = 0; i < 4; i++) {
@@ -163,6 +194,7 @@ function updateMoveButtons() {
                 if (moveBtn) {
                     moveBtn.textContent = moves[i] || '---';
                     moveBtn.disabled = !moves[i];
+                    moveBtn.className = 'move-btn type-normal';
                 }
             }
         });
@@ -506,4 +538,29 @@ window.addEventListener('error', function(e) {
 window.addEventListener('unhandledrejection', function(e) {
     console.error('Unhandled promise rejection:', e.reason);
     e.preventDefault();
-}); 
+});
+
+// Function to update Pokémon type badges
+async function updatePokemonTypes(target, pokemonId) {
+    try {
+        const response = await fetch(`/api/pokemon/${pokemonId}`);
+        const data = await response.json();
+        
+        if (data.success && data.pokemon && data.pokemon.type) {
+            const typesContainer = document.getElementById(`${target}-types`);
+            const typeBadges = data.pokemon.type.map(type => 
+                `<span class="type-badge type-${type.toLowerCase()}">${type}</span>`
+            ).join('');
+            typesContainer.innerHTML = typeBadges;
+        } else {
+            // Fallback to default type if API fails
+            const typesContainer = document.getElementById(`${target}-types`);
+            typesContainer.innerHTML = '<span class="type-badge type-normal">Normal</span>';
+        }
+    } catch (error) {
+        console.error(`Error fetching ${target} Pokémon types:`, error);
+        // Fallback to default type if API fails
+        const typesContainer = document.getElementById(`${target}-types`);
+        typesContainer.innerHTML = '<span class="type-badge type-normal">Normal</span>';
+    }
+} 

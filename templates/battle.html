@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pokemon Battle - Pikapi</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='battle.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='type-colors.css') }}">
 </head>
 <body>
     <div class="battle-container">
@@ -18,6 +19,9 @@
                 <div class="pokemon-info">
                     <div class="pokemon-name" id="enemy-name">Enemy Pokemon</div>
                     <div class="pokemon-level" id="enemy-level">Lv. 50</div>
+                    <div class="pokemon-types" id="enemy-types">
+                        <!-- Type badges will be populated here -->
+                    </div>
                     <div class="health-bar">
                         <div class="health-fill" id="enemy-health-fill" style="width: 100%"></div>
                         <div class="health-text" id="enemy-health-text">100/100</div>
@@ -41,6 +45,9 @@
                 <div class="pokemon-info">
                     <div class="pokemon-name" id="player-name">Your Pokemon</div>
                     <div class="pokemon-level" id="player-level">Lv. 50</div>
+                    <div class="pokemon-types" id="player-types">
+                        <!-- Type badges will be populated here -->
+                    </div>
                     <div class="health-bar">
                         <div class="health-fill" id="player-health-fill" style="width: 100%"></div>
                         <div class="health-text" id="player-health-text">100/100</div>

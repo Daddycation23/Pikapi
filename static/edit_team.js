@@ -285,6 +285,25 @@ async function renderDetails(poke) {
     }
   }
   
+  // Fetch moves with type information
+  let movesWithTypes = [];
+  if (detailedPoke.id) {
+    try {
+      const movesResponse = await fetch(`/api/pokemon/${detailedPoke.id}/moves-with-types`);
+      const movesData = await movesResponse.json();
+      if (movesData.moves) {
+        movesWithTypes = movesData.moves;
+      }
+    } catch (error) {
+      console.error('Error fetching moves with types:', error);
+      // Fallback to basic moves if API fails
+      movesWithTypes = (detailedPoke.moves || []).map(move => ({ name: move, type: 'Normal' }));
+    }
+  } else {
+    // Fallback for Pokemon without ID
+    movesWithTypes = (detailedPoke.moves || []).map(move => ({ name: move, type: 'Normal' }));
+  }
+  
   const typeDisplay = (detailedPoke.type||[]).map(t => 
     `<span class="type-badge type-${t.toLowerCase()}">${t}</span>`
   ).join(' ');
@@ -356,11 +375,11 @@ async function renderDetails(poke) {
         <button class="replace-btn" id="replace-btn">Replace</button>
       </div>
       <div class="details-moves">
-        ${detailedPoke.moves && detailedPoke.moves.length > 0 ? 
-          `<h4>Moves (${detailedPoke.moves.length})</h4>
+        ${movesWithTypes.length > 0 ? 
+          `<h4>Moves (${movesWithTypes.length})</h4>
            <div class="moves-container">
-             ${detailedPoke.moves.map(move => 
-               `<span class="move-badge">${move.replace('-', ' ')}</span>`
+             ${movesWithTypes.map(move => 
+               `<span class="move-badge type-${move.type.toLowerCase()}">${move.name.replace('-', ' ')}</span>`
              ).join('')}
            </div>` :
           `<h4>Moves</h4><p style="color: var(--text-secondary); font-size: 14px;">No moves available</p>`
