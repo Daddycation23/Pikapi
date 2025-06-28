@@ -335,17 +335,38 @@ def register_routes(app):
             print(f"DEBUG: {pokemon['name']} assigned moves: {selected_moves}")
             return pokemon
         
-        # Assign moves to player team
-        for pokemon in player_team:
+        # Apply traditional stats to player team
+        for i, pokemon in enumerate(player_team):
+            # Use the Pokémon's level if present, otherwise default to 50
+            level = pokemon.get('level', 50)
+            pokemon = apply_traditional_stats(pokemon, level)
             pokemon = assign_random_moves(pokemon)
             pokemon['max_hp'] = pokemon['hp']  # Set max HP to original HP
             pokemon['current_hp'] = pokemon['hp']  # Set current HP to max initially
+            # Ensure both 'id' and 'pokemon_id' fields are present
+            pokemon['id'] = pokemon.get('id') or pokemon.get('pokemon_id')
+            pokemon['pokemon_id'] = pokemon['id']
+            # Ensure 'name' is present
+            pokemon['name'] = pokemon.get('name', 'Unknown')
+            # Ensure 'assigned_moves' is a list
+            if 'assigned_moves' not in pokemon or not isinstance(pokemon['assigned_moves'], list):
+                pokemon['assigned_moves'] = []
+            player_team[i] = pokemon
         
-        # Assign moves to enemy team
-        for pokemon in enemy_team:
+        # Assign moves to enemy team (already has stats set)
+        for i, pokemon in enumerate(enemy_team):
             pokemon = assign_random_moves(pokemon)
             pokemon['max_hp'] = pokemon['hp']  # Set max HP to original HP
             pokemon['current_hp'] = pokemon['hp']  # Set current HP to max initially
+            # Ensure both 'id' and 'pokemon_id' fields are present
+            pokemon['id'] = pokemon.get('id') or pokemon.get('pokemon_id')
+            pokemon['pokemon_id'] = pokemon['id']
+            # Ensure 'name' is present
+            pokemon['name'] = pokemon.get('name', 'Unknown')
+            # Ensure 'assigned_moves' is a list
+            if 'assigned_moves' not in pokemon or not isinstance(pokemon['assigned_moves'], list):
+                pokemon['assigned_moves'] = []
+            enemy_team[i] = pokemon
         
         # Initialize battle state with proper field names
         battle_state = {
@@ -905,13 +926,13 @@ def calculate_damage_advanced(attacker, defender, move_id, level=50):
     
     # Determine attack and defense stats based on move category
     if move_category == 'physical':
-        attack_stat = attacker['atk']
-        defense_stat = defender['def']
+        attack_stat = attacker.get('attack', attacker.get('atk', 50))  # Try 'attack' first, fallback to 'atk'
+        defense_stat = defender.get('defense', defender.get('def', 50))  # Try 'defense' first, fallback to 'def'
         attack_name = 'Attack'
         defense_name = 'Defense'
     else:  # special
-        attack_stat = attacker['sp_atk']
-        defense_stat = defender['sp_def']
+        attack_stat = attacker.get('sp_atk', 50)
+        defense_stat = defender.get('sp_def', 50)
         attack_name = 'Special Attack'
         defense_name = 'Special Defense'
     
@@ -990,6 +1011,38 @@ def get_enemy_team_config(player_level):
     else:
         return {'pokemon_count': 6, 'cost_budget': 20}
 
+def calculate_pokemon_stats(base_stats, level):
+    # Generate random IVs for each stat
+    ivs = {stat: random.randint(0, 31) for stat in base_stats}
+    evs = {stat: 0 for stat in base_stats}  # You can expand this if you want EVs
+    stats = {}
+    # HP uses a different formula
+    stats['hp'] = int(((2 * base_stats['hp'] + ivs['hp'] + (evs['hp'] // 4)) * level) / 100) + level + 10
+    # Other stats
+    for stat in ['atk', 'def', 'sp_atk', 'sp_def', 'speed']:
+        stats[stat] = int(((2 * base_stats[stat] + ivs[stat] + (evs[stat] // 4)) * level) / 100) + 5
+    return stats
+
+def apply_traditional_stats(pokemon, level):
+    # Map the field names from the database to the expected format
+    base_stats = {
+        'hp': pokemon.get('hp', 50),
+        'atk': pokemon.get('attack', 50),  # Map 'attack' to 'atk'
+        'def': pokemon.get('defense', 50),  # Map 'defense' to 'def'
+        'sp_atk': pokemon.get('sp_atk', 50),
+        'sp_def': pokemon.get('sp_def', 50),
+        'speed': pokemon.get('speed', 50)
+    }
+    stats = calculate_pokemon_stats(base_stats, level)
+    # Update the Pokémon object with the calculated stats using the original field names
+    pokemon['hp'] = stats['hp']
+    pokemon['attack'] = stats['atk']  # Keep original field name
+    pokemon['defense'] = stats['def']  # Keep original field name
+    pokemon['sp_atk'] = stats['sp_atk']
+    pokemon['sp_def'] = stats['sp_def']
+    pokemon['speed'] = stats['speed']
+    return pokemon
+
 def generate_enemy_team(player_level):
     """Generate enemy team based on player level"""
     config = get_enemy_team_config(player_level)
@@ -1027,6 +1080,7 @@ def generate_enemy_team(player_level):
             pokemon = fetch_pokemon_by_id(fallback_ids[i])
             if pokemon:
                 pokemon['level'] = enemy_pokemon_level
+                pokemon = apply_traditional_stats(pokemon, enemy_pokemon_level)
                 enemy_team.append(pokemon)
                 print(f"DEBUG: Added fallback Pokémon: {pokemon['name']}")
     else:
@@ -1045,6 +1099,7 @@ def generate_enemy_team(player_level):
                 pokemon = fetch_pokemon_by_id(pokemon_id)
                 if pokemon:
                     pokemon['level'] = enemy_pokemon_level
+                    pokemon = apply_traditional_stats(pokemon, enemy_pokemon_level)
                     selected_pokemon.append(pokemon)
                     remaining_budget -= cost
                     print(f"DEBUG: Added Pokémon: {name} (cost: {cost}, remaining budget: {remaining_budget})")
@@ -1057,6 +1112,7 @@ def generate_enemy_team(player_level):
         random_pokemon = fetch_pokemon_by_id(random.randint(1, 1025))
         if random_pokemon and random_pokemon not in enemy_team:
             random_pokemon['level'] = enemy_pokemon_level
+            random_pokemon = apply_traditional_stats(random_pokemon, enemy_pokemon_level)
             enemy_team.append(random_pokemon)
             print(f"DEBUG: Added random Pokémon: {random_pokemon['name']}")
     
