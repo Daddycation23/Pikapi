@@ -210,6 +210,25 @@ function showMoveSelection() {
 function showPokemonSelection() {
     document.getElementById('battle-menu').style.display = 'none';
     document.getElementById('pokemon-selection').style.display = 'block';
+    
+    // Check if current Pokemon fainted - if so, disable back button
+    const currentPokemon = battleState.player_pokemon;
+    const backBtn = document.getElementById('back-to-menu-pokemon');
+    if (currentPokemon && currentPokemon.current_hp <= 0) {
+        console.log('Pokemon fainted, disabling back button');
+        backBtn.style.display = 'none'; // Hide the back button
+        
+        // Add a message to inform the player they must choose
+        const pokemonList = document.getElementById('pokemon-list');
+        const messageDiv = document.createElement('div');
+        messageDiv.className = 'selection-message';
+        messageDiv.textContent = 'Choose your next Pokemon!';
+        messageDiv.style.cssText = 'text-align: center; color: #ff4444; font-weight: bold; margin-bottom: 10px; padding: 10px; background: #ffeeee; border-radius: 5px;';
+        pokemonList.insertBefore(messageDiv, pokemonList.firstChild);
+    } else {
+        backBtn.style.display = 'block'; // Show the back button
+    }
+    
     populatePokemonList();
 }
 
@@ -289,8 +308,15 @@ function useMove(moveIndex) {
             console.log('Battle ended, handling...');
             handleBattleEnd(data.winner);
         } else {
-            console.log('Battle continues, showing main menu');
-            showMainMenu();
+            // Check if player's Pokemon fainted and they need to choose next Pokemon
+            const playerPokemon = data.player_pokemon;
+            if (playerPokemon.current_hp <= 0) {
+                console.log('Player Pokemon fainted, forcing Pokemon selection');
+                showPokemonSelection();
+            } else {
+                console.log('Battle continues, showing main menu');
+                showMainMenu();
+            }
             // Re-enable buttons for next turn
             moveBtns.forEach(btn => btn.disabled = false);
         }
@@ -326,7 +352,17 @@ function switchPokemon(pokemonIndex) {
         if (data.battle_ended) {
             handleBattleEnd(data.winner);
         } else {
-            showMainMenu();
+            // Check if the switched Pokemon fainted
+            const playerPokemon = data.player_pokemon;
+            if (playerPokemon.current_hp <= 0) {
+                console.log('Switched Pokemon fainted, forcing Pokemon selection');
+                showPokemonSelection();
+            } else {
+                // Pokemon switch was successful, show main menu and re-enable back button
+                const backBtn = document.getElementById('back-to-menu-pokemon');
+                backBtn.style.display = 'block'; // Re-enable the back button
+                showMainMenu();
+            }
         }
     })
     .catch(error => {
