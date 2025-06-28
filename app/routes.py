@@ -269,6 +269,9 @@ def register_routes(app):
         data = request.json
         team_id = data.get('team_id')  # Get the team_id from the request
         
+        # Get current player level
+        player_level = get_player_level(user['_id'])
+        
         # Get user's team based on team_id
         if team_id:
             # Use the specific team requested
@@ -287,16 +290,20 @@ def register_routes(app):
         if not player_team:
             return jsonify({'error': 'Invalid team'}), 400
         
-        # Generate enemy team of 3 Pokemon
-        enemy_team = []
-        for _ in range(3):
-            enemy_pokemon = fetch_pokemon_by_id(random.randint(1, 1025))  # Gen 1 Pokemon
-            enemy_team.append(enemy_pokemon)
+        # Generate enemy team based on player level
+        enemy_team = generate_enemy_team(player_level)
         
         # Assign randomized moves to each Pokémon
         def assign_random_moves(pokemon):
             # Get full Pokémon data including all available moves
-            full_data = get_pokemon_full_data(pokemon['id'] if 'id' in pokemon else pokemon['pokemon_id'])
+            # Handle both 'id' and 'pokemon_id' fields
+            pokemon_id = pokemon.get('id') or pokemon.get('pokemon_id')
+            if not pokemon_id:
+                print(f"DEBUG: No valid ID found for {pokemon.get('name', 'Unknown')}")
+                pokemon['assigned_moves'] = [1, 2, 3, 4]  # Default move IDs
+                return pokemon
+                
+            full_data = get_pokemon_full_data(pokemon_id)
             if not full_data or not full_data['move_ids']:
                 # Fallback to default moves if no moves available
                 pokemon['assigned_moves'] = [1, 2, 3, 4]  # Default move IDs
@@ -349,6 +356,7 @@ def register_routes(app):
             'player_pokemon': player_team[0],
             'enemy_pokemon': enemy_team[0],
             'turn': 1,
+            'player_level': player_level,
             'battle_log': [f"A wild {enemy_team[0]['name']} appeared!"]
         }
         save_battle_state_to_db(user['_id'], battle_state)
@@ -359,6 +367,7 @@ def register_routes(app):
             'enemy_team': battle_state['enemy_team'],
             'current_player_index': battle_state['current_player_index'],
             'current_enemy_index': battle_state['current_enemy_index'],
+            'player_level': battle_state['player_level'],
             'battle_log': battle_state['battle_log']
         })
 
@@ -380,9 +389,15 @@ def register_routes(app):
         player_pokemon = battle_state['player_team'][battle_state['current_player_index']]
         enemy_pokemon = battle_state['enemy_team'][battle_state['current_enemy_index']]
         
-        # Fetch full data for both
-        player_full = get_pokemon_full_data(player_pokemon['id'] if 'id' in player_pokemon else player_pokemon['pokemon_id'])
-        enemy_full = get_pokemon_full_data(enemy_pokemon['id'] if 'id' in enemy_pokemon else enemy_pokemon['pokemon_id'])
+        # Fetch full data for both - handle both 'id' and 'pokemon_id' fields
+        player_id = player_pokemon.get('id') or player_pokemon.get('pokemon_id')
+        enemy_id = enemy_pokemon.get('id') or enemy_pokemon.get('pokemon_id')
+        
+        if not player_id or not enemy_id:
+            return jsonify({'error': 'Invalid Pokémon IDs'}), 400
+            
+        player_full = get_pokemon_full_data(player_id)
+        enemy_full = get_pokemon_full_data(enemy_id)
         if not player_full or not enemy_full:
             return jsonify({'error': 'Could not fetch Pokémon data'}), 400
         
@@ -483,6 +498,9 @@ def register_routes(app):
                 battle_log.append(f"Enemy sent out {new_enemy['name']}!")
             else:
                 battle_log.append("You won the battle!")
+                # Increment player level on victory
+                new_level = increment_player_level(user['_id'])
+                battle_log.append(f"Level up! You are now level {new_level}!")
                 save_battle_state_to_db(user['_id'], battle_state)
                 return jsonify({
                     'player_pokemon': battle_state['player_pokemon'],
@@ -494,6 +512,7 @@ def register_routes(app):
                     'battle_log': battle_log,
                     'battle_ended': True,
                     'winner': 'player',
+                    'new_level': new_level,
                     'turn': battle_state['turn']
                 })
         if player_hp <= 0:
@@ -937,3 +956,109 @@ def get_battle_state_from_db(user_id):
 def save_battle_state_to_db(user_id, state):
     battles = get_battles_collection()
     battles.update_one({'user_id': user_id}, {'$set': {'state': state}}, upsert=True)
+
+def get_player_level(user_id):
+    """Get the current player level from MongoDB"""
+    battles = get_battles_collection()
+    battle = battles.find_one({'user_id': user_id})
+    return battle.get('player_level', 1) if battle else 1
+
+def set_player_level(user_id, level):
+    """Set the player level in MongoDB"""
+    battles = get_battles_collection()
+    battles.update_one({'user_id': user_id}, {'$set': {'player_level': level}}, upsert=True)
+
+def increment_player_level(user_id):
+    """Increment player level by 1"""
+    current_level = get_player_level(user_id)
+    new_level = current_level + 1
+    set_player_level(user_id, new_level)
+    return new_level
+
+def get_enemy_team_config(player_level):
+    """Get enemy team configuration based on player level"""
+    if player_level <= 5:
+        return {'pokemon_count': 3, 'cost_budget': 8}
+    elif player_level <= 10:
+        return {'pokemon_count': 3, 'cost_budget': 10}
+    elif player_level <= 15:
+        return {'pokemon_count': 4, 'cost_budget': 12}
+    elif player_level <= 20:
+        return {'pokemon_count': 4, 'cost_budget': 15}
+    elif player_level <= 25:
+        return {'pokemon_count': 5, 'cost_budget': 18}
+    else:
+        return {'pokemon_count': 6, 'cost_budget': 20}
+
+def generate_enemy_team(player_level):
+    """Generate enemy team based on player level"""
+    config = get_enemy_team_config(player_level)
+    pokemon_count = config['pokemon_count']
+    cost_budget = config['cost_budget']
+    
+    print(f"DEBUG: Generating enemy team for player level {player_level}")
+    print(f"DEBUG: Config - Pokemon count: {pokemon_count}, Cost budget: {cost_budget}")
+    
+    enemy_team = []
+    total_cost = 0
+    
+    enemy_pokemon_level = min(100, 50 + (player_level - 1))
+    
+    # Get all Pokémon with their costs
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT p.pokemon_id, p.name, p.cost, p.hp, p.atk, p.def, p.sp_atk, p.sp_def, p.speed
+        FROM Pokemon p 
+        WHERE p.cost <= ? 
+        ORDER BY RANDOM()
+    """, (cost_budget,))
+    
+    available_pokemon = cur.fetchall()
+    conn.close()
+    
+    print(f"DEBUG: Found {len(available_pokemon)} Pokémon within budget {cost_budget}")
+    
+    if not available_pokemon:
+        # Fallback to basic Pokémon if no suitable ones found
+        print("DEBUG: No Pokémon found within budget, using fallback")
+        fallback_ids = [25, 6, 9, 3, 12, 15]  # Pikachu, Charizard, Blastoise, Venusaur, Butterfree, Beedrill
+        for i in range(min(pokemon_count, len(fallback_ids))):
+            pokemon = fetch_pokemon_by_id(fallback_ids[i])
+            if pokemon:
+                pokemon['level'] = enemy_pokemon_level
+                enemy_team.append(pokemon)
+                print(f"DEBUG: Added fallback Pokémon: {pokemon['name']}")
+    else:
+        # Select Pokémon that fit within the budget
+        selected_pokemon = []
+        remaining_budget = cost_budget
+        
+        for pokemon_data in available_pokemon:
+            if len(selected_pokemon) >= pokemon_count:
+                break
+                
+            pokemon_id, name, cost, hp, atk, defense, sp_atk, sp_def, speed = pokemon_data
+            
+            # Check if we can afford this Pokémon
+            if cost <= remaining_budget:
+                pokemon = fetch_pokemon_by_id(pokemon_id)
+                if pokemon:
+                    pokemon['level'] = enemy_pokemon_level
+                    selected_pokemon.append(pokemon)
+                    remaining_budget -= cost
+                    print(f"DEBUG: Added Pokémon: {name} (cost: {cost}, remaining budget: {remaining_budget})")
+        
+        enemy_team = selected_pokemon
+    
+    # Ensure we have the required number of Pokémon
+    while len(enemy_team) < pokemon_count:
+        # Add random Pokémon if we don't have enough
+        random_pokemon = fetch_pokemon_by_id(random.randint(1, 1025))
+        if random_pokemon and random_pokemon not in enemy_team:
+            random_pokemon['level'] = enemy_pokemon_level
+            enemy_team.append(random_pokemon)
+            print(f"DEBUG: Added random Pokémon: {random_pokemon['name']}")
+    
+    print(f"DEBUG: Final enemy team ({len(enemy_team)} Pokémon): {[p['name'] for p in enemy_team]}")
+    return enemy_team

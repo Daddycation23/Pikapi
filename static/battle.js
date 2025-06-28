@@ -47,39 +47,93 @@ function updateBattleDisplay() {
         enemy_index: battleState.current_enemy_index
     });
     
+    // Update player level display
+    if (battleState.player_level) {
+        document.getElementById('player-level-display').textContent = battleState.player_level;
+    }
+    
     // Update player Pokemon display
     const player = battleState.player_pokemon;
     document.getElementById('player-name').textContent = player.name;
     document.getElementById('player-level').textContent = `Lv. ${player.level || 50}`;
-    document.getElementById('player-sprite').src = `/api/pokemon_image/${player.id}`;
+    const playerId = player.id || player.pokemon_id;
+    const playerSprite = document.getElementById('player-sprite');
+    if (playerId) {
+        playerSprite.src = `/api/pokemon_image/${playerId}`;
+        playerSprite.style.display = 'block';
+        playerSprite.onerror = function() { this.style.display = 'none'; };
+    } else {
+        playerSprite.style.display = 'none';
+    }
     
     // Use current_hp and max_hp from server, fallback to hp if not available
-    const playerCurrentHp = (typeof player.current_hp === 'number') ? Math.max(0, player.current_hp) : 0;
-    const playerMaxHp = player.max_hp || player.hp || 100;
-    updateHealthBar('player', playerCurrentHp, playerMaxHp);
-
+    const playerCurrentHp = (typeof player.current_hp === 'number') ? Math.max(0, player.current_hp) : player.hp;
+    const playerMaxHp = (typeof player.max_hp === 'number') ? player.max_hp : player.hp;
+    const playerHpPercent = Math.max(0, Math.min(100, (playerCurrentHp / playerMaxHp) * 100));
+    const playerHpBar = document.getElementById('player-health-fill');
+    if (playerHpBar) playerHpBar.style.width = playerHpPercent + '%';
+    const playerHpText = document.getElementById('player-health-text');
+    if (playerHpText) playerHpText.textContent = `${Math.round(playerCurrentHp)}/${Math.round(playerMaxHp)}`;
+    
     // Update enemy Pokemon display
     const enemy = battleState.enemy_pokemon;
     document.getElementById('enemy-name').textContent = enemy.name;
     document.getElementById('enemy-level').textContent = `Lv. ${enemy.level || 50}`;
-    document.getElementById('enemy-sprite').src = `/api/pokemon_image/${enemy.id}`;
+    const enemyId = enemy.id || enemy.pokemon_id;
+    const enemySprite = document.getElementById('enemy-sprite');
+    if (enemyId) {
+        enemySprite.src = `/api/pokemon_image/${enemyId}`;
+        enemySprite.style.display = 'block';
+        enemySprite.onerror = function() { this.style.display = 'none'; };
+    } else {
+        enemySprite.style.display = 'none';
+    }
     
-    // Use current_hp and max_hp from server, fallback to hp if not available
-    const enemyCurrentHp = (typeof enemy.current_hp === 'number') ? Math.max(0, enemy.current_hp) : 0;
-    const enemyMaxHp = enemy.max_hp || enemy.hp || 100;
-    updateHealthBar('enemy', enemyCurrentHp, enemyMaxHp);
-
-    // Update type badges for both Pokémon
-    updatePokemonTypes('player', player.id);
-    updatePokemonTypes('enemy', enemy.id);
-
-    // Update enemy team display
-    updateEnemyTeamDisplay();
-
+    const enemyCurrentHp = (typeof enemy.current_hp === 'number') ? Math.max(0, enemy.current_hp) : enemy.hp;
+    const enemyMaxHp = (typeof enemy.max_hp === 'number') ? enemy.max_hp : enemy.hp;
+    const enemyHpPercent = Math.max(0, Math.min(100, (enemyCurrentHp / enemyMaxHp) * 100));
+    const enemyHpBar = document.getElementById('enemy-health-fill');
+    if (enemyHpBar) enemyHpBar.style.width = enemyHpPercent + '%';
+    const enemyHpText = document.getElementById('enemy-health-text');
+    if (enemyHpText) enemyHpText.textContent = `${Math.round(enemyCurrentHp)}/${Math.round(enemyMaxHp)}`;
+    
+    // Update Pokemon type badges
+    updatePokemonTypes();
+    
+    // Update enemy team display (if you want to show enemy team)
+    if (battleState.enemy_team && document.getElementById('enemy-team-list')) {
+        const enemyTeamList = document.getElementById('enemy-team-list');
+        enemyTeamList.innerHTML = '';
+        battleState.enemy_team.forEach((poke, idx) => {
+            const pokeId = poke.id || poke.pokemon_id;
+            const pokeDiv = document.createElement('div');
+            pokeDiv.className = 'enemy-team-poke';
+            if (pokeId) {
+                pokeDiv.innerHTML = `<img src="/api/pokemon_image/${pokeId}" alt="${poke.name}" style="width:32px;height:32px;" onerror="this.style.display='none';"> <span>${poke.name}</span>`;
+            } else {
+                pokeDiv.innerHTML = `<span>${poke.name}</span>`;
+            }
+            enemyTeamList.appendChild(pokeDiv);
+        });
+        console.log('DEBUG: Enemy team:', battleState.enemy_team);
+    }
+    
+    // Update battle log
+    const battleLog = document.getElementById('battle-log');
+    battleLog.innerHTML = '';
+    battleState.battle_log.forEach(log => {
+        const logEntry = document.createElement('div');
+        logEntry.className = 'log-entry';
+        logEntry.textContent = log;
+        battleLog.appendChild(logEntry);
+    });
+    battleLog.scrollTop = battleLog.scrollHeight;
+    
     // Update move buttons
     updateMoveButtons();
     
-    console.log('Battle display updated successfully');
+    // Update team display
+    updateTeamDisplay();
 }
 
 function updateEnemyTeamDisplay() {
@@ -408,6 +462,19 @@ function useMove(moveIndex) {
         updateBattleDisplay();
         updateBattleLog();
         
+        // Handle level up if player won
+        if (data.battle_ended && data.winner === 'player' && data.new_level) {
+            console.log(`Player leveled up to level ${data.new_level}!`);
+            // Update the level display immediately
+            document.getElementById('player-level-display').textContent = data.new_level;
+            // Add a visual effect for level up
+            const levelDisplay = document.getElementById('player-level-display');
+            levelDisplay.style.animation = 'levelUp 0.5s ease-in-out';
+            setTimeout(() => {
+                levelDisplay.style.animation = '';
+            }, 500);
+        }
+        
         // Add a small delay to ensure UI updates are visible before any menu changes
         setTimeout(() => {
             if (data.battle_ended) {
@@ -540,27 +607,56 @@ window.addEventListener('unhandledrejection', function(e) {
     e.preventDefault();
 });
 
-// Function to update Pokémon type badges
-async function updatePokemonTypes(target, pokemonId) {
-    try {
-        const response = await fetch(`/api/pokemon/${pokemonId}`);
-        const data = await response.json();
-        
-        if (data.success && data.pokemon && data.pokemon.type) {
-            const typesContainer = document.getElementById(`${target}-types`);
-            const typeBadges = data.pokemon.type.map(type => 
-                `<span class="type-badge type-${type.toLowerCase()}">${type}</span>`
-            ).join('');
-            typesContainer.innerHTML = typeBadges;
-        } else {
-            // Fallback to default type if API fails
-            const typesContainer = document.getElementById(`${target}-types`);
-            typesContainer.innerHTML = '<span class="type-badge type-normal">Normal</span>';
+// Function to update Pokémon type badges for both player and enemy
+async function updatePokemonTypes() {
+    if (!battleState) return;
+    
+    // Update player types
+    const playerId = battleState.player_pokemon?.id || battleState.player_pokemon?.pokemon_id;
+    if (playerId) {
+        try {
+            const response = await fetch(`/api/pokemon/${playerId}`);
+            const data = await response.json();
+            
+            if (data.success && data.pokemon && data.pokemon.type) {
+                const typesContainer = document.getElementById('player-types');
+                if (typesContainer) {
+                    const typeBadges = data.pokemon.type.map(type => 
+                        `<span class="type-badge type-${type.toLowerCase()}">${type}</span>`
+                    ).join('');
+                    typesContainer.innerHTML = typeBadges;
+                }
+            }
+        } catch (error) {
+            console.error('Error fetching player Pokémon types:', error);
         }
-    } catch (error) {
-        console.error(`Error fetching ${target} Pokémon types:`, error);
-        // Fallback to default type if API fails
-        const typesContainer = document.getElementById(`${target}-types`);
-        typesContainer.innerHTML = '<span class="type-badge type-normal">Normal</span>';
     }
+    
+    // Update enemy types
+    const enemyId = battleState.enemy_pokemon?.id || battleState.enemy_pokemon?.pokemon_id;
+    if (enemyId) {
+        try {
+            const response = await fetch(`/api/pokemon/${enemyId}`);
+            const data = await response.json();
+            
+            if (data.success && data.pokemon && data.pokemon.type) {
+                const typesContainer = document.getElementById('enemy-types');
+                if (typesContainer) {
+                    const typeBadges = data.pokemon.type.map(type => 
+                        `<span class="type-badge type-${type.toLowerCase()}">${type}</span>`
+                    ).join('');
+                    typesContainer.innerHTML = typeBadges;
+                }
+            }
+        } catch (error) {
+            console.error('Error fetching enemy Pokémon types:', error);
+        }
+    }
+}
+
+// Function to update team display (placeholder for now)
+function updateTeamDisplay() {
+    // This function can be expanded later to show team status
+    // For now, it's just a placeholder to prevent errors
+    console.log('DEBUG: Team display updated');
 } 

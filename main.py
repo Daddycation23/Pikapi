@@ -42,5 +42,19 @@ Session(app)
 
 register_routes(app)
 
+def get_enemy_team_config(player_level):
+    """Get enemy team configuration based on player level"""
+    # Team size increases at certain milestones, but cost budget always increases
+    if player_level <= 5:
+        pokemon_count = 3
+    elif player_level <= 10:
+        pokemon_count = 4
+    elif player_level <= 20:
+        pokemon_count = 5
+    else:
+        pokemon_count = 6
+    cost_budget = 7 + player_level  # Start at 8, +1 per level
+    return {'pokemon_count': pokemon_count, 'cost_budget': cost_budget}
+
 if __name__ == '__main__':
     app.run(debug=True)

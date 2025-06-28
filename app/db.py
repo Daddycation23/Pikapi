@@ -176,6 +176,7 @@ def fetch_pokemon_by_id(pokemon_id):
     
     result = {
         'id': row['pokemon_id'],
+        'pokemon_id': row['pokemon_id'],
         'name': row['name'],
         'img': f"/api/pokemon_image/{row['pokemon_id']}",
         'cost': row['cost'],
