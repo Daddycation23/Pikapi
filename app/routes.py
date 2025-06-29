@@ -1,11 +1,10 @@
 from flask import render_template, request, jsonify, session, Response, abort, make_response, redirect, url_for
 from app.db import fetch_pokemon, fetch_pokemon_by_id, get_db_connection, save_team as db_save_team, get_team as db_get_team, list_teams, get_team_by_id, save_team_by_id, create_team, get_move_data, get_type_effectiveness, get_pokemon_full_data
-#from app.mongo_client import get_player_profiles_collection, get_teams_collection
+from app.mongo_client import get_player_profiles_collection, get_battles_collection
 import bcrypt
 from datetime import datetime
 import sqlite3
 import random
-from app.mongo_client import get_battles_collection
 import math
 
 
@@ -36,6 +35,14 @@ def register_routes(app):
     def player():
         # This should be the team building interface for logged-in users
         return render_template('player.html')
+
+    @app.route('/profile')
+    def profile_page():
+        user_id = session.get('user_id')
+        username = session.get('username')
+        if not user_id or not username:
+            return redirect(url_for('home'))
+        return render_template('profile.html')
 
     @app.route('/edit_team')
     def edit_team():
@@ -117,8 +124,7 @@ def register_routes(app):
         data = request.json
         username = data.get('username')
         password = data.get('password')
-        email = data.get('email')  # <-- get email
-
+        email = data.get('email')
         if not username or not password or not email:
             return jsonify({'error': 'Username, password, and email required'}), 400
 
@@ -137,7 +143,25 @@ def register_routes(app):
                 "INSERT INTO Player (username, email, password_hash, registration_date) VALUES (?, ?, ?, CURRENT_TIMESTAMP)",
                 (username, email, password_hash)
             )
+            player_id = cur.lastrowid
             conn.commit()
+
+        profiles = get_player_profiles_collection()
+        profiles.insert_one({
+            "_id": player_id,
+            "statistics": {
+                "total_wins": 0,
+                "total_losses": 0,
+                "most_used_team_id": None,
+                "most_used_pokemon_id": None
+            },
+            "preferences": {
+                "sound": True,
+                "theme": "light"
+            },
+            "last_battle_id": None
+        })
+
         return jsonify({'success': True})
 
     @app.route('/api/login', methods=['POST'])
@@ -155,7 +179,6 @@ def register_routes(app):
             if not user:
                 return jsonify({'error': 'Invalid credentials'}), 401
 
-            # password_hash is stored as bytes in SQLite, so ensure correct type
             db_hash = user['password_hash']
             if isinstance(db_hash, str):
                 db_hash = db_hash.encode('utf-8')
@@ -815,6 +838,28 @@ def register_routes(app):
             
         except Exception as e:
             return jsonify({'success': False, 'error': str(e)})
+
+    @app.route('/api/profile')
+    def api_profile():
+        user_id = session.get('user_id')
+        if not user_id:
+            return jsonify({'success': False, 'error': 'Not logged in'}), 401
+        profiles = get_player_profiles_collection()
+        profile = profiles.find_one({'_id': int(user_id)})
+        if not profile:
+            return jsonify({'success': False, 'error': 'Profile not found'}), 404
+
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute("SELECT username FROM Player WHERE player_id = ?", (user_id,))
+        row = cur.fetchone()
+        conn.close()
+        username = row['username'] if row else ''
+
+        profile['_id'] = str(profile['_id'])
+        profile['username'] = username  # Add username to profile
+
+        return jsonify({'success': True, 'profile': profile})
 
     @app.route('/api/pokemon/<int:pokemon_id>/moves')
     def get_pokemon_moves(pokemon_id):

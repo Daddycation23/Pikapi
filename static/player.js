@@ -7,13 +7,21 @@ let currentTeamIndex = 0;
 // Update UI for logged-in user
 function updateAuthUI(username) {
   if (username) {
-    authSection.innerHTML = `<span style='margin-right:15px;'>Welcome, <b>${username}</b>!</span><button class='auth-button' id='logout-btn'>Logout</button>`;
+    authSection.innerHTML = `
+      <button class="auth-button" id="profile-btn" style="background:#4CAF50;color:white;">
+        <span style="font-size:18px;vertical-align:middle;">👤</span> <span style="font-weight:bold;margin-right:10px;">${username}</span>
+      </button>
+      <button class="auth-button" id="logout-btn" style="margin-left:10px;">Logout</button>
+    `;
     document.getElementById('logout-btn').onclick = async function() {
       const response = await fetch('/api/logout', { method: 'POST' });
       const data = await response.json();
       if (data.success) {
         window.location.href = '/';
       }
+    };
+    document.getElementById('profile-btn').onclick = function() {
+      window.location.href = '/profile';
     };
   } else {
     // User not logged in, redirect to home
@@ -134,4 +142,4 @@ document.addEventListener('DOMContentLoaded', () => {
   setupTeamTabs();
   setupEditTeamButtons();
   setupBattleButton();
-}); 
+});

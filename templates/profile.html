@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Player Profile</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='common.css')}}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='index.css')}}">
+    <style>
+        body {
+            background: linear-gradient(120deg, #e0eafc 0%, #cfdef3 100%);
+            min-height: 100vh;
+        }
+        .profile-card {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 24px 20px 20px 20px;
+            box-shadow: 0 2px 8px rgba(44,62,80,0.10);
+
+            max-width: 1100px;
+            width: 100%;
+            margin: 48px auto 0 auto;
+            text-align: center;
+            border: 2px solid #dee2e6;
+        }
+        .profile-avatar {
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 12px auto;
+            background: linear-gradient(135deg, #4CAF50 60%, #2196F3 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 60px;
+            color: white;
+            box-shadow: 0 2px 8px rgba(44,62,80,0.10);
+        }
+        .profile-username {
+            margin-bottom: 32px;
+            margin-top: 8px;
+            font-size: 2em;
+            font-weight: 700;
+            color: #2196F3;
+            text-align: center;
+            padding-left: 0;
+            letter-spacing: 1px;
+        }
+        @media (max-width: 600px) {
+            .profile-username {
+                font-size: 1.3em;
+                padding-left: 0;
+                text-align: center;
+            }
+        }
+        .profile-content-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 32px;
+            width: 100%;
+            margin-top: 30px;
+        }
+        .profile-section {
+            width: 100%;
+            max-width: 900px;
+            margin: 0 auto;
+            text-align: left;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 8px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+            padding: 28px 32px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            border: 1px solid rgba(255,255,255,0.8);
+            position: relative;
+            overflow: hidden;
+        }
+        .profile-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            border-radius: 8px 8px 0 0;
+        }
+        .profile-section h2 {
+            font-size: 1.05em;
+            color: #2196F3;
+            margin-bottom: 8px;
+            letter-spacing: 0.5px;
+        }
+        .profile-section ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .profile-section li {
+            margin-bottom: 7px;
+            font-size: 1em;
+            display: flex;
+            justify-content: space-between;
+        }
+        .profile-label {
+            color: #888;
+        }
+        .profile-value {
+            font-weight: 600;
+            color: #222;
+        }
+        .profile-badge {
+            display: inline-block;
+            background: #4CAF50;
+            color: #fff;
+            border-radius: 12px;
+            padding: 2px 10px;
+            font-size: 0.95em;
+            margin-left: 8px;
+        }
+        .profile-back-btn {
+            margin-top: 24px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 10px 28px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s, box-shadow 0.2s;
+            box-shadow: 0 2px 8px rgba(44,62,80,0.10);
+        }
+        .profile-back-btn:hover {
+            background: #388e3c;
+        }
+        @media (max-width: 900px) {
+            .profile-card {
+                max-width: 98vw;
+                padding: 12px 2vw 12px 2vw;
+            }
+            .profile-content-wrapper {
+                flex-direction: column;
+                gap: 18px;
+            }
+            .profile-section {
+                width: 100%;
+            }
+        }
+        @media (max-width: 950px) {
+            .profile-section {
+                max-width: 98vw;
+                padding: 18px 2vw;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="profile-card" style="position: relative; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 16px; padding: 0; overflow: hidden; box-shadow: 0 8px 32px rgba(0,0,0,0.1);">
+            <button class="profile-back-btn" style="position: absolute; left: 24px; top: 24px; z-index: 2; background: rgba(255,255,255,0.9); color: #333;" onclick="window.location.href='/player'">← Back to Team Builder</button>
+
+            <div style="background: rgba(255,255,255,0.95); padding: 48px 32px 32px 32px; text-align: center; border-bottom: 1px solid rgba(0,0,0,0.05); position: relative; z-index: 1;">
+                <img src="/static/images/25.png" alt="Pikachu" style="position: absolute; left: 50%; top: 50%; width: 200px; height: 200px; opacity: 0.25; transform: translate(-50%, -50%); pointer-events: none; z-index: 0;" />
+                <img src="/static/images/6.png" alt="Charizard" style="position: absolute; left: 20%; top: 30%; width: 120px; height: 120px; opacity: 0.2; transform: translate(-50%, -50%); pointer-events: none; z-index: 0;" />
+                <img src="/static/images/9.png" alt="Blastoise" style="position: absolute; right: 20%; top: 70%; width: 100px; height: 100px; opacity: 0.2; transform: translate(-50%, -50%); pointer-events: none; z-index: 0;" />
+                <img src="/static/images/1.png" alt="Bulbasaur" style="position: absolute; left: 30%; bottom: 20%; width: 80px; height: 80px; opacity: 0.15; transform: translate(-50%, -50%); pointer-events: none; z-index: 0;" />
+                <img src="/static/images/4.png" alt="Charmander" style="position: absolute; right: 30%; top: 20%; width: 90px; height: 90px; opacity: 0.18; transform: translate(-50%, -50%); pointer-events: none; z-index: 0;" />
+                <img src="/static/images/7.png" alt="Squirtle" style="position: absolute; right: 5%; top: 50%; width: 110px; height: 110px; opacity: 0.22; transform: translate(-50%, -50%); pointer-events: none; z-index: 0;" />
+                <img src="/static/images/133.png" alt="Eevee" style="position: absolute; left: 5%; bottom: -5%; width: 85px; height: 85px; opacity: 0.16; transform: translate(-50%, -50%); pointer-events: none; z-index: 0;" />
+                <img src="/static/images/16.png" alt="Pidgey" style="position: absolute; left: 15%; bottom: -25%; width: 70px; height: 70px; opacity: 0.14; transform: translate(-50%, -50%); pointer-events: none; z-index: 0;" />
+                <img src="/static/images/19.png" alt="Rattata" style="position: absolute; right: 15%; bottom: -20%; width: 75px; height: 75px; opacity: 0.13; transform: translate(-50%, -50%); pointer-events: none; z-index: 0;" />
+                <img src="/static/images/10.png" alt="Caterpie" style="position: absolute; left: 45%; bottom: -12%; width: 65px; height: 65px; opacity: 0.12; transform: translate(-50%, -50%); pointer-events: none; z-index: 0;" />
+                <div style="position: relative; z-index: 1;">
+                    <div style="font-size: 2.8em; color: #ff6b35; font-weight: 700; font-family: 'Inter', 'Arial', sans-serif; letter-spacing: 0.5px; margin-bottom: 8px; text-shadow: 0 2px 4px rgba(255,107,53,0.2);">⚡ Welcome <span class="profile-username" id="profile-username" style="font-size: 1em; font-weight: 900; background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; letter-spacing: 1.5px; font-family: 'Inter', 'Arial', sans-serif; text-shadow: 0 4px 8px rgba(0,0,0,0.1);"><span id="profile-username-text"></span></span> ⚡</div>
+                </div>
+            </div>
+
+            <div style="background: #fff; padding: 32px; position: relative; z-index: 1;">
+                <div class="profile-content-wrapper" id="profile-content-wrapper"></div>
+            </div>
+        </div>
+    </div>
+    <script src="{{ url_for('static', filename='profile.js') }}"></script>
+</body>
+</html>
