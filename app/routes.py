@@ -940,6 +940,52 @@ def register_routes(app):
             'type_name': row['type_name']
         })
 
+    @app.route('/type_effectiveness')
+    def type_effectiveness():
+        return render_template('type_effectiveness.html')
+
+    @app.route('/api/type_effectiveness/<type_name>')
+    def get_type_effectiveness_data(type_name):
+        try:
+            conn = get_db_connection()
+            cur = conn.cursor()
+            
+            # Get the type ID for the given type name
+            cur.execute("SELECT type_id FROM Type WHERE LOWER(type_name) = LOWER(?)", (type_name,))
+            type_row = cur.fetchone()
+            if not type_row:
+                return jsonify({'error': f'Type "{type_name}" not found'}), 404
+            
+            attacking_type_id = type_row['type_id']
+            
+            # Get all effectiveness relationships for this type
+            cur.execute("""
+                SELECT t.type_name as defending_type, te.effectiveness
+                FROM TypeEffectiveness te
+                JOIN Type t ON t.type_id = te.defending_type_id
+                WHERE te.attacking_type_id = ?
+                ORDER BY t.type_name
+            """, (attacking_type_id,))
+            
+            # Organize results by effectiveness
+            effectiveness_data = {
+                '2': [],    # Super effective
+                '0.5': [],  # Not very effective
+                '0': [],    # No effect
+                '1': []     # Normal damage
+            }
+            
+            for row in cur.fetchall():
+                eff_key = str(row['effectiveness'])
+                effectiveness_data[eff_key].append(row['defending_type'])
+            
+            conn.close()
+            return jsonify(effectiveness_data)
+            
+        except Exception as e:
+            print(f"Error getting type effectiveness data: {e}")
+            return jsonify({'error': 'Failed to get type effectiveness data'}), 500
+
 def calculate_damage(attacker, defender, move_name):
     """Calculate damage based on Pokemon stats and move"""
     base_damage = 20

@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Type Effectiveness Chart - Pikapi</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='common.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='type_effectiveness.css') }}">
+</head>
+<body class="index-pokemon-bg">
+    <div class="container">
+        <a href="{{ url_for('home') }}" class="auth-button back-btn">← Back to Home</a>
+        
+        <div class="type-chart-container">
+            <div class="type-wheel-container">
+                <div style="position: relative; width: 400px; height: 400px;">
+                    <canvas id="typeWheelCanvas" width="400" height="400" style="display: block;"></canvas>
+                </div>
+            </div>
+            
+            <div class="type-effectiveness-display">
+                <div class="selected-type">
+                    <h2>Selected Type</h2>
+                    <div class="type-badge">Select a type</div>
+                </div>
+                
+                <div class="effectiveness-sections">
+                    <div class="effectiveness-section" data-effectiveness="2">
+                        <h3>Super Effective (2x)</h3>
+                        <div class="type-list"></div>
+                    </div>
+                    
+                    <div class="effectiveness-section" data-effectiveness="0.5">
+                        <h3>Not Very Effective (0.5x)</h3>
+                        <div class="type-list"></div>
+                    </div>
+                    
+                    <div class="effectiveness-section" data-effectiveness="0">
+                        <h3>No Effect (0x)</h3>
+                        <div class="type-list"></div>
+                    </div>
+                    
+                    <div class="effectiveness-section" data-effectiveness="1">
+                        <h3>Normal Damage (1x)</h3>
+                        <div class="type-list"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="{{ url_for('static', filename='type_effectiveness.js') }}"></script>
+</body>
+</html> 

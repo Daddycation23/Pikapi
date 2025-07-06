@@ -1,0 +1,221 @@
+.type-effectiveness-main {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.type-chart-container {
+    display: flex;
+    gap: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+    align-items: flex-start;
+    flex: 1;
+    position: relative;
+    min-height: 500px;
+}
+
+.type-wheel-container {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-width: 420px;
+    max-width: 420px;
+    min-height: 420px;
+    max-height: 420px;
+    box-sizing: border-box;
+}
+
+#typeWheelCanvas {
+    display: block;
+    margin: 0 auto;
+    background: white;
+    border-radius: 50%;
+    box-shadow: var(--shadow-medium);
+    width: 400px !important;
+    height: 400px !important;
+    min-width: 400px;
+    min-height: 400px;
+    max-width: 400px;
+    max-height: 400px;
+}
+
+.type-wheel {
+    width: 400px;
+    height: 400px;
+    position: relative;
+    border-radius: 50%;
+    background: white;
+}
+
+.type-slice {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    width: 50%;
+    height: 50%;
+    transform-origin: 0% 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    clip-path: polygon(0 0, 100% 0, 0 100%);
+    transition: filter var(--transition-fast);
+}
+
+.type-slice:hover {
+    filter: brightness(1.1);
+    z-index: 1;
+}
+
+.type-slice span {
+    position: absolute;
+    color: white;
+    font-weight: bold;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+    font-size: 0.9rem;
+    transform-origin: left;
+    white-space: nowrap;
+    left: 30%;
+    bottom: 50%;
+}
+
+.type-effectiveness-display {
+    flex: 1;
+    background: var(--background-card);
+    padding: 0.7rem 1rem 0.7rem 1rem;
+    border-radius: var(--border-radius-lg);
+    max-width: 600px;
+    min-width: 400px;
+    font-size: 0.97rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    min-height: 400px;
+    overflow-y: visible;
+    box-sizing: border-box;
+}
+
+.selected-type {
+    text-align: center;
+    margin-bottom: 1.2rem;
+}
+
+.selected-type h2 {
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+    font-size: 1.1rem;
+}
+
+.type-badge {
+    display: inline-block;
+    padding: 0.3rem 1rem;
+    border-radius: var(--border-radius-md);
+    font-weight: bold;
+    color: white;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+    margin-top: 0.5rem;
+    font-size: 0.98rem;
+}
+
+.effectiveness-sections {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.effectiveness-section {
+    background: var(--background-light);
+    padding: 0.7rem 0.7rem 0.5rem 0.7rem;
+    border-radius: var(--border-radius-md);
+    margin-bottom: 0.2rem;
+    transition: none !important;
+    flex-shrink: 0;
+    box-sizing: border-box;
+}
+
+.effectiveness-section h3 {
+    margin: 0 0 0.5rem 0;
+    color: var(--text-primary);
+    font-size: 0.98rem;
+}
+
+.type-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+}
+
+.type-list .type-badge {
+    margin: 0;
+    padding: 0.18rem 0.7rem;
+    padding: 0.25rem 1rem;
+    font-size: 0.9rem;
+}
+
+.back-btn {
+    margin: 1rem;
+    background-color: var(--secondary-color);
+    color: white;
+}
+
+.back-btn:hover {
+    background-color: var(--secondary-hover);
+}
+
+.error-message {
+    color: #ff6b6b;
+    text-align: center;
+    padding: 1rem;
+    font-style: italic;
+}
+
+/* Fancy font for wheel types (canvas) */
+@import url('https://fonts.googleapis.com/css2?family=Luckiest+Guy&family=Fredoka+One&display=swap');
+.type-wheel-fancy-font {
+    font-family: 'Luckiest Guy', 'Fredoka One', 'Comic Sans MS', cursive, sans-serif;
+}
+
+/* Canvas hover effect handled in JS, but reserve a class for future use */
+.type-wheel-canvas-hover {
+    filter: brightness(1.15) drop-shadow(0 0 8px #fff2);
+}
+
+/* Responsive design */
+@media (max-width: 1024px) {
+    .type-chart-container {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .type-wheel {
+        width: 350px;
+        height: 350px;
+    }
+    
+    .type-effectiveness-display {
+        max-width: 95vw;
+        min-width: 0;
+        padding: 0.7rem;
+    }
+}
+
+body.index-pokemon-bg {
+    background: linear-gradient(135deg, #e0e7ff 0%, #f8fafc 100%) fixed;
+    min-height: 100vh;
+    position: relative;
+}
+body.index-pokemon-bg::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: -1;
+    background: url('/static/images/pokemon-bg.png') repeat;
+    opacity: 0.13;
+    pointer-events: none;
+} 
