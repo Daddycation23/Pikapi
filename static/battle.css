@@ -136,8 +136,10 @@ body {
     .battle-log {
         grid-column: 1;
         grid-row: 5;
+        height: 150px;
         max-height: 150px;
         padding: 15px;
+        overflow-y: auto;
     }
     
     .move-selection {
@@ -165,7 +167,16 @@ body {
     }
     
     .pokemon-list {
-        grid-template-columns: 1fr;
+        gap: 10px;
+        max-width: 100%;
+        padding: 8px 0;
+    }
+    
+    .pokemon-item {
+        min-width: 180px;
+        width: 200px;
+        padding: 12px;
+        gap: 12px;
     }
     
     /* Mobile team display */
@@ -261,8 +272,10 @@ body {
     }
     
     .battle-log {
+        height: 120px;
         max-height: 120px;
         padding: 10px;
+        overflow-y: auto;
     }
     
     .log-message {
@@ -302,6 +315,32 @@ body {
     .swap-in-btn {
         padding: 2px 4px;
         font-size: 8px;
+    }
+    
+    .pokemon-list {
+        gap: 8px;
+        max-width: 100%;
+        padding: 6px 0;
+    }
+    
+    .pokemon-item {
+        padding: 10px;
+        gap: 10px;
+        min-width: 160px;
+        width: 180px;
+    }
+    
+    .pokemon-item img {
+        width: 40px;
+        height: 40px;
+    }
+    
+    .pokemon-item .name {
+        font-size: 14px;
+    }
+    
+    .pokemon-item .health {
+        font-size: 12px;
     }
 }
 
@@ -392,8 +431,39 @@ body {
     justify-content: flex-start;
     min-height: 400px;
     max-height: calc(100vh - 200px); /* Prevent overflow */
-    overflow: hidden;
+    overflow-y: auto;
     box-sizing: border-box;
+    cursor: grab;
+    user-select: none;
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+}
+
+.battle-scene.dragging {
+    cursor: grabbing;
+}
+
+.battle-scene.dragging .enemy-pokemon,
+.battle-scene.dragging .player-pokemon {
+    pointer-events: none;
+}
+
+.battle-scene::-webkit-scrollbar {
+    width: 8px;
+}
+
+.battle-scene::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+}
+
+.battle-scene::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 4px;
+}
+
+.battle-scene::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.5);
 }
 
 .enemy-pokemon {
@@ -682,11 +752,45 @@ body {
 }
 
 .pokemon-list {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    display: flex;
     gap: 15px;
     width: 100%;
-    max-width: 600px;
+    max-width: 800px;
+    overflow-x: auto;
+    scroll-behavior: smooth;
+    padding: 10px 0;
+    -webkit-overflow-scrolling: touch;
+}
+
+.pokemon-list::-webkit-scrollbar {
+    height: 8px;
+}
+
+.pokemon-list::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+}
+
+.pokemon-list::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 4px;
+}
+
+.pokemon-list::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.5);
+}
+
+.pokemon-list {
+    cursor: grab;
+    user-select: none;
+}
+
+.pokemon-list.dragging {
+    cursor: grabbing;
+}
+
+.pokemon-list.dragging .pokemon-item {
+    pointer-events: none;
 }
 
 .pokemon-item {
@@ -699,6 +803,9 @@ body {
     cursor: pointer;
     transition: all 0.2s ease;
     border: 1px solid rgba(255, 255, 255, 0.2);
+    flex-shrink: 0;
+    min-width: 200px;
+    width: 250px;
 }
 
 .pokemon-item:hover {
@@ -735,7 +842,8 @@ body {
     padding: 20px;
     backdrop-filter: blur(10px);
     border: 1px solid rgba(255, 255, 255, 0.2);
-    max-height: 100%;
+    height: calc(100vh - 200px);
+    max-height: 600px;
     overflow-y: auto;
     display: flex;
     flex-direction: column;
@@ -758,6 +866,19 @@ body {
 
 .battle-log::-webkit-scrollbar-thumb:hover {
     background: rgba(255, 255, 255, 0.5);
+}
+
+.battle-log {
+    cursor: grab;
+    user-select: none;
+}
+
+.battle-log.dragging {
+    cursor: grabbing;
+}
+
+.battle-log.dragging .log-message {
+    pointer-events: none;
 }
 
 .log-message {
@@ -799,6 +920,41 @@ body {
     flex: 1;
     min-height: 0;
     overflow-y: auto;
+    cursor: grab;
+    user-select: none;
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+}
+
+.enemy-team-display.dragging, .player-team-display.dragging {
+    cursor: grabbing;
+}
+
+.enemy-team-display.dragging .enemy-team-item, 
+.player-team-display.dragging .player-team-item {
+    pointer-events: none;
+}
+
+.enemy-team-display::-webkit-scrollbar, 
+.player-team-display::-webkit-scrollbar {
+    width: 8px;
+}
+
+.enemy-team-display::-webkit-scrollbar-track, 
+.player-team-display::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+}
+
+.enemy-team-display::-webkit-scrollbar-thumb, 
+.player-team-display::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 4px;
+}
+
+.enemy-team-display::-webkit-scrollbar-thumb:hover, 
+.player-team-display::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.5);
 }
 
 .team-title {

@@ -460,6 +460,11 @@ body {
     align-items: center;
     gap: 8px;
     color: white;
+    background: var(--danger-color);
+}
+
+.battle-btn:hover {
+    background: var(--danger-hover);
 }
 
 .battle-btn:hover {

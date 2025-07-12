@@ -6,6 +6,7 @@ let eventListenersSetup = false;
 document.addEventListener('DOMContentLoaded', () => {
     initializeBattle();
     setupEventListeners();
+    setupAllDragScrolling();
 });
 
 function initializeBattle() {
@@ -504,6 +505,150 @@ function populatePokemonList() {
         
         pokemonList.appendChild(pokemonItem);
     });
+    
+    // Setup drag scrolling for the Pokemon list
+    setupDragScrolling(pokemonList);
+}
+
+// Drag scrolling functionality for Pokemon selection
+function setupDragScrolling(element) {
+    let isDown = false;
+    let startX;
+    let scrollLeft;
+    
+    element.addEventListener('mousedown', (e) => {
+        isDown = true;
+        element.classList.add('dragging');
+        startX = e.pageX - element.offsetLeft;
+        scrollLeft = element.scrollLeft;
+        element.style.cursor = 'grabbing';
+    });
+    
+    element.addEventListener('mouseleave', () => {
+        isDown = false;
+        element.classList.remove('dragging');
+        element.style.cursor = 'grab';
+    });
+    
+    element.addEventListener('mouseup', () => {
+        isDown = false;
+        element.classList.remove('dragging');
+        element.style.cursor = 'grab';
+    });
+    
+    element.addEventListener('mousemove', (e) => {
+        if (!isDown) return;
+        e.preventDefault();
+        const x = e.pageX - element.offsetLeft;
+        const walk = (x - startX) * 2; // Adjust scroll speed
+        element.scrollLeft = scrollLeft - walk;
+    });
+    
+    // Touch events for mobile
+    element.addEventListener('touchstart', (e) => {
+        isDown = true;
+        startX = e.touches[0].pageX - element.offsetLeft;
+        scrollLeft = element.scrollLeft;
+    });
+    
+    element.addEventListener('touchmove', (e) => {
+        if (!isDown) return;
+        e.preventDefault();
+        const x = e.touches[0].pageX - element.offsetLeft;
+        const walk = (x - startX) * 2;
+        element.scrollLeft = scrollLeft - walk;
+    });
+    
+    element.addEventListener('touchend', () => {
+        isDown = false;
+    });
+    
+    // Set initial cursor
+    element.style.cursor = 'grab';
+}
+
+// Setup drag scrolling for all scrollable areas
+function setupAllDragScrolling() {
+    // Battle scene
+    const battleScene = document.querySelector('.battle-scene');
+    if (battleScene) {
+        setupVerticalDragScrolling(battleScene);
+    }
+    
+    // Enemy team display
+    const enemyTeamDisplay = document.querySelector('.enemy-team-display');
+    if (enemyTeamDisplay) {
+        setupVerticalDragScrolling(enemyTeamDisplay);
+    }
+    
+    // Player team display
+    const playerTeamDisplay = document.querySelector('.player-team-display');
+    if (playerTeamDisplay) {
+        setupVerticalDragScrolling(playerTeamDisplay);
+    }
+    
+    // Battle log
+    const battleLog = document.querySelector('.battle-log');
+    if (battleLog) {
+        setupVerticalDragScrolling(battleLog);
+    }
+}
+
+// Vertical drag scrolling functionality for battle areas
+function setupVerticalDragScrolling(element) {
+    let isDown = false;
+    let startY;
+    let scrollTop;
+    
+    element.addEventListener('mousedown', (e) => {
+        isDown = true;
+        element.classList.add('dragging');
+        startY = e.pageY - element.offsetTop;
+        scrollTop = element.scrollTop;
+        element.style.cursor = 'grabbing';
+    });
+    
+    element.addEventListener('mouseleave', () => {
+        isDown = false;
+        element.classList.remove('dragging');
+        element.style.cursor = 'grab';
+    });
+    
+    element.addEventListener('mouseup', () => {
+        isDown = false;
+        element.classList.remove('dragging');
+        element.style.cursor = 'grab';
+    });
+    
+    element.addEventListener('mousemove', (e) => {
+        if (!isDown) return;
+        e.preventDefault();
+        const y = e.pageY - element.offsetTop;
+        const walk = (y - startY) * 2; // Adjust scroll speed
+        element.scrollTop = scrollTop - walk;
+    });
+    
+    // Touch events for mobile
+    element.addEventListener('touchstart', (e) => {
+        isDown = true;
+        startY = e.touches[0].pageY - element.offsetTop;
+        scrollTop = element.scrollTop;
+    });
+    
+    element.addEventListener('touchmove', (e) => {
+        if (!isDown) return;
+        e.preventDefault();
+        const y = e.touches[0].pageY - element.offsetTop;
+        const walk = (y - startY) * 2;
+        element.scrollTop = scrollTop - walk;
+    });
+    
+    element.addEventListener('touchend', () => {
+        isDown = false;
+    });
+    
+    // Set initial cursor
+    element.style.cursor = 'grab';
 }
 
 function useMove(moveIndex) {
