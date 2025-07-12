@@ -1,3 +1,4 @@
+from re import S
 from flask import render_template, request, jsonify, session, Response, abort, make_response, redirect, url_for
 from app.db import fetch_pokemon, fetch_pokemon_by_id, get_db_connection, save_team as db_save_team, get_team as db_get_team, list_teams, get_team_by_id, save_team_by_id, create_team, get_move_data, get_type_effectiveness, get_pokemon_full_data
 from app.mongo_client import (
@@ -12,6 +13,7 @@ from app.mongo_client import (
 import bcrypt
 from datetime import datetime
 import random
+import json
 
 def register_routes(app):
     @app.route('/')
@@ -159,7 +161,7 @@ def register_routes(app):
             'current_enemy_team': enemy_team,
             'statistics.total_wins': 0,
             'statistics.total_losses': 0,
-            'statistics.most_used_team_id': None,
+            'statistics.most_used_team': None,
             'statistics.most_used_pokemon_id': None
         })
 
@@ -591,21 +593,15 @@ def register_routes(app):
                 # --- MongoDB stats update for win ---
                 profiles = get_player_profiles_collection()
                 user_id = user['_id']
-                # Ensure correct type and profile existence
                 profile = get_or_create_player_profile(user_id)
-                profiles.update_one({'_id': user_id}, {'$inc': {'statistics.total_wins': 1}})
-                # Team usage
-                team_id = None
-                if 'team_id' in battle_state:
-                    team_id = battle_state['team_id']
-                elif 'team_id' in data:
-                    team_id = data['team_id']
-                if team_id is not None:
-                    profiles.update_one({'_id': user_id}, {f'$inc': {f'team_usage.{team_id}': 1}}, upsert=True)
-                # Pokémon usage
+                # Get the current team composition as a list of Pokémon IDs
                 player_team = battle_state.get('player_team', [])
-                for poke in player_team:
-                    poke_id = poke.get('id') or poke.get('pokemon_id')
+                team_comp = [poke.get('id') or poke.get('pokemon_id') for poke in player_team]
+                team_key = json.dumps(team_comp)  # Use as a string key
+                # Increment usage count for this composition
+                profiles.update_one({'_id': user_id}, {f'$inc': {f'team_usage.{team_key}': 1}}, upsert=True)
+                # Pokémon usage
+                for poke_id in team_comp:
                     if poke_id is not None:
                         profiles.update_one({'_id': user_id}, {f'$inc': {f'pokemon_usage.{poke_id}': 1}}, upsert=True)
                 # Update most used team and Pokémon
@@ -616,9 +612,15 @@ def register_routes(app):
                 else:
                     team_usage = {}
                     pokemon_usage = {}
-                most_used_team_id = max(team_usage, key=lambda k: team_usage[k]) if team_usage else None
+                print('DEBUG: team_usage', team_usage)
+                print('DEBUG: pokemon_usage', pokemon_usage)
+                most_used_team_key = max(team_usage, key=lambda k: team_usage[k]) if team_usage else None
+                most_used_team = json.loads(most_used_team_key) if most_used_team_key else []
                 most_used_pokemon_id = max(pokemon_usage, key=lambda k: pokemon_usage[k]) if pokemon_usage else None
-                profiles.update_one({'_id': user_id}, {'$set': {'statistics.most_used_team_id': most_used_team_id, 'statistics.most_used_pokemon_id': most_used_pokemon_id}})
+                print('DEBUG: most_used_team', most_used_team)
+                print('DEBUG: most_used_pokemon_id', most_used_pokemon_id)
+                # Always set statistics.most_used_team to the composition (list of IDs)
+                profiles.update_one({'_id': user_id}, {'$set': {'statistics.most_used_team': most_used_team, 'statistics.most_used_pokemon_id': int(most_used_pokemon_id) if most_used_pokemon_id else None}})
                 # --- end MongoDB stats update ---
 
                 # Clear battle state since battle is complete
@@ -665,21 +667,15 @@ def register_routes(app):
                 # --- MongoDB stats update for loss ---
                 profiles = get_player_profiles_collection()
                 user_id = user['_id']
-                # Ensure correct type and profile existence
                 profile = get_or_create_player_profile(user_id)
-                profiles.update_one({'_id': user_id}, {'$inc': {'statistics.total_losses': 1}})
-                # Team usage
-                team_id = None
-                if 'team_id' in battle_state:
-                    team_id = battle_state['team_id']
-                elif 'team_id' in data:
-                    team_id = data['team_id']
-                if team_id is not None:
-                    profiles.update_one({'_id': user_id}, {f'$inc': {f'team_usage.{team_id}': 1}}, upsert=True)
-                # Pokémon usage
+                # Get the current team composition as a list of Pokémon IDs
                 player_team = battle_state.get('player_team', [])
-                for poke in player_team:
-                    poke_id = poke.get('id') or poke.get('pokemon_id')
+                team_comp = [poke.get('id') or poke.get('pokemon_id') for poke in player_team]
+                team_key = json.dumps(team_comp)  # Use as a string key
+                # Increment usage count for this composition
+                profiles.update_one({'_id': user_id}, {f'$inc': {f'team_usage.{team_key}': 1}}, upsert=True)
+                # Pokémon usage
+                for poke_id in team_comp:
                     if poke_id is not None:
                         profiles.update_one({'_id': user_id}, {f'$inc': {f'pokemon_usage.{poke_id}': 1}}, upsert=True)
                 # Update most used team and Pokémon
@@ -690,9 +686,15 @@ def register_routes(app):
                 else:
                     team_usage = {}
                     pokemon_usage = {}
-                most_used_team_id = max(team_usage, key=lambda k: team_usage[k]) if team_usage else None
+                print('DEBUG: team_usage', team_usage)
+                print('DEBUG: pokemon_usage', pokemon_usage)
+                most_used_team_key = max(team_usage, key=lambda k: team_usage[k]) if team_usage else None
+                most_used_team = json.loads(most_used_team_key) if most_used_team_key else []
                 most_used_pokemon_id = max(pokemon_usage, key=lambda k: pokemon_usage[k]) if pokemon_usage else None
-                profiles.update_one({'_id': user_id}, {'$set': {'statistics.most_used_team_id': most_used_team_id, 'statistics.most_used_pokemon_id': most_used_pokemon_id}})
+                print('DEBUG: most_used_team', most_used_team)
+                print('DEBUG: most_used_pokemon_id', most_used_pokemon_id)
+                # Always set statistics.most_used_team to the composition (list of IDs)
+                profiles.update_one({'_id': user_id}, {'$set': {'statistics.most_used_team': most_used_team, 'statistics.most_used_pokemon_id': int(most_used_pokemon_id) if most_used_pokemon_id else None}})
                 # --- end MongoDB stats update ---
 
                 # Clear battle state since battle is complete
@@ -1037,6 +1039,55 @@ def register_routes(app):
         except Exception as e:
             print(f"Error getting type effectiveness data: {e}")
             return jsonify({'error': 'Failed to get type effectiveness data'}), 500
+
+    
+    @app.route('/api/user_stats')
+    def user_stats():
+        user = get_current_user()
+        if not user:
+            return jsonify({'error': 'Not authenticated'}), 401
+        profiles = get_player_profiles_collection()
+        profile = profiles.find_one({'_id': user['_id']})
+        stats = profile.get('statistics', {}) if profile else {}
+        raw_team = stats.get('most_used_team')
+        if isinstance(raw_team, list):
+            most_used_team = raw_team
+        elif isinstance(raw_team, int):
+            most_used_team = [raw_team]
+        else:
+            most_used_team = []
+        most_used_pokemon = stats.get('most_used_pokemon_id', None)
+        # Fetch Pokémon details for the team and the most used Pokémon
+        team_details = []
+        for poke in most_used_team:
+            try:
+                poke_id = int(poke)
+                poke_obj = fetch_pokemon_by_id(poke_id)
+                if poke_obj:
+                    poke_obj['type1'] = poke_obj['type'][0] if poke_obj.get('type') and len(poke_obj['type']) > 0 else None
+                    poke_obj['type2'] = poke_obj['type'][1] if poke_obj.get('type') and len(poke_obj['type']) > 1 else None
+                    team_details.append(poke_obj)
+            except (ValueError, TypeError):
+                continue
+
+        pokemon_details = None
+        if most_used_pokemon:
+            try:
+                poke_id = int(most_used_pokemon)
+                poke_obj = fetch_pokemon_by_id(poke_id)
+                if poke_obj:
+                    poke_obj['type1'] = poke_obj['type'][0] if poke_obj.get('type') and len(poke_obj['type']) > 0 else None
+                    poke_obj['type2'] = poke_obj['type'][1] if poke_obj.get('type') and len(poke_obj['type']) > 1 else None
+                    pokemon_details = poke_obj
+            except (ValueError, TypeError):
+                pokemon_details = None
+        return jsonify({
+            'total_wins': stats.get('total_wins', 0),
+            'total_losses': stats.get('total_losses', 0),
+            'most_used_team': team_details,
+            'most_used_pokemon': pokemon_details
+        })
+
 
 def calculate_damage(attacker, defender, move_name):
     """Calculate damage based on Pokemon stats and move"""
