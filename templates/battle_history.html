@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Battle History</title>
+    <link rel="stylesheet" href="/static/battle_history.css">
+    <style>
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f7f9fb; margin: 0; }
+        .container { max-width: 900px; margin: 40px auto; background: #fff; border-radius: 12px; box-shadow: 0 2px 12px #0001; padding: 32px; }
+        h1 { text-align: center; margin-bottom: 32px; }
+        .record { border-bottom: 1px solid #eee; padding: 24px 0; }
+        .record:last-child { border-bottom: none; }
+        .record-header { display: flex; align-items: center; justify-content: space-between; }
+        .result.win { color: #2196f3; font-weight: bold; }
+        .result.loss { color: #e53935; font-weight: bold; }
+        .teams { display: flex; gap: 32px; margin: 16px 0; }
+        .team { flex: 1; }
+        .team-title { font-size: 1.1em; margin-bottom: 8px; }
+        .pokemon-list { display: flex; gap: 12px; }
+        .pokemon { text-align: center; position: relative; }
+        .pokemon img { width: 56px; height: 56px; border-radius: 8px; border: 2px solid #eee; background: #fafafa; }
+        .hp-bar { height: 6px; border-radius: 3px; background: #eee; margin-top: 4px; width: 56px; }
+        .hp-bar-inner { height: 100%; border-radius: 3px; }
+        .fainted { filter: grayscale(1) opacity(0.5); }
+        .battle-log-toggle { cursor: pointer; color: #666; font-size: 0.95em; margin-top: 8px; }
+        .battle-log { display: none; background: #f4f4f8; border-radius: 8px; margin-top: 10px; padding: 12px; max-height: 120px; overflow-y: auto; font-size: 0.98em; }
+        .battle-log.open { display: block; }
+        .timestamp { color: #888; font-size: 0.95em; }
+        .back-link { display: inline-block; margin-bottom: 24px; color: #2196f3; text-decoration: none; font-weight: 500; }
+        .back-link:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="/profile" class="back-link">&larr; Back to Profile</a>
+        <h1>Battle History</h1>
+        <div id="history-list"></div>
+    </div>
+    <script src="/static/battle_history.js"></script>
+</body>
+</html> 

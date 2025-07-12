@@ -1,9 +1,13 @@
 from re import S
 from flask import render_template, request, jsonify, session, Response, abort, make_response, redirect, url_for
 from app.db import fetch_pokemon, fetch_pokemon_by_id, get_db_connection, save_team as db_save_team, get_team as db_get_team, list_teams, get_team_by_id, save_team_by_id, create_team, get_move_data, get_type_effectiveness, get_pokemon_full_data
+from datetime import datetime
+import random
+import json
 from app.mongo_client import (
     get_player_profiles_collection, 
     get_battles_collection,
+    get_battle_logs_collection,
     get_or_create_player_profile,
     update_player_profile,
     get_player_level_info,
@@ -11,9 +15,6 @@ from app.mongo_client import (
     reset_player_to_level_one
 )
 import bcrypt
-from datetime import datetime
-import random
-import json
 
 def register_routes(app):
     @app.route('/')
@@ -156,8 +157,8 @@ def register_routes(app):
 
         # Create player profile with new enemy team
         enemy_team = generate_enemy_team_with_moves(1)  # Start at level 1
-        get_or_create_player_profile(player_id)  # This will create the profile with defaults
-        update_player_profile(player_id, {
+        get_or_create_player_profile(str(player_id))  # This will create the profile with defaults
+        update_player_profile(str(player_id), {
             'current_enemy_team': enemy_team,
             'statistics.total_wins': 0,
             'statistics.total_losses': 0,
@@ -593,19 +594,19 @@ def register_routes(app):
                 # --- MongoDB stats update for win ---
                 profiles = get_player_profiles_collection()
                 user_id = user['_id']
-                profile = get_or_create_player_profile(user_id)
+                profile = get_or_create_player_profile(str(user_id))
                 # Get the current team composition as a list of Pokémon IDs
                 player_team = battle_state.get('player_team', [])
                 team_comp = [poke.get('id') or poke.get('pokemon_id') for poke in player_team]
                 team_key = json.dumps(team_comp)  # Use as a string key
                 # Increment usage count for this composition
-                profiles.update_one({'_id': user_id}, {f'$inc': {f'team_usage.{team_key}': 1}}, upsert=True)
+                profiles.update_one({'_id': str(user_id)}, {f'$inc': {f'team_usage.{team_key}': 1}}, upsert=True)
                 # Pokémon usage
                 for poke_id in team_comp:
                     if poke_id is not None:
-                        profiles.update_one({'_id': user_id}, {f'$inc': {f'pokemon_usage.{poke_id}': 1}}, upsert=True)
+                        profiles.update_one({'_id': str(user_id)}, {f'$inc': {f'pokemon_usage.{poke_id}': 1}}, upsert=True)
                 # Update most used team and Pokémon
-                updated_profile = profiles.find_one({'_id': user_id})
+                updated_profile = profiles.find_one({'_id': str(user_id)})
                 if updated_profile:
                     team_usage = updated_profile.get('team_usage', {})
                     pokemon_usage = updated_profile.get('pokemon_usage', {})
@@ -620,11 +621,16 @@ def register_routes(app):
                 print('DEBUG: most_used_team', most_used_team)
                 print('DEBUG: most_used_pokemon_id', most_used_pokemon_id)
                 # Always set statistics.most_used_team to the composition (list of IDs)
-                profiles.update_one({'_id': user_id}, {'$set': {'statistics.most_used_team': most_used_team, 'statistics.most_used_pokemon_id': int(most_used_pokemon_id) if most_used_pokemon_id else None}})
+                profiles.update_one({'_id': str(user_id)}, {'$set': {'statistics.most_used_team': most_used_team, 'statistics.most_used_pokemon_id': int(most_used_pokemon_id) if most_used_pokemon_id else None}})
                 # --- end MongoDB stats update ---
 
                 # Clear battle state since battle is complete
                 save_battle_state_to_db(user['_id'], None)
+                
+                # --- Save battle record for win ---
+                player_level = battle_state.get('player_level') if battle_state else None
+                save_battle_record(user['_id'], 'win', battle_state['player_team'], battle_state['enemy_team'], list(battle_log), player_level)
+                # --- end save battle record ---
                 
                 return jsonify({
                     'player_pokemon': battle_state['player_pokemon'],
@@ -667,19 +673,19 @@ def register_routes(app):
                 # --- MongoDB stats update for loss ---
                 profiles = get_player_profiles_collection()
                 user_id = user['_id']
-                profile = get_or_create_player_profile(user_id)
+                profile = get_or_create_player_profile(str(user_id))
                 # Get the current team composition as a list of Pokémon IDs
                 player_team = battle_state.get('player_team', [])
                 team_comp = [poke.get('id') or poke.get('pokemon_id') for poke in player_team]
                 team_key = json.dumps(team_comp)  # Use as a string key
                 # Increment usage count for this composition
-                profiles.update_one({'_id': user_id}, {f'$inc': {f'team_usage.{team_key}': 1}}, upsert=True)
+                profiles.update_one({'_id': str(user_id)}, {f'$inc': {f'team_usage.{team_key}': 1}}, upsert=True)
                 # Pokémon usage
                 for poke_id in team_comp:
                     if poke_id is not None:
-                        profiles.update_one({'_id': user_id}, {f'$inc': {f'pokemon_usage.{poke_id}': 1}}, upsert=True)
+                        profiles.update_one({'_id': str(user_id)}, {f'$inc': {f'pokemon_usage.{poke_id}': 1}}, upsert=True)
                 # Update most used team and Pokémon
-                updated_profile = profiles.find_one({'_id': user_id})
+                updated_profile = profiles.find_one({'_id': str(user_id)})
                 if updated_profile:
                     team_usage = updated_profile.get('team_usage', {})
                     pokemon_usage = updated_profile.get('pokemon_usage', {})
@@ -694,11 +700,16 @@ def register_routes(app):
                 print('DEBUG: most_used_team', most_used_team)
                 print('DEBUG: most_used_pokemon_id', most_used_pokemon_id)
                 # Always set statistics.most_used_team to the composition (list of IDs)
-                profiles.update_one({'_id': user_id}, {'$set': {'statistics.most_used_team': most_used_team, 'statistics.most_used_pokemon_id': int(most_used_pokemon_id) if most_used_pokemon_id else None}})
+                profiles.update_one({'_id': str(user_id)}, {'$set': {'statistics.most_used_team': most_used_team, 'statistics.most_used_pokemon_id': int(most_used_pokemon_id) if most_used_pokemon_id else None}})
                 # --- end MongoDB stats update ---
 
                 # Clear battle state since battle is complete
                 save_battle_state_to_db(user['_id'], None)
+                
+                # --- Save battle record for loss ---
+                player_level = battle_state.get('player_level') if battle_state else None
+                save_battle_record(user['_id'], 'loss', battle_state['player_team'], battle_state['enemy_team'], list(battle_log), player_level)
+                # --- end save battle record ---
                 
                 return jsonify({
                     'player_pokemon': battle_state['player_pokemon'],
@@ -912,26 +923,26 @@ def register_routes(app):
             # Update MongoDB stats for loss
             profiles = get_player_profiles_collection()
             user_id = user['_id']
-            profile = get_or_create_player_profile(user_id)
-            profiles.update_one({'_id': user_id}, {'$inc': {'statistics.total_losses': 1}})
+            profile = get_or_create_player_profile(str(user_id))
+            profiles.update_one({'_id': str(user_id)}, {'$inc': {'statistics.total_losses': 1}})
             
             # Update team and Pokemon usage if we have battle state
-            if battle_state:
+            if battle_state is not None:
                 # Get the current team composition as a list of Pokémon IDs
                 player_team = battle_state.get('player_team', [])
                 team_comp = [poke.get('id') or poke.get('pokemon_id') for poke in player_team]
                 team_key = json.dumps(team_comp)  # Use as a string key
                 
                 # Increment usage count for this composition
-                profiles.update_one({'_id': user_id}, {f'$inc': {f'team_usage.{team_key}': 1}}, upsert=True)
+                profiles.update_one({'_id': str(user_id)}, {f'$inc': {f'team_usage.{team_key}': 1}}, upsert=True)
                 
                 # Pokémon usage
                 for poke_id in team_comp:
                     if poke_id is not None:
-                        profiles.update_one({'_id': user_id}, {f'$inc': {f'pokemon_usage.{poke_id}': 1}}, upsert=True)
+                        profiles.update_one({'_id': str(user_id)}, {f'$inc': {f'pokemon_usage.{poke_id}': 1}}, upsert=True)
                 
                 # Update most used team and Pokémon
-                updated_profile = profiles.find_one({'_id': user_id})
+                updated_profile = profiles.find_one({'_id': str(user_id)})
                 if updated_profile:
                     team_usage = updated_profile.get('team_usage', {})
                     pokemon_usage = updated_profile.get('pokemon_usage', {})
@@ -944,10 +955,18 @@ def register_routes(app):
                 most_used_pokemon_id = max(pokemon_usage, key=lambda k: pokemon_usage[k]) if pokemon_usage else None
                 
                 # Always set statistics.most_used_team to the composition (list of IDs)
-                profiles.update_one({'_id': user_id}, {'$set': {'statistics.most_used_team': most_used_team, 'statistics.most_used_pokemon_id': int(most_used_pokemon_id) if most_used_pokemon_id else None}})
+                profiles.update_one({'_id': str(user_id)}, {'$set': {'statistics.most_used_team': most_used_team, 'statistics.most_used_pokemon_id': int(most_used_pokemon_id) if most_used_pokemon_id else None}})
             
             # Clear battle state
             save_battle_state_to_db(user['_id'], None)
+            
+            # --- Save battle record for loss (end_battle) ---
+            player_level = battle_state.get('player_level') if battle_state else None
+            player_team = battle_state.get('player_team') if battle_state else []
+            enemy_team = battle_state.get('enemy_team') if battle_state else []
+            battle_log = list(battle_state.get('battle_log', [])) if battle_state else []
+            save_battle_record(user['_id'], 'loss', player_team, enemy_team, battle_log, player_level)
+            # --- end save battle record ---
             
             return jsonify({
                 'success': True,
@@ -970,7 +989,7 @@ def register_routes(app):
         
         # Get player level info and profile
         level_info = get_player_level_info(user['_id'])
-        profile = get_or_create_player_profile(user['_id'])
+        profile = get_or_create_player_profile(str(user['_id']))
         
         # Convert _id to string for JSON serialization
         profile['_id'] = str(profile['_id'])
@@ -1152,6 +1171,23 @@ def register_routes(app):
             'most_used_pokemon': pokemon_details
         })
 
+    @app.route('/battle-history')
+    def battle_history_page():
+        return render_template('battle_history.html')
+    
+    @app.route('/api/battle/history')
+    def battle_history():
+        user = get_current_user()
+        if not user:
+            return jsonify({'error': 'Not authenticated'}), 401
+        battle_logs = get_battle_logs_collection()
+        records = list(battle_logs.find({'user_id': str(user['_id'])}).sort('timestamp', -1))
+        for rec in records:
+            rec['_id'] = str(rec['_id'])
+            if 'timestamp' in rec:
+                rec['timestamp'] = rec['timestamp'].isoformat() + 'Z'
+        return jsonify({'records': records})
+
 
 def calculate_damage(attacker, defender, move_name):
     """Calculate damage based on Pokemon stats and move"""
@@ -1237,7 +1273,7 @@ def save_battle_state_to_db(user_id, state):
 # New functions for the updated system
 def get_or_generate_enemy_team(user_id):
     """Get current enemy team or generate a new one if needed."""
-    profile = get_or_create_player_profile(user_id)
+    profile = get_or_create_player_profile(str(user_id))
     current_enemy_team = profile.get('current_enemy_team')
     
     if not current_enemy_team:
@@ -1246,7 +1282,7 @@ def get_or_generate_enemy_team(user_id):
         enemy_team = generate_enemy_team_with_moves(current_level)
         
         # Save to profile
-        update_player_profile(user_id, {'current_enemy_team': enemy_team})
+        update_player_profile(str(user_id), {'current_enemy_team': enemy_team})
         return enemy_team
     
     return current_enemy_team
@@ -1254,9 +1290,22 @@ def get_or_generate_enemy_team(user_id):
 def generate_new_enemy_team_for_level(user_id, level):
     """Generate and save a new enemy team for the specified level."""
     enemy_team = generate_enemy_team_with_moves(level)
-    update_player_profile(user_id, {'current_enemy_team': enemy_team})
+    update_player_profile(str(user_id), {'current_enemy_team': enemy_team})
     return enemy_team
 
+def save_battle_record(user_id, result, player_team, enemy_team, battle_log, level=None):
+    battle_logs = get_battle_logs_collection()
+    record = {
+        'user_id': str(user_id),
+        'timestamp': datetime.utcnow(),
+        'result': result,
+        'player_team': player_team,
+        'enemy_team': enemy_team,
+        'battle_log': battle_log,
+    }
+    if level is not None:
+        record['level'] = level
+    battle_logs.insert_one(record)
 
 
 def get_enemy_team_config(player_level):

@@ -32,7 +32,7 @@ def get_player_profiles_collection():
     """Returns the player_profiles collection."""
     return get_db()['player_profiles']
 
-def get_battle_logs():
+def get_battle_logs_collection():
     """Returns the battle_logs collection."""
     return get_db()['battle_logs']
 
@@ -48,6 +48,7 @@ def get_battles_collection():
 def get_or_create_player_profile(player_id):
     """Get existing player profile or create a new one with default values."""
     profiles = get_player_profiles_collection()
+    player_id = str(player_id)
     profile = profiles.find_one({"_id": player_id})
     
     if not profile:
@@ -78,11 +79,12 @@ def get_or_create_player_profile(player_id):
 def update_player_profile(player_id, updates):
     """Update player profile with new data."""
     profiles = get_player_profiles_collection()
+    player_id = str(player_id)
     profiles.update_one({"_id": player_id}, {"$set": updates})
 
 def get_player_level_info(player_id):
     """Get current level, max level, and streak information."""
-    profile = get_or_create_player_profile(player_id)
+    profile = get_or_create_player_profile(str(player_id))
     return {
         "current_level": profile.get("current_level", 1),
         "max_level_reached": profile.get("max_level_reached", 1),
@@ -93,6 +95,7 @@ def get_player_level_info(player_id):
 def increment_player_level(player_id):
     """Increment player level and update streaks."""
     profiles = get_player_profiles_collection()
+    player_id = str(player_id)
     profile = profiles.find_one({"_id": player_id})
     
     if not profile:
@@ -125,6 +128,7 @@ def increment_player_level(player_id):
 def reset_player_to_level_one(player_id):
     """Reset player to level 1 and update max level if needed."""
     profiles = get_player_profiles_collection()
+    player_id = str(player_id)
     profile = profiles.find_one({"_id": player_id})
     
     if not profile:
