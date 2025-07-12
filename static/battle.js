@@ -170,6 +170,50 @@ function updateBattleDisplay() {
     // Update team displays
     updateTeamDisplay();
     updateEnemyTeamDisplay();
+    
+    // Update battle button states if battle is ended
+    const fightBtn = document.getElementById('fight-btn');
+    const runBtn = document.getElementById('run-btn');
+    
+    if (battleState.battle_ended) {
+        // Battle is over - disable all battle buttons
+        if (fightBtn) {
+            fightBtn.disabled = true;
+            fightBtn.style.opacity = '0.5';
+            fightBtn.style.cursor = 'not-allowed';
+        }
+        
+        if (runBtn) {
+            runBtn.disabled = true;
+            runBtn.style.opacity = '0.5';
+            runBtn.style.cursor = 'not-allowed';
+            
+            // Update button text and state based on battle result
+            if (battleState.winner === 'player') {
+                runBtn.textContent = 'VICTORY!';
+                runBtn.setAttribute('data-state', 'victory');
+            } else {
+                runBtn.textContent = 'DEFEAT!';
+                runBtn.setAttribute('data-state', 'defeat');
+            }
+        }
+    } else {
+        // Battle is ongoing - enable all buttons
+        if (fightBtn) {
+            fightBtn.disabled = false;
+            fightBtn.textContent = 'FIGHT';
+            fightBtn.style.opacity = '1';
+            fightBtn.style.cursor = 'pointer';
+        }
+        
+        if (runBtn) {
+            runBtn.disabled = false;
+            runBtn.textContent = 'RUN';
+            runBtn.style.opacity = '1';
+            runBtn.style.cursor = 'pointer';
+            runBtn.removeAttribute('data-state');
+        }
+    }
 }
 
 function updateEnemyTeamDisplay() {
@@ -261,7 +305,17 @@ function updateMoveButtons() {
                 if (moveBtn && movesWithTypes[i]) {
                     const move = movesWithTypes[i];
                     moveBtn.textContent = move.name || '---';
-                    moveBtn.disabled = !move.name;
+                    
+                    // Disable move buttons if battle is ended
+                    if (battleState.battle_ended) {
+                        moveBtn.disabled = true;
+                        moveBtn.style.opacity = '0.5';
+                        moveBtn.style.cursor = 'not-allowed';
+                    } else {
+                        moveBtn.disabled = !move.name;
+                        moveBtn.style.opacity = '1';
+                        moveBtn.style.cursor = 'pointer';
+                    }
                     
                     // Apply type color styling
                     moveBtn.className = `move-btn type-${move.type.toLowerCase()}`;
@@ -276,7 +330,18 @@ function updateMoveButtons() {
                 const moveBtn = document.getElementById(`move-${i + 1}`);
                 if (moveBtn) {
                     moveBtn.textContent = moves[i] || '---';
-                    moveBtn.disabled = !moves[i];
+                    
+                    // Disable move buttons if battle is ended
+                    if (battleState.battle_ended) {
+                        moveBtn.disabled = true;
+                        moveBtn.style.opacity = '0.5';
+                        moveBtn.style.cursor = 'not-allowed';
+                    } else {
+                        moveBtn.disabled = !moves[i];
+                        moveBtn.style.opacity = '1';
+                        moveBtn.style.cursor = 'pointer';
+                    }
+                    
                     moveBtn.className = 'move-btn type-normal';
                 }
             }
@@ -328,6 +393,12 @@ function setupEventListeners() {
     const fightBtn = document.getElementById('fight-btn');
     if (fightBtn) {
         fightBtn.onclick = function() {
+            // Check if battle is ended
+            if (battleState && battleState.battle_ended) {
+                showNotification('Battle Over', 'The battle has already ended!');
+                return;
+            }
+            
             document.getElementById('battle-menu').style.display = 'none';
             document.getElementById('move-selection').style.display = 'flex';
         };
@@ -337,6 +408,12 @@ function setupEventListeners() {
     const runBtn = document.getElementById('run-btn');
     if (runBtn) {
         runBtn.onclick = function() {
+            // Check if battle is ended
+            if (battleState && battleState.battle_ended) {
+                showNotification('Battle Over', 'The battle has already ended!');
+                return;
+            }
+            
             showRunModal();
         };
     }
@@ -434,6 +511,50 @@ function showMainMenu() {
     const backBtn = document.getElementById('back-to-menu-pokemon');
     if (backBtn) {
         backBtn.style.display = 'block';
+    }
+    
+    // Handle battle end state - disable all buttons except exit
+    const fightBtn = document.getElementById('fight-btn');
+    const runBtn = document.getElementById('run-btn');
+    
+    if (battleState && battleState.battle_ended) {
+        // Battle is over - disable all battle buttons
+        if (fightBtn) {
+            fightBtn.disabled = true;
+            fightBtn.style.opacity = '0.5';
+            fightBtn.style.cursor = 'not-allowed';
+        }
+        
+        if (runBtn) {
+            runBtn.disabled = true;
+            runBtn.style.opacity = '0.5';
+            runBtn.style.cursor = 'not-allowed';
+            
+            // Update button text and state based on battle result
+            if (battleState.winner === 'player') {
+                runBtn.textContent = 'VICTORY!';
+                runBtn.setAttribute('data-state', 'victory');
+            } else {
+                runBtn.textContent = 'DEFEAT!';
+                runBtn.setAttribute('data-state', 'defeat');
+            }
+        }
+    } else {
+        // Battle is ongoing - enable all buttons
+        if (fightBtn) {
+            fightBtn.disabled = false;
+            fightBtn.textContent = 'FIGHT';
+            fightBtn.style.opacity = '1';
+            fightBtn.style.cursor = 'pointer';
+        }
+        
+        if (runBtn) {
+            runBtn.disabled = false;
+            runBtn.textContent = 'RUN';
+            runBtn.style.opacity = '1';
+            runBtn.style.cursor = 'pointer';
+            runBtn.removeAttribute('data-state');
+        }
     }
 }
 
@@ -962,7 +1083,7 @@ function updateTeamDisplay() {
                 <div class="team-pokemon-health">${Math.round(currentHp)}/${Math.round(maxHp)}</div>
                 ${isFainted ? '<div class="team-pokemon-status">Fainted</div>' : ''}
             </div>
-            ${!isActive && !isFainted ? `<button class="swap-in-btn" onclick="swapInPokemon(${index})">Swap In</button>` : ''}
+            ${!isActive && !isFainted && !battleState.battle_ended ? `<button class="swap-in-btn" onclick="swapInPokemon(${index})">Swap In</button>` : ''}
         `;
         
         playerTeamList.appendChild(teamItem);
@@ -972,6 +1093,12 @@ function updateTeamDisplay() {
 // Function to swap in a Pokemon from the team display
 function swapInPokemon(pokemonIndex) {
     if (!battleState || !battleState.player_team) return;
+    
+    // Check if battle is ended
+    if (battleState.battle_ended) {
+        showNotification('Invalid Action', 'Cannot swap Pokemon after battle has ended!');
+        return;
+    }
     
     const pokemon = battleState.player_team[pokemonIndex];
     if (!pokemon) return;

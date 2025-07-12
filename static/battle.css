@@ -626,11 +626,36 @@ body {
 }
 
 .battle-btn {
-    background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+    background: linear-gradient(135deg, #3498db, #2980b9);
+}
+
+.battle-btn:disabled {
+    background: linear-gradient(135deg, #95a5a6, #7f8c8d) !important;
+    color: white !important;
+    opacity: 0.7 !important;
+    cursor: not-allowed !important;
+    transform: none !important;
 }
 
 .run-btn {
     background: linear-gradient(135deg, #e74c3c, #c0392b);
+}
+
+.run-btn:disabled {
+    color: white !important;
+    opacity: 0.9 !important;
+    cursor: not-allowed !important;
+    transform: none !important;
+}
+
+/* Victory state - green background */
+.run-btn:disabled[data-state="victory"] {
+    background: linear-gradient(135deg, #27ae60, #2ecc71) !important;
+}
+
+/* Defeat state - darker red background */
+.run-btn:disabled[data-state="defeat"] {
+    background: linear-gradient(135deg, #8e44ad, #9b59b6) !important;
 }
 
 .menu-btn:hover {
