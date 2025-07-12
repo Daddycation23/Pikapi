@@ -146,6 +146,12 @@ function setupBattleButtons() {
   const resumeBattleBtn = document.getElementById('resume-battle-btn');
   if (resumeBattleBtn) {
     resumeBattleBtn.onclick = function() {
+      // Check if current team has at least 1 Pokemon
+      if (!validateTeamForBattle()) {
+        showErrorModal('Please add at least 1 Pokemon to your team before resuming a battle.');
+        return;
+      }
+      
       let teamId = teamsList[currentTeamIndex] && teamsList[currentTeamIndex].team_id;
       if (teamId) {
         window.location.href = `/battle?team_id=${teamId}&action=resume`;
@@ -159,6 +165,12 @@ function setupBattleButtons() {
   const newBattleBtn = document.getElementById('new-battle-btn');
   if (newBattleBtn) {
     newBattleBtn.onclick = function() {
+      // Check if current team has at least 1 Pokemon
+      if (!validateTeamForBattle()) {
+        showErrorModal('Please add at least 1 Pokemon to your team before starting a new battle.');
+        return;
+      }
+      
       let teamId = teamsList[currentTeamIndex] && teamsList[currentTeamIndex].team_id;
       if (teamId) {
         window.location.href = `/battle?team_id=${teamId}&action=new`;
@@ -172,6 +184,12 @@ function setupBattleButtons() {
   const battleBtn = document.getElementById('battle-btn');
   if (battleBtn) {
     battleBtn.onclick = function() {
+      // Check if current team has at least 1 Pokemon
+      if (!validateTeamForBattle()) {
+        showErrorModal('Please add at least 1 Pokemon to your team before starting a battle.');
+        return;
+      }
+      
       let teamId = teamsList[currentTeamIndex] && teamsList[currentTeamIndex].team_id;
       if (teamId) {
         window.location.href = `/battle?team_id=${teamId}`;
@@ -179,6 +197,38 @@ function setupBattleButtons() {
         window.location.href = '/battle';
       }
     };
+  }
+}
+
+// Validate team for battle
+function validateTeamForBattle() {
+  // Check if current team has at least 1 Pokemon
+  const currentTeam = teamsList[currentTeamIndex];
+  if (!currentTeam || !currentTeam.pokemon || currentTeam.pokemon.length === 0) {
+    return false;
+  }
+  
+  // Check if at least one Pokemon slot is not empty
+  const hasAtLeastOnePokemon = currentTeam.pokemon.some(pokemon => pokemon !== null && pokemon !== undefined);
+  return hasAtLeastOnePokemon;
+}
+
+// Show error modal
+function showErrorModal(message) {
+  const errorModal = document.getElementById('error-modal');
+  const errorMessage = document.getElementById('error-message');
+  
+  if (errorModal && errorMessage) {
+    errorMessage.textContent = message;
+    errorModal.style.display = 'block';
+  }
+}
+
+// Close error modal
+function closeErrorModal() {
+  const errorModal = document.getElementById('error-modal');
+  if (errorModal) {
+    errorModal.style.display = 'none';
   }
 }
 

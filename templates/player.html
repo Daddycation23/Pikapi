@@ -139,6 +139,18 @@
         </div>
     </div>
 
+    <!-- Error Modal -->
+    <div id="error-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" onclick="closeErrorModal()">&times;</span>
+            <div class="error-modal-content">
+                <h2>⚠️ Cannot Start Battle</h2>
+                <p id="error-message">Please add at least 1 Pokemon to your team before starting a battle.</p>
+                <button class="btn-base auth-button" onclick="closeErrorModal()">OK</button>
+            </div>
+        </div>
+    </div>
+
     <script src="{{ url_for('static', filename='player.js') }}"></script>
 </body>
 </html> 

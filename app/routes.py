@@ -348,11 +348,10 @@ def register_routes(app):
             player_team_ids = db_get_team(int(user['_id']))
         
         if not player_team_ids:
-            # Create a default team if user doesn't have one
-            default_pokemon_ids = [25, 6, 9]  # Pikachu, Charizard, Blastoise
-            player_team = [fetch_pokemon_by_id(pid) for pid in default_pokemon_ids]
-        else:
-            player_team = [fetch_pokemon_by_id(pid) for pid in player_team_ids]
+            # Return error if no team is available
+            return jsonify({'error': 'No team available. Please create a team with at least 1 Pokemon before starting a battle.'}), 400
+        
+        player_team = [fetch_pokemon_by_id(pid) for pid in player_team_ids]
         
         if not player_team:
             return jsonify({'error': 'Invalid team'}), 400
