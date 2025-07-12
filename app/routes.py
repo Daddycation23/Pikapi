@@ -895,6 +895,70 @@ def register_routes(app):
         if not user:
             return jsonify({'error': 'Not authenticated'}), 401
         
+        # Get the reason for ending the battle
+        data = request.json or {}
+        reason = data.get('reason', 'unknown')
+        winner = data.get('winner', 'enemy')
+        
+        # If the player ran from battle, treat it as a loss
+        if reason == 'player_ran' or winner == 'enemy':
+            # Get current battle state for statistics
+            battle_state = get_battle_state_from_db(user['_id'])
+            
+            # Reset player to level 1 and generate new enemy team
+            reset_level = reset_player_to_level_one(user['_id'])
+            new_enemy_team = generate_new_enemy_team_for_level(user['_id'], reset_level)
+            
+            # Update MongoDB stats for loss
+            profiles = get_player_profiles_collection()
+            user_id = user['_id']
+            profile = get_or_create_player_profile(user_id)
+            profiles.update_one({'_id': user_id}, {'$inc': {'statistics.total_losses': 1}})
+            
+            # Update team and Pokemon usage if we have battle state
+            if battle_state:
+                # Get the current team composition as a list of Pokémon IDs
+                player_team = battle_state.get('player_team', [])
+                team_comp = [poke.get('id') or poke.get('pokemon_id') for poke in player_team]
+                team_key = json.dumps(team_comp)  # Use as a string key
+                
+                # Increment usage count for this composition
+                profiles.update_one({'_id': user_id}, {f'$inc': {f'team_usage.{team_key}': 1}}, upsert=True)
+                
+                # Pokémon usage
+                for poke_id in team_comp:
+                    if poke_id is not None:
+                        profiles.update_one({'_id': user_id}, {f'$inc': {f'pokemon_usage.{poke_id}': 1}}, upsert=True)
+                
+                # Update most used team and Pokémon
+                updated_profile = profiles.find_one({'_id': user_id})
+                if updated_profile:
+                    team_usage = updated_profile.get('team_usage', {})
+                    pokemon_usage = updated_profile.get('pokemon_usage', {})
+                else:
+                    team_usage = {}
+                    pokemon_usage = {}
+                
+                most_used_team_key = max(team_usage, key=lambda k: team_usage[k]) if team_usage else None
+                most_used_team = json.loads(most_used_team_key) if most_used_team_key else []
+                most_used_pokemon_id = max(pokemon_usage, key=lambda k: pokemon_usage[k]) if pokemon_usage else None
+                
+                # Always set statistics.most_used_team to the composition (list of IDs)
+                profiles.update_one({'_id': user_id}, {'$set': {'statistics.most_used_team': most_used_team, 'statistics.most_used_pokemon_id': int(most_used_pokemon_id) if most_used_pokemon_id else None}})
+            
+            # Clear battle state
+            save_battle_state_to_db(user['_id'], None)
+            
+            return jsonify({
+                'success': True,
+                'battle_ended': True,
+                'winner': 'enemy',
+                'reason': reason,
+                'reset_level': reset_level,
+                'message': f'You ran from battle and have been reset to level {reset_level}!'
+            })
+        
+        # For other cases, just clear the battle state
         save_battle_state_to_db(user['_id'], None)
         return jsonify({'success': True})
 

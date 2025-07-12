@@ -1234,9 +1234,34 @@ function runFromBattle() {
             return;
         }
         
-        // Update battle state and handle as loss
-        battleState = data;
-        handleBattleEnd('enemy');
+        // Handle the battle end response
+        if (data.battle_ended && data.winner === 'enemy') {
+            // Update battle state to show defeat
+            battleState = {
+                ...battleState,
+                battle_ended: true,
+                winner: 'enemy'
+            };
+            
+            // Update the display
+            updateBattleDisplay();
+            
+            // Show the level reset message
+            const message = data.message || `You ran from battle and have been reset to level ${data.reset_level || 1}!`;
+            showNotification('Battle Ended', message);
+            
+            // Update level display if we have the reset level
+            if (data.reset_level) {
+                document.getElementById('player-level-display').textContent = data.reset_level;
+            }
+            
+            // Handle battle end
+            handleBattleEnd('enemy');
+        } else {
+            // Fallback - just show that the battle ended
+            showNotification('Battle Ended', 'You ran from battle!');
+            handleBattleEnd('enemy');
+        }
     })
     .catch(error => {
         console.error('Error running from battle:', error);
