@@ -443,10 +443,7 @@ body {
     cursor: grabbing;
 }
 
-.battle-scene.dragging .enemy-pokemon,
-.battle-scene.dragging .player-pokemon {
-    pointer-events: none;
-}
+/* Removed pointer-events: none to allow interactions during drag */
 
 .battle-scene::-webkit-scrollbar {
     width: 8px;
@@ -789,9 +786,7 @@ body {
     cursor: grabbing;
 }
 
-.pokemon-list.dragging .pokemon-item {
-    pointer-events: none;
-}
+/* Removed pointer-events: none to allow Pokemon selection during drag */
 
 .pokemon-item {
     display: flex;
@@ -877,9 +872,7 @@ body {
     cursor: grabbing;
 }
 
-.battle-log.dragging .log-message {
-    pointer-events: none;
-}
+/* Removed pointer-events: none to allow interactions during drag */
 
 .log-message {
     padding: 10px;
@@ -930,10 +923,7 @@ body {
     cursor: grabbing;
 }
 
-.enemy-team-display.dragging .enemy-team-item, 
-.player-team-display.dragging .player-team-item {
-    pointer-events: none;
-}
+/* Removed pointer-events: none to allow buttons to remain clickable during drag */
 
 .enemy-team-display::-webkit-scrollbar, 
 .player-team-display::-webkit-scrollbar {
@@ -978,7 +968,7 @@ body {
     display: flex;
     align-items: center;
     gap: 10px;
-    padding: 10px;
+        padding: 10px;
     background: rgba(255, 255, 255, 0.1);
     border-radius: 8px;
     border: 1px solid rgba(255, 255, 255, 0.2);

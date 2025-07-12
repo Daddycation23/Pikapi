@@ -516,7 +516,40 @@ function setupDragScrolling(element) {
     let startX;
     let scrollLeft;
     
+    // Check if the target element should be excluded from drag scrolling
+    function shouldExcludeTarget(target) {
+        // Check if the target or any of its parents is a button or clickable element
+        const excludedSelectors = [
+            'button',
+            '.pokemon-item',
+            '.back-btn',
+            '.menu-btn',
+            '.move-btn',
+            'input',
+            'select',
+            'textarea',
+            'a'
+        ];
+        
+        let currentElement = target;
+        while (currentElement && currentElement !== element) {
+            // Check if current element matches any excluded selector
+            for (const selector of excludedSelectors) {
+                if (currentElement.matches && currentElement.matches(selector)) {
+                    return true;
+                }
+            }
+            currentElement = currentElement.parentElement;
+        }
+        return false;
+    }
+    
     element.addEventListener('mousedown', (e) => {
+        // Don't start drag if clicking on a button or interactive element
+        if (shouldExcludeTarget(e.target)) {
+            return;
+        }
+        
         isDown = true;
         element.classList.add('dragging');
         startX = e.pageX - element.offsetLeft;
@@ -546,6 +579,11 @@ function setupDragScrolling(element) {
     
     // Touch events for mobile
     element.addEventListener('touchstart', (e) => {
+        // Don't start drag if touching a button or interactive element
+        if (shouldExcludeTarget(e.target)) {
+            return;
+        }
+        
         isDown = true;
         startX = e.touches[0].pageX - element.offsetLeft;
         scrollLeft = element.scrollLeft;
@@ -600,7 +638,41 @@ function setupVerticalDragScrolling(element) {
     let startY;
     let scrollTop;
     
+    // Check if the target element should be excluded from drag scrolling
+    function shouldExcludeTarget(target) {
+        // Check if the target or any of its parents is a button or clickable element
+        const excludedSelectors = [
+            'button',
+            '.swap-in-btn',
+            '.pokemon-item',
+            '.back-btn',
+            '.menu-btn',
+            '.move-btn',
+            'input',
+            'select',
+            'textarea',
+            'a'
+        ];
+        
+        let currentElement = target;
+        while (currentElement && currentElement !== element) {
+            // Check if current element matches any excluded selector
+            for (const selector of excludedSelectors) {
+                if (currentElement.matches && currentElement.matches(selector)) {
+                    return true;
+                }
+            }
+            currentElement = currentElement.parentElement;
+        }
+        return false;
+    }
+    
     element.addEventListener('mousedown', (e) => {
+        // Don't start drag if clicking on a button or interactive element
+        if (shouldExcludeTarget(e.target)) {
+            return;
+        }
+        
         isDown = true;
         element.classList.add('dragging');
         startY = e.pageY - element.offsetTop;
@@ -630,6 +702,11 @@ function setupVerticalDragScrolling(element) {
     
     // Touch events for mobile
     element.addEventListener('touchstart', (e) => {
+        // Don't start drag if touching a button or interactive element
+        if (shouldExcludeTarget(e.target)) {
+            return;
+        }
+        
         isDown = true;
         startY = e.touches[0].pageY - element.offsetTop;
         scrollTop = element.scrollTop;
