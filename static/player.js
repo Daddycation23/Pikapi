@@ -8,19 +8,46 @@ let currentTeamIndex = 0;
 function updateAuthUI(username) {
   if (username) {
     authSection.innerHTML = `
-      <button class="auth-button" id="profile-btn" style="background:#4CAF50;color:white;">
-        <span style="font-size:18px;vertical-align:middle;">👤</span> <span style="font-weight:bold;margin-right:10px;">${username}</span>
+      <button class="btn-base auth-button" id="profile-btn" style="background:#4CAF50;color:white;box-shadow:0 2px 8px rgba(0,0,0,0.08);transition:all 0.2s;">
+        <span style="font-size:18px;vertical-align:middle;">👤</span> <span style="font-weight:500;margin-left:8px;">${username}</span>
       </button>
-      <button class="auth-button" id="logout-btn" style="margin-left:10px;">Logout</button>
+      <button class="btn-base auth-button" id="logout-btn" style="margin-left:15px;box-shadow:0 2px 8px rgba(0,0,0,0.08);transition:all 0.2s;">Logout</button>
     `;
-    document.getElementById('logout-btn').onclick = async function() {
+    // Add hover effects and click handlers
+    const profileBtn = document.getElementById('profile-btn');
+    const logoutBtn = document.getElementById('logout-btn');
+    
+    // Profile button hover effects
+    profileBtn.addEventListener('mouseenter', function() {
+      this.style.transform = 'translateY(-1px)';
+      this.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
+      this.style.background = '#45a049';
+    });
+    profileBtn.addEventListener('mouseleave', function() {
+      this.style.transform = 'translateY(0)';
+      this.style.boxShadow = '0 2px 8px rgba(0,0,0,0.08)';
+      this.style.background = '#4CAF50';
+    });
+    
+    // Logout button hover effects
+    logoutBtn.addEventListener('mouseenter', function() {
+      this.style.transform = 'translateY(-1px)';
+      this.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
+    });
+    logoutBtn.addEventListener('mouseleave', function() {
+      this.style.transform = 'translateY(0)';
+      this.style.boxShadow = '0 2px 8px rgba(0,0,0,0.08)';
+    });
+    
+    // Click handlers
+    logoutBtn.onclick = async function() {
       const response = await fetch('/api/logout', { method: 'POST' });
       const data = await response.json();
       if (data.success) {
         window.location.href = '/';
       }
     };
-    document.getElementById('profile-btn').onclick = function() {
+    profileBtn.onclick = function() {
       window.location.href = '/profile';
     };
   } else {
@@ -113,18 +140,46 @@ function setupEditTeamButtons() {
   });
 }
 
-// Add this after setupEditTeamButtons()
-function setupBattleButton() {
+// Battle button functionality
+function setupBattleButtons() {
+  // Resume battle button
+  const resumeBattleBtn = document.getElementById('resume-battle-btn');
+  if (resumeBattleBtn) {
+    resumeBattleBtn.onclick = function() {
+      let teamId = teamsList[currentTeamIndex] && teamsList[currentTeamIndex].team_id;
+      if (teamId) {
+        window.location.href = `/battle?team_id=${teamId}&action=resume`;
+      } else {
+        window.location.href = '/battle?action=resume';
+      }
+    };
+  }
+  
+  // New battle button
+  const newBattleBtn = document.getElementById('new-battle-btn');
+  if (newBattleBtn) {
+    newBattleBtn.onclick = function() {
+      let teamId = teamsList[currentTeamIndex] && teamsList[currentTeamIndex].team_id;
+      if (teamId) {
+        window.location.href = `/battle?team_id=${teamId}&action=new`;
+      } else {
+        window.location.href = '/battle?action=new';
+      }
+    };
+  }
+  
+  // Single battle button (when no existing battle)
   const battleBtn = document.getElementById('battle-btn');
-  if (!battleBtn) return;
-  battleBtn.onclick = function() {
-    let teamId = teamsList[currentTeamIndex] && teamsList[currentTeamIndex].team_id;
-    if (teamId) {
-      window.location.href = `/battle?team_id=${teamId}`;
-    } else {
-      window.location.href = '/battle';
-    }
-  };
+  if (battleBtn) {
+    battleBtn.onclick = function() {
+      let teamId = teamsList[currentTeamIndex] && teamsList[currentTeamIndex].team_id;
+      if (teamId) {
+        window.location.href = `/battle?team_id=${teamId}`;
+      } else {
+        window.location.href = '/battle';
+      }
+    };
+  }
 }
 
 // Load current challenge information
@@ -274,5 +329,5 @@ document.addEventListener('DOMContentLoaded', () => {
   checkSessionAndInit();
   setupTeamTabs();
   setupEditTeamButtons();
-  setupBattleButton();
+  setupBattleButtons();
 });

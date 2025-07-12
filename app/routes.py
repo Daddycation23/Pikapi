@@ -28,7 +28,15 @@ def register_routes(app):
     @app.route('/player')
     def player():
         # This should be the team building interface for logged-in users
-        return render_template('player.html')
+        user = get_current_user()
+        has_existing_battle = False
+        
+        # Check if user has an existing battle state
+        if user:
+            existing_battle = get_battle_state_from_db(user['_id'])
+            has_existing_battle = bool(existing_battle)
+        
+        return render_template('player.html', has_existing_battle=has_existing_battle)
 
     @app.route('/profile')
     def profile_page():
@@ -299,13 +307,20 @@ def register_routes(app):
         if not user:
             return redirect(url_for('home'))
         
-        # Get team_id from query parameter, default to None
+        # Get team_id and action from query parameters
         team_id = request.args.get('team_id', type=int)
+        action = request.args.get('action', '')
         
         # Check if there's an existing battle state
         existing_battle = get_battle_state_from_db(user['_id'])
         
-        return render_template('battle.html', team_id=team_id, has_existing_battle=bool(existing_battle))
+        # Handle action parameter
+        if action == 'new' and existing_battle:
+            # Clear existing battle state to start fresh
+            save_battle_state_to_db(user['_id'], None)
+            existing_battle = None
+        
+        return render_template('battle.html', team_id=team_id, has_existing_battle=bool(existing_battle), action=action)
 
     @app.route('/api/battle/start', methods=['POST'])
     def start_battle():
@@ -791,6 +806,19 @@ def register_routes(app):
         save_battle_state_to_db(user['_id'], None)
         
         # Start new battle
+        return start_battle()
+
+    @app.route('/api/battle/start-fresh', methods=['POST'])
+    def start_fresh_battle():
+        """Clear existing battle state and start a completely new battle"""
+        user = get_current_user()
+        if not user:
+            return jsonify({'error': 'Not authenticated'}), 401
+        
+        # Clear existing battle state
+        save_battle_state_to_db(user['_id'], None)
+        
+        # Start new battle using the existing start_battle function
         return start_battle()
 
     @app.route('/api/battle/end', methods=['POST'])

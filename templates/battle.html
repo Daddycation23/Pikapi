@@ -2,19 +2,43 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Pokemon Battle - Pikapi</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='common.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='battle.css') }}">
+    <meta name="theme-color" content="#667eea">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 </head>
 <body>
-    <div class="battle-container" data-team-id="{{ team_id|default('null') }}" data-has-existing-battle="{{ has_existing_battle|lower }}">
+    <div class="battle-container" data-team-id="{{ team_id|default('null') }}" data-has-existing-battle="{{ has_existing_battle|lower }}" data-action="{{ action|default('') }}">
         <!-- Battle Header -->
         <div class="battle-header">
+            <button class="exit-btn" onclick="window.location.href='/'">← Exit</button>
             <div class="player-level">
                 <span class="level-label">Stage Level:</span>
                 <span id="player-level-display" class="level-value">1</span>
             </div>
             <div class="battle-title">Pokemon Battle</div>
+        </div>
+        
+        <!-- Team Overview Column -->
+        <div class="team-overview">
+            <!-- Enemy Team Display -->
+            <div class="enemy-team-display" id="enemy-team-display">
+                <div class="team-title">Enemy Team</div>
+                <div class="enemy-team-list" id="enemy-team-list">
+                    <!-- Enemy team will be populated here -->
+                </div>
+            </div>
+            
+            <!-- Player Team Display -->
+            <div class="player-team-display" id="player-team-display">
+                <div class="team-title">Your Team</div>
+                <div class="player-team-list" id="player-team-list">
+                    <!-- Player team will be populated here -->
+                </div>
+            </div>
         </div>
         
         <!-- Battle Scene -->
@@ -26,22 +50,16 @@
                 </div>
                 <div class="pokemon-info">
                     <div class="pokemon-name" id="enemy-name">Enemy Pokemon</div>
-                    <div class="pokemon-level" id="enemy-level">Lv. 50</div>
-                    <div class="pokemon-types" id="enemy-types">
-                        <!-- Type badges will be populated here -->
+                    <div class="pokemon-level-types">
+                        <div class="pokemon-level" id="enemy-level">Lv. 50</div>
+                        <div class="pokemon-types" id="enemy-types">
+                            <!-- Type badges will be populated here -->
+                        </div>
                     </div>
                     <div class="health-bar">
                         <div class="health-fill" id="enemy-health-fill" style="width: 100%"></div>
                         <div class="health-text" id="enemy-health-text">100/100</div>
                     </div>
-                </div>
-            </div>
-
-            <!-- Enemy Team Display -->
-            <div class="enemy-team-display" id="enemy-team-display">
-                <div class="team-title">Enemy Team</div>
-                <div class="enemy-team-list" id="enemy-team-list">
-                    <!-- Enemy team will be populated here -->
                 </div>
             </div>
 
@@ -52,9 +70,11 @@
                 </div>
                 <div class="pokemon-info">
                     <div class="pokemon-name" id="player-name">Your Pokemon</div>
-                    <div class="pokemon-level" id="player-level">Lv. 50</div>
-                    <div class="pokemon-types" id="player-types">
-                        <!-- Type badges will be populated here -->
+                    <div class="pokemon-level-types">
+                        <div class="pokemon-level" id="player-level">Lv. 50</div>
+                        <div class="pokemon-types" id="player-types">
+                            <!-- Type badges will be populated here -->
+                        </div>
                     </div>
                     <div class="health-bar">
                         <div class="health-fill" id="player-health-fill" style="width: 100%"></div>
@@ -68,13 +88,13 @@
         <div class="battle-menu" id="battle-menu">
             <div class="menu-buttons">
                 <button class="menu-btn battle-btn" id="fight-btn">FIGHT</button>
-                <button class="menu-btn pokemon-btn" id="pokemon-btn">POKEMON</button>
+                <button class="menu-btn run-btn" id="run-btn">RUN</button>
             </div>
         </div>
 
         <!-- Move Selection (hidden by default) -->
         <div class="move-selection" id="move-selection" style="display: none;">
-            <div class="move-grid">
+            <div class="move-grid-horizontal">
                 <button class="move-btn" data-move="0" id="move-1">Move 1</button>
                 <button class="move-btn" data-move="1" id="move-2">Move 2</button>
                 <button class="move-btn" data-move="2" id="move-3">Move 3</button>
@@ -96,9 +116,36 @@
             <div class="log-message">A wild Pokemon appeared!</div>
         </div>
 
-        <!-- Back to Main Menu -->
-        <div class="back-to-main">
-            <button class="main-menu-btn" onclick="window.location.href='/'">← Back to Main Menu</button>
+        <!-- Run Confirmation Modal -->
+        <div class="run-modal" id="run-modal" style="display: none;">
+            <div class="run-modal-content">
+                <div class="run-modal-header">
+                    <h3>Run from Battle?</h3>
+                </div>
+                <div class="run-modal-body">
+                    <p>Are you sure you want to run from this battle?</p>
+                    <p><strong>Warning:</strong> Running will count as a loss and you will be reset to level 1.</p>
+                </div>
+                <div class="run-modal-footer">
+                    <button class="run-modal-btn run-cancel-btn" id="run-cancel-btn">Cancel</button>
+                    <button class="run-modal-btn run-confirm-btn" id="run-confirm-btn">Run Away</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Notification Modal -->
+        <div class="notification-modal" id="notification-modal" style="display: none;">
+            <div class="notification-modal-content">
+                <div class="notification-modal-header">
+                    <h3 id="notification-title">Notification</h3>
+                </div>
+                <div class="notification-modal-body">
+                    <p id="notification-message">Message goes here</p>
+                </div>
+                <div class="notification-modal-footer">
+                    <button class="notification-modal-btn" id="notification-ok-btn">OK</button>
+                </div>
+            </div>
         </div>
     </div>
 

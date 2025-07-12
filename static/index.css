@@ -448,28 +448,67 @@ body {
 }
 
 .battle-btn {
-    background: var(--danger-color);
-    border: 2px solid var(--danger-color);
-    border-radius: var(--border-radius-lg);
-    padding: 8px 16px;
+    padding: 10px 20px;
+    border: none;
+    border-radius: var(--border-radius-sm);
+    font-size: 14px;
+    font-weight: 500;
     cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
     transition: all var(--transition-fast);
     display: flex;
     align-items: center;
-    gap: 6px;
-    font-size: 14px;
+    gap: 8px;
     color: white;
-    font-weight: 600;
 }
 
 .battle-btn:hover {
-    background: #c0392b;
-    border-color: #c0392b;
     transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 }
 
 .battle-icon {
     font-size: 16px;
+}
+
+/* Battle Buttons Container */
+.battle-buttons-container {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+/* Resume Battle Button */
+.resume-battle-btn {
+    background: #3498db;
+    color: white;
+}
+
+.resume-battle-btn:hover {
+    background: #2980b9;
+}
+
+/* New Battle Button */
+.new-battle-btn {
+    background: #9b59b6;
+    color: white;
+}
+
+.new-battle-btn:hover {
+    background: #8e44ad;
+}
+
+/* Responsive design for battle buttons */
+@media (max-width: 768px) {
+    .battle-buttons-container {
+        flex-direction: column;
+        gap: 5px;
+    }
+    
+    .battle-btn {
+        font-size: 12px;
+        padding: 6px 12px;
+    }
 }   
 
 body.index-pokemon-bg {

@@ -23,11 +23,7 @@
                 <div class="team-tab active">Team 1</div>
                 <div class="team-tab">Team 2</div>
                 <div class="team-tab">Team 3</div>
-                <button class="battle-btn" id="battle-btn" style="margin-left: auto;" onclick="window.location.href='/battle'">
-                    <span class="battle-icon">⚔️</span>
-                    Battle
-                </button>
-                <button class="btn-base auth-button edit-team-btn" style="margin-left: 10px;">Edit Team</button>
+                <button class="btn-base auth-button edit-team-btn" style="margin-left: auto;">Edit Team</button>
             </div>
             <div class="team-grid">
                 <div class="pokemon-slot edit-team-btn">
@@ -54,10 +50,30 @@
         <!-- Current Challenge Section -->
         <div class="challenge-section" id="challenge-section" style="display: none;">
             <h2>Current Challenge</h2>
-            <div class="level-info">
-                <span class="level-badge">Stage Level: <span id="current-level">1</span></span>
-                <span class="streak-info">Streak: <span id="current-streak">0</span></span>
-                <span class="max-level">Best: Stage Level: <span id="max-level">1</span></span>
+            <div class="level-info" style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <span class="level-badge">Stage Level: <span id="current-level">1</span></span>
+                    <span class="streak-info">Streak: <span id="current-streak">0</span></span>
+                    <span class="max-level">Best: Stage Level: <span id="max-level">1</span></span>
+                </div>
+                <!-- Battle Buttons -->
+                <div class="battle-buttons-container">
+                    {% if has_existing_battle %}
+                        <button id="resume-battle-btn" class="battle-btn resume-battle-btn" style="margin-right: 10px;">
+                            <span class="battle-icon">⚔️</span>
+                            Resume Battle
+                        </button>
+                        <button id="new-battle-btn" class="battle-btn new-battle-btn">
+                            <span class="battle-icon">🔄</span>
+                            New Battle
+                        </button>
+                    {% else %}
+                        <button id="battle-btn" class="battle-btn">
+                            <span class="battle-icon">⚔️</span>
+                            Start Battle
+                        </button>
+                    {% endif %}
+                </div>
             </div>
             <div class="enemy-team-preview">
                 <h3>Enemy Team: <span class="enemy-cost">Cost: <span id="enemy-cost">0</span></span></h3>

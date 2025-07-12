@@ -9,46 +9,42 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function initializeBattle() {
-    // Get team_id from window object (passed from Flask template)
-    const teamId = window.teamId;
-    const hasExistingBattle = window.hasExistingBattle;
+    // Get team_id and action from data attributes
+    const battleContainer = document.querySelector('.battle-container');
+    const teamIdStr = battleContainer.getAttribute('data-team-id');
+    const teamId = teamIdStr && teamIdStr !== 'null' ? parseInt(teamIdStr) : null;
+    const hasExistingBattle = battleContainer.getAttribute('data-has-existing-battle') === 'true';
+    const action = battleContainer.getAttribute('data-action');
     
-    // Check if there's an existing battle to restore
-    if (hasExistingBattle) {
-        const shouldRestore = confirm('You have an ongoing battle. Would you like to restore it or start fresh?\n\nClick OK to restore the battle\nClick Cancel to start fresh with full health');
-        
-        if (shouldRestore) {
-            // Restore existing battle
-            fetch('/api/battle/restore', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.error) {
-                    console.error('Battle restore error:', data.error);
-                    // Fallback to new battle
-                    startNewBattle(teamId);
-                    return;
-                }
-                
-                battleState = data;
-                updateBattleDisplay();
-                updateBattleLog();
-            })
-            .catch(error => {
-                console.error('Error restoring battle:', error);
+    // Handle based on action and existing battle state
+    if (hasExistingBattle && action === 'resume') {
+        // Restore existing battle
+        fetch('/api/battle/restore', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                console.error('Battle restore error:', data.error);
                 // Fallback to new battle
                 startNewBattle(teamId);
-            });
-        } else {
-            // Start fresh battle
+                return;
+            }
+            
+            battleState = data;
+            updateBattleDisplay();
+            updateBattleLog();
+        })
+        .catch(error => {
+            console.error('Error restoring battle:', error);
+            // Fallback to new battle
             startNewBattle(teamId);
-        }
+        });
     } else {
-        // No existing battle, start new one
+        // Start new battle (either no existing battle or action is 'new')
         startNewBattle(teamId);
     }
 }
@@ -170,14 +166,13 @@ function updateBattleDisplay() {
     // Update move buttons
     updateMoveButtons();
     
-    // Update team display
+    // Update team displays
     updateTeamDisplay();
+    updateEnemyTeamDisplay();
 }
 
 function updateEnemyTeamDisplay() {
     if (!battleState || !battleState.enemy_team) return;
-    
-
     
     const enemyTeamList = document.getElementById('enemy-team-list');
     if (!enemyTeamList) return;
@@ -189,7 +184,7 @@ function updateEnemyTeamDisplay() {
         teamItem.className = 'enemy-team-item';
         
         // Use current_hp and max_hp from server, fallback to hp if not available
-        const currentHp = (typeof pokemon.current_hp === 'number') ? Math.max(0, pokemon.current_hp) : 0;
+        const currentHp = (typeof pokemon.current_hp === 'number') ? Math.max(0, pokemon.current_hp) : pokemon.hp || 100;
         const maxHp = pokemon.max_hp || pokemon.hp || 100;
         
         // Determine if this Pokemon is active or fainted
@@ -199,18 +194,22 @@ function updateEnemyTeamDisplay() {
         if (isActive) teamItem.classList.add('active');
         if (isFainted) teamItem.classList.add('fainted');
         
+        // Create the Pokemon image
+        const pokemonId = pokemon.id || pokemon.pokemon_id;
+        const imgSrc = pokemonId ? `/api/pokemon_image/${pokemonId}` : '/static/images/placeholder.png';
+        
+        // Create the team item HTML
         teamItem.innerHTML = `
-            <img src="/api/pokemon_image/${pokemon.id}" alt="${pokemon.name}" onerror="this.src='/static/images/placeholder.png'">
-            <div class="name">${pokemon.name}</div>
-            <div class="health">${currentHp}/${maxHp}</div>
-            ${isActive ? '<div class="status">ACTIVE</div>' : ''}
-            ${isFainted ? '<div class="status">FAINTED</div>' : ''}
+            <img src="${imgSrc}" alt="${pokemon.name}" onerror="this.src='/static/images/placeholder.png'">
+            <div class="team-pokemon-info">
+                <div class="team-pokemon-name">${pokemon.name}</div>
+                <div class="team-pokemon-health">${Math.round(currentHp)}/${Math.round(maxHp)}</div>
+                ${isFainted ? '<div class="team-pokemon-status">Fainted</div>' : ''}
+            </div>
         `;
         
         enemyTeamList.appendChild(teamItem);
     });
-    
-
 }
 
 function updateMoveButtons() {
@@ -321,32 +320,91 @@ function updateBattleLog() {
 }
 
 function setupEventListeners() {
-    if (eventListenersSetup) return; // Prevent duplicate setup
-    
-    // Menu buttons
+    if (eventListenersSetup) return;
+    eventListenersSetup = true;
+
+    // FIGHT button: Show move selection, hide menu
     const fightBtn = document.getElementById('fight-btn');
-    const pokemonBtn = document.getElementById('pokemon-btn');
-    
     if (fightBtn) {
-        fightBtn.addEventListener('click', function() {
-            showMoveSelection();
-        });
-    }
-    
-    if (pokemonBtn) {
-        pokemonBtn.addEventListener('click', function() {
-            showPokemonSelection();
-        });
+        fightBtn.onclick = function() {
+            document.getElementById('battle-menu').style.display = 'none';
+            document.getElementById('move-selection').style.display = 'flex';
+        };
     }
 
-    // Move selection
+    // RUN button: Show run confirmation modal
+    const runBtn = document.getElementById('run-btn');
+    if (runBtn) {
+        runBtn.onclick = function() {
+            showRunModal();
+        };
+    }
+
+    // BACK button in move selection: Show menu, hide move selection
     const backToMenuBtn = document.getElementById('back-to-menu');
     if (backToMenuBtn) {
-        backToMenuBtn.addEventListener('click', function() {
-            showMainMenu();
-        });
+        backToMenuBtn.onclick = function() {
+            document.getElementById('move-selection').style.display = 'none';
+            document.getElementById('battle-menu').style.display = 'flex';
+        };
+    }
+
+    // BACK button in pokemon selection: Show menu, hide pokemon selection
+    const backToMenuPokemonBtn = document.getElementById('back-to-menu-pokemon');
+    if (backToMenuPokemonBtn) {
+        backToMenuPokemonBtn.onclick = function() {
+            document.getElementById('pokemon-selection').style.display = 'none';
+            document.getElementById('battle-menu').style.display = 'flex';
+        };
+    }
+
+    // Run modal buttons
+    const runCancelBtn = document.getElementById('run-cancel-btn');
+    const runConfirmBtn = document.getElementById('run-confirm-btn');
+    
+    if (runCancelBtn) {
+        runCancelBtn.onclick = function() {
+            hideRunModal();
+        };
     }
     
+    if (runConfirmBtn) {
+        runConfirmBtn.onclick = function() {
+            hideRunModal();
+            runFromBattle();
+        };
+    }
+
+    // Close modal when clicking outside
+    const runModal = document.getElementById('run-modal');
+    if (runModal) {
+        runModal.onclick = function(e) {
+            if (e.target === runModal) {
+                hideRunModal();
+            }
+        };
+    }
+
+    // Notification modal OK button
+    const notificationOkBtn = document.getElementById('notification-ok-btn');
+    if (notificationOkBtn) {
+        notificationOkBtn.onclick = function() {
+            hideNotification();
+        };
+    }
+
+    // Close notification modal when clicking outside
+    const notificationModal = document.getElementById('notification-modal');
+    if (notificationModal) {
+        notificationModal.onclick = function(e) {
+            if (e.target === notificationModal) {
+                hideNotification();
+            }
+        };
+    }
+
+
+
     // Set up move button event listeners once
     const moveBtns = document.querySelectorAll('.move-btn');
     moveBtns.forEach((btn, index) => {
@@ -354,16 +412,6 @@ function setupEventListeners() {
             useMove(index);
         });
     });
-
-    // Pokemon selection
-    const backToMenuPokemonBtn = document.getElementById('back-to-menu-pokemon');
-    if (backToMenuPokemonBtn) {
-        backToMenuPokemonBtn.addEventListener('click', function() {
-            showMainMenu();
-        });
-    }
-    
-    eventListenersSetup = true;
 }
 
 function showMainMenu() {
@@ -576,21 +624,20 @@ function handleBattleEnd(winner) {
     
     window.battleEndTimeout = setTimeout(() => {
         // Show appropriate message based on winner
+        const title = winner === 'player' ? 'Victory!' : 'Defeat!';
         const message = winner === 'player' 
             ? `Battle won! You are now level ${battleState.new_level || 'unknown'}! Redirecting to team building...`
             : `Battle lost! You have been reset to level ${battleState.reset_level || 1}. Redirecting to team building...`;
         
-        alert(message);
-        
-        // Redirect to team building page
-        window.location.href = '/player';
+        // Show custom notification and redirect after user clicks OK
+        showBattleEndNotification(title, message);
     }, 1000);
 }
 
 // Add error handling for network issues
 function handleNetworkError(error, context) {
     console.error(`Network error in ${context}:`, error);
-    alert(`Connection error: ${error.message}. Please refresh the page.`);
+    showNotification('Connection Error', `Connection error: ${error.message}. Please refresh the page.`);
 }
 
 // Add this to the end of the file for better debugging
@@ -657,9 +704,179 @@ async function updatePokemonTypes() {
     }
 }
 
-// Function to update team display (placeholder for now)
+// Function to update team display
 function updateTeamDisplay() {
-    // This function can be expanded later to show team status
-    // For now, it's just a placeholder to prevent errors
+    if (!battleState || !battleState.player_team) return;
+    
+    const playerTeamList = document.getElementById('player-team-list');
+    if (!playerTeamList) return;
+    
+    playerTeamList.innerHTML = '';
 
+    battleState.player_team.forEach((pokemon, index) => {
+        const teamItem = document.createElement('div');
+        teamItem.className = 'player-team-item';
+        
+        // Use current_hp and max_hp from server, fallback to hp if not available
+        const currentHp = (typeof pokemon.current_hp === 'number') ? Math.max(0, pokemon.current_hp) : pokemon.hp || 100;
+        const maxHp = pokemon.max_hp || pokemon.hp || 100;
+        
+        // Determine if this Pokemon is active or fainted
+        const isActive = index === battleState.current_player_index;
+        const isFainted = currentHp <= 0;
+        
+        if (isActive) teamItem.classList.add('active');
+        if (isFainted) teamItem.classList.add('fainted');
+        
+        // Create the Pokemon image
+        const pokemonId = pokemon.id || pokemon.pokemon_id;
+        const imgSrc = pokemonId ? `/api/pokemon_image/${pokemonId}` : '/static/images/placeholder.png';
+        
+        // Create the team item HTML
+        teamItem.innerHTML = `
+            <img src="${imgSrc}" alt="${pokemon.name}" onerror="this.src='/static/images/placeholder.png'">
+            <div class="team-pokemon-info">
+                <div class="team-pokemon-name">${pokemon.name}</div>
+                <div class="team-pokemon-health">${Math.round(currentHp)}/${Math.round(maxHp)}</div>
+                ${isFainted ? '<div class="team-pokemon-status">Fainted</div>' : ''}
+            </div>
+            ${!isActive && !isFainted ? `<button class="swap-in-btn" onclick="swapInPokemon(${index})">Swap In</button>` : ''}
+        `;
+        
+        playerTeamList.appendChild(teamItem);
+    });
+}
+
+// Function to swap in a Pokemon from the team display
+function swapInPokemon(pokemonIndex) {
+    if (!battleState || !battleState.player_team) return;
+    
+    const pokemon = battleState.player_team[pokemonIndex];
+    if (!pokemon) return;
+    
+    // Check if Pokemon is fainted
+    const currentHp = (typeof pokemon.current_hp === 'number') ? Math.max(0, pokemon.current_hp) : pokemon.hp || 100;
+    if (currentHp <= 0) {
+        showNotification('Invalid Action', 'Cannot swap in a fainted Pokemon!');
+        return;
+    }
+    
+    // Check if Pokemon is already active
+    if (pokemonIndex === battleState.current_player_index) {
+        showNotification('Invalid Action', 'This Pokemon is already active!');
+        return;
+    }
+    
+    // Disable the button to prevent multiple clicks
+    const swapBtn = event.target;
+    swapBtn.disabled = true;
+    swapBtn.textContent = 'Swapping...';
+    
+    // Call the switch Pokemon function
+    switchPokemon(pokemonIndex);
+} 
+
+// Function to show the run confirmation modal
+function showRunModal() {
+    const modal = document.getElementById('run-modal');
+    if (modal) {
+        modal.style.display = 'flex';
+    }
+}
+
+// Function to hide the run confirmation modal
+function hideRunModal() {
+    const modal = document.getElementById('run-modal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
+// Function to show notification modal
+function showNotification(title, message) {
+    const modal = document.getElementById('notification-modal');
+    const titleElement = document.getElementById('notification-title');
+    const messageElement = document.getElementById('notification-message');
+    
+    if (modal && titleElement && messageElement) {
+        titleElement.textContent = title;
+        messageElement.textContent = message;
+        modal.style.display = 'flex';
+    }
+}
+
+// Function to hide notification modal
+function hideNotification() {
+    const modal = document.getElementById('notification-modal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
+// Function to show battle end notification with redirect
+function showBattleEndNotification(title, message) {
+    const modal = document.getElementById('notification-modal');
+    const titleElement = document.getElementById('notification-title');
+    const messageElement = document.getElementById('notification-message');
+    const okButton = document.getElementById('notification-ok-btn');
+    
+    if (modal && titleElement && messageElement && okButton) {
+        titleElement.textContent = title;
+        messageElement.textContent = message;
+        modal.style.display = 'flex';
+        
+        // Override the OK button to redirect to player page
+        okButton.onclick = function() {
+            hideNotification();
+            window.location.href = '/player';
+        };
+    }
+}
+
+// Function to run from battle (exit as loss)
+function runFromBattle() {
+    // Disable the run button to prevent multiple clicks
+    const runBtn = document.getElementById('run-btn');
+    if (runBtn) {
+        runBtn.disabled = true;
+        runBtn.textContent = 'RUNNING...';
+    }
+    
+    // Call the server to end the battle as a loss
+    fetch('/api/battle/end', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            winner: 'enemy',
+            reason: 'player_ran'
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) {
+            console.error('Run error:', data.error);
+            // Re-enable button on error
+            if (runBtn) {
+                runBtn.disabled = false;
+                runBtn.textContent = 'RUN';
+            }
+            showNotification('Error', 'Failed to run from battle. Please try again.');
+            return;
+        }
+        
+        // Update battle state and handle as loss
+        battleState = data;
+        handleBattleEnd('enemy');
+    })
+    .catch(error => {
+        console.error('Error running from battle:', error);
+        // Re-enable button on error
+        if (runBtn) {
+            runBtn.disabled = false;
+            runBtn.textContent = 'RUN';
+        }
+        showNotification('Connection Error', 'Connection error. Please try again.');
+    });
 } 
