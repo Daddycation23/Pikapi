@@ -261,6 +261,9 @@ function updateMoveButtons() {
     if (!battleState || !battleState.player_pokemon || !battleState.player_pokemon.assigned_moves) {
         return;
     }
+    
+    // Clear any existing tooltips
+    hideMoveTooltip();
 
     const assignedMoves = battleState.player_pokemon.assigned_moves;
 
@@ -319,6 +322,11 @@ function updateMoveButtons() {
                     
                     // Apply type color styling
                     moveBtn.className = `move-btn type-${move.type.toLowerCase()}`;
+                    
+                    // Add tooltip functionality if move has name
+                    if (move.name && move.name !== '---') {
+                        setupMoveTooltip(moveBtn, battleState.player_pokemon.assigned_moves[i]);
+                    }
                 }
             }
         })
@@ -343,6 +351,11 @@ function updateMoveButtons() {
                     }
                     
                     moveBtn.className = 'move-btn type-normal';
+                    
+                    // Add tooltip functionality for assigned moves
+                    if (moves[i] && battleState.player_pokemon.assigned_moves && battleState.player_pokemon.assigned_moves[i]) {
+                        setupMoveTooltip(moveBtn, battleState.player_pokemon.assigned_moves[i]);
+                    }
                 }
             }
         });
@@ -502,6 +515,9 @@ function showMainMenu() {
         }
     }
     
+    // Clear any move tooltips
+    hideMoveTooltip();
+    
     // Show main menu and hide others
     document.getElementById('battle-menu').style.display = 'flex';
     document.getElementById('move-selection').style.display = 'none';
@@ -559,6 +575,9 @@ function showMainMenu() {
 }
 
 function showMoveSelection() {
+    // Clear any move tooltips
+    hideMoveTooltip();
+    
     document.getElementById('battle-menu').style.display = 'none';
     document.getElementById('move-selection').style.display = 'block';
     document.getElementById('pokemon-selection').style.display = 'none';
@@ -1228,4 +1247,80 @@ function runFromBattle() {
         }
         showNotification('Connection Error', 'Connection error. Please try again.');
     });
+} 
+
+// Move tooltip functionality
+async function setupMoveTooltip(moveButton, moveId) {
+    try {
+        // Fetch detailed move information
+        const response = await fetch(`/api/move/${moveId}`);
+        const moveData = await response.json();
+        
+        const moveInfo = {
+            name: moveData.move_name || 'Unknown Move',
+            power: moveData.power || 0,
+            accuracy: moveData.accuracy || 0,
+            category: moveData.category || 'physical',
+            type: moveData.type_id || 1
+        };
+        
+        // Get type name
+        let typeName = 'Normal';
+        if (moveInfo.type !== 1) {
+            try {
+                const typeResponse = await fetch(`/api/type/${moveInfo.type}`);
+                const typeData = await typeResponse.json();
+                typeName = typeData.type_name || 'Normal';
+            } catch (error) {
+                console.error('Error fetching type name:', error);
+            }
+        }
+        
+        // Add event listeners for tooltip
+        moveButton.addEventListener('mouseenter', () => {
+            showMoveTooltip(moveButton, moveInfo, typeName);
+        });
+        
+        moveButton.addEventListener('mouseleave', () => {
+            hideMoveTooltip();
+        });
+        
+    } catch (error) {
+        console.error('Error setting up move tooltip:', error);
+    }
+}
+
+// Show move tooltip
+function showMoveTooltip(element, moveInfo, typeName) {
+    hideMoveTooltip(); // Remove any existing tooltip
+    
+    const tooltip = document.createElement('div');
+    tooltip.className = 'battle-move-tooltip';
+    tooltip.innerHTML = `
+        <div class="tooltip-header">${moveInfo.name}</div>
+        <div class="tooltip-content">
+            <div class="move-stat">Type: <span class="type-badge type-${typeName.toLowerCase()}">${typeName}</span></div>
+            <div class="move-stat">Category: <span class="move-category">${moveInfo.category}</span></div>
+            <div class="move-stat">Power: <span class="move-power">${moveInfo.power || 'N/A'}</span></div>
+            <div class="move-stat">Accuracy: <span class="move-accuracy">${moveInfo.accuracy || 'N/A'}%</span></div>
+        </div>
+    `;
+    
+    document.body.appendChild(tooltip);
+    
+    // Position tooltip
+    const rect = element.getBoundingClientRect();
+    tooltip.style.left = rect.left + (rect.width / 2) - (tooltip.offsetWidth / 2) + 'px';
+    tooltip.style.top = rect.top - tooltip.offsetHeight - 10 + 'px';
+    
+    // Add fade-in animation
+    setTimeout(() => tooltip.classList.add('visible'), 10);
+}
+
+// Hide move tooltip
+function hideMoveTooltip() {
+    const existingTooltip = document.querySelector('.battle-move-tooltip');
+    if (existingTooltip) {
+        existingTooltip.remove();
+    }
 } 
