@@ -11,7 +11,49 @@ document.addEventListener('DOMContentLoaded', () => {
 function initializeBattle() {
     // Get team_id from window object (passed from Flask template)
     const teamId = window.teamId;
+    const hasExistingBattle = window.hasExistingBattle;
     
+    // Check if there's an existing battle to restore
+    if (hasExistingBattle) {
+        const shouldRestore = confirm('You have an ongoing battle. Would you like to restore it or start fresh?\n\nClick OK to restore the battle\nClick Cancel to start fresh with full health');
+        
+        if (shouldRestore) {
+            // Restore existing battle
+            fetch('/api/battle/restore', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    console.error('Battle restore error:', data.error);
+                    // Fallback to new battle
+                    startNewBattle(teamId);
+                    return;
+                }
+                
+                battleState = data;
+                updateBattleDisplay();
+                updateBattleLog();
+            })
+            .catch(error => {
+                console.error('Error restoring battle:', error);
+                // Fallback to new battle
+                startNewBattle(teamId);
+            });
+        } else {
+            // Start fresh battle
+            startNewBattle(teamId);
+        }
+    } else {
+        // No existing battle, start new one
+        startNewBattle(teamId);
+    }
+}
+
+function startNewBattle(teamId) {
     // Start a new battle with the server
     fetch('/api/battle/start', {
         method: 'POST',
@@ -524,8 +566,6 @@ function switchPokemon(pokemonIndex) {
 }
 
 function handleBattleEnd(winner) {
-    
-    
     // Hide move selection and show main menu
     showMainMenu();
     
@@ -535,33 +575,15 @@ function handleBattleEnd(winner) {
     }
     
     window.battleEndTimeout = setTimeout(() => {
-        const message = winner === 'player' ? 'Battle won! Start a new battle?' : 'Battle lost! Start a new battle?';
-        if (confirm(message)) {
-    
-            // End current battle and start new one
-            fetch('/api/battle/end', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                }
-            })
-            .then(response => {
-                return response.json();
-            })
-            .then(data => {
-                // Preserve the team_id when starting a new battle
-                initializeBattle();
-            })
-            .catch(error => {
-                console.error('Error ending battle:', error);
-                // Fallback: just reload the page
-                location.reload();
-            });
-        } else {
-    
-            // User doesn't want to start new battle, redirect to main menu
-            window.location.href = '/';
-        }
+        // Show appropriate message based on winner
+        const message = winner === 'player' 
+            ? `Battle won! You are now level ${battleState.new_level || 'unknown'}! Redirecting to team building...`
+            : `Battle lost! You have been reset to level ${battleState.reset_level || 1}. Redirecting to team building...`;
+        
+        alert(message);
+        
+        // Redirect to team building page
+        window.location.href = '/player';
     }, 1000);
 }
 

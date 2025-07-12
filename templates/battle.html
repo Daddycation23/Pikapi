@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='battle.css') }}">
 </head>
 <body>
-    <div class="battle-container">
+    <div class="battle-container" data-team-id="{{ team_id|default('null') }}" data-has-existing-battle="{{ has_existing_battle|lower }}">
         <!-- Battle Header -->
         <div class="battle-header">
             <div class="player-level">
@@ -104,7 +104,9 @@
 
     <script>
         // Pass team_id from Flask template to JavaScript
-        window.teamId = {{ team_id if team_id else 'null' }};
+        const container = document.querySelector('.battle-container');
+        window.teamId = container.dataset.teamId === 'null' ? null : parseInt(container.dataset.teamId);
+        window.hasExistingBattle = container.dataset.hasExistingBattle === 'true';
     </script>
     <script src="{{ url_for('static', filename='battle.js') }}"></script>
 </body>

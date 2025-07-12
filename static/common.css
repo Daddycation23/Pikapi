@@ -502,9 +502,173 @@ body {
 
 /* Utility classes */
 
+/* Challenge Section Styles */
+.challenge-section {
+    background: var(--background-card);
+    border-radius: var(--border-radius-lg);
+    padding: 20px;
+    margin-top: 20px;
+    box-shadow: var(--shadow-light);
+}
 
+.challenge-section h2 {
+    margin: 0 0 15px 0;
+    color: var(--text-primary);
+    font-size: 1.5em;
+}
 
+.level-info {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 20px;
+    align-items: center;
+}
 
+.level-badge {
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-hover));
+    color: white;
+    padding: 8px 16px;
+    border-radius: var(--border-radius-lg);
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.streak-info {
+    background: linear-gradient(135deg, var(--accent-color), var(--accent-hover));
+    color: white;
+    padding: 8px 16px;
+    border-radius: var(--border-radius-lg);
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.max-level {
+    background: linear-gradient(135deg, var(--secondary-color), var(--secondary-hover));
+    color: white;
+    padding: 8px 16px;
+    border-radius: var(--border-radius-lg);
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.enemy-team-preview h3 {
+    margin: 0 0 15px 0;
+    color: var(--text-primary);
+    font-size: 1.2em;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.enemy-cost {
+    font-size: 0.9em;
+    color: var(--text-secondary);
+    font-weight: normal;
+}
+
+.enemy-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 15px;
+}
+
+.enemy-pokemon-preview {
+    background: var(--background-light);
+    border: 2px solid var(--border-color);
+    border-radius: var(--border-radius-md);
+    padding: 10px;
+    text-align: center;
+    transition: all var(--transition-fast);
+}
+
+.enemy-pokemon-preview:hover {
+    border-color: var(--primary-color);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-medium);
+}
+
+.enemy-pokemon-preview img {
+    width: 60px;
+    height: 60px;
+    object-fit: contain;
+    margin-bottom: 8px;
+}
+
+.enemy-pokemon-preview .pokemon-name {
+    font-size: 12px;
+    font-weight: 600;
+    margin-bottom: 5px;
+    color: var(--text-primary);
+}
+
+.enemy-pokemon-preview .pokemon-level {
+    font-size: 11px;
+    color: var(--text-secondary);
+    margin-bottom: 5px;
+}
+
+.enemy-pokemon-preview .pokemon-types {
+    display: flex;
+    gap: 3px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.enemy-pokemon-preview .type-badge {
+    font-size: 10px;
+    padding: 2px 6px;
+}
+
+/* Enemy Move Tooltip Styles */
+.enemy-move-tooltip {
+    position: fixed;
+    background: linear-gradient(135deg, #2c3e50, #34495e);
+    color: white;
+    padding: 12px;
+    border-radius: var(--border-radius-md);
+    box-shadow: var(--shadow-heavy);
+    z-index: 1000;
+    max-width: 200px;
+    font-size: 12px;
+    opacity: 0;
+    transform: translateX(-10px) translateY(-80px);
+    transition: all var(--transition-fast);
+}
+
+.enemy-move-tooltip.visible {
+    opacity: 1;
+    transform: translateX(0) translateY(-80px);
+}
+
+.tooltip-header {
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: #3498db;
+    border-bottom: 1px solid #34495e;
+    padding-bottom: 4px;
+}
+
+.move-tooltip-item {
+    margin-bottom: 6px;
+    padding: 4px 0;
+}
+
+.move-tooltip-item:last-child {
+    margin-bottom: 0;
+}
+
+.move-name {
+    display: block;
+    font-weight: 500;
+    color: #ecf0f1;
+    margin-bottom: 2px;
+}
+
+.move-details {
+    display: block;
+    font-size: 11px;
+    color: #bdc3c7;
+}
 
 /* ---------------------------------
    Auth Modal (Login & Register)

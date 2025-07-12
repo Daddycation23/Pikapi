@@ -1,6 +1,14 @@
 from flask import render_template, request, jsonify, session, Response, abort, make_response, redirect, url_for
 from app.db import fetch_pokemon, fetch_pokemon_by_id, get_db_connection, save_team as db_save_team, get_team as db_get_team, list_teams, get_team_by_id, save_team_by_id, create_team, get_move_data, get_type_effectiveness, get_pokemon_full_data
-from app.mongo_client import get_player_profiles_collection, get_battles_collection
+from app.mongo_client import (
+    get_player_profiles_collection, 
+    get_battles_collection,
+    get_or_create_player_profile,
+    update_player_profile,
+    get_player_level_info,
+    increment_player_level,
+    reset_player_to_level_one
+)
 import bcrypt
 from datetime import datetime
 import random
@@ -136,20 +144,15 @@ def register_routes(app):
             player_id = cur.lastrowid
             conn.commit()
 
-        profiles = get_player_profiles_collection()
-        profiles.insert_one({
-            "_id": player_id,
-            "statistics": {
-                "total_wins": 0,
-                "total_losses": 0,
-                "most_used_team_id": None,
-                "most_used_pokemon_id": None
-            },
-            "preferences": {
-                "sound": True,
-                "theme": "light"
-            },
-            "last_battle_id": None
+        # Create player profile with new enemy team
+        enemy_team = generate_enemy_team_with_moves(1)  # Start at level 1
+        get_or_create_player_profile(player_id)  # This will create the profile with defaults
+        update_player_profile(player_id, {
+            'current_enemy_team': enemy_team,
+            'statistics.total_wins': 0,
+            'statistics.total_losses': 0,
+            'statistics.most_used_team_id': None,
+            'statistics.most_used_pokemon_id': None
         })
 
         return jsonify({'success': True})
@@ -252,6 +255,30 @@ def register_routes(app):
             return jsonify({'username': user['username']})
         return jsonify({'username': None})
 
+    @app.route('/api/current-challenge')
+    def get_current_challenge():
+        """Get current enemy team and level information for team building screen"""
+        user = get_current_user()
+        if not user:
+            return jsonify({'error': 'Not authenticated'}), 401
+        
+        # Get level info and enemy team
+        level_info = get_player_level_info(user['_id'])
+        enemy_team = get_or_generate_enemy_team(user['_id'])
+        
+        # Calculate enemy team cost
+        enemy_cost = 0
+        if enemy_team:
+            for pokemon in enemy_team:
+                if pokemon and pokemon.get('cost'):
+                    enemy_cost += pokemon['cost']
+        
+        return jsonify({
+            'level_info': level_info,
+            'enemy_team': enemy_team,
+            'enemy_cost': enemy_cost
+        })
+
     @app.route('/api/pokemon_image/<int:pokemon_id>')
     def pokemon_image(pokemon_id):
         with get_db_connection() as conn:
@@ -274,7 +301,11 @@ def register_routes(app):
         
         # Get team_id from query parameter, default to None
         team_id = request.args.get('team_id', type=int)
-        return render_template('battle.html', team_id=team_id)
+        
+        # Check if there's an existing battle state
+        existing_battle = get_battle_state_from_db(user['_id'])
+        
+        return render_template('battle.html', team_id=team_id, has_existing_battle=bool(existing_battle))
 
     @app.route('/api/battle/start', methods=['POST'])
     def start_battle():
@@ -288,8 +319,10 @@ def register_routes(app):
         data = request.json
         team_id = data.get('team_id')  # Get the team_id from the request
         
-        # Get current player level
-        player_level = get_player_level(user['_id'])
+        # Get current player level and enemy team
+        level_info = get_player_level_info(user['_id'])
+        player_level = level_info['current_level']
+        enemy_team = get_or_generate_enemy_team(user['_id'])
         
         # Get user's team based on team_id
         if team_id:
@@ -309,8 +342,9 @@ def register_routes(app):
         if not player_team:
             return jsonify({'error': 'Invalid team'}), 400
         
-        # Generate enemy team based on player level
-        enemy_team = generate_enemy_team(player_level)
+        # Use pre-generated enemy team (already has moves assigned)
+        if not enemy_team:
+            return jsonify({'error': 'No enemy team available'}), 400
         
         # Assign randomized moves to each Pokémon
         def assign_random_moves(pokemon):
@@ -374,20 +408,11 @@ def register_routes(app):
                 pokemon['assigned_moves'] = []
             player_team[i] = pokemon
         
-        # Assign moves to enemy team (already has stats set)
+        # Enemy team is already pre-generated with moves, just ensure HP is reset
         for i, pokemon in enumerate(enemy_team):
-            pokemon = assign_random_moves(pokemon)
-            pokemon['max_hp'] = pokemon['hp']  # Set max HP to original HP
-            pokemon['current_hp'] = pokemon['hp']  # Set current HP to max initially
-            # Ensure both 'id' and 'pokemon_id' fields are present
-            pokemon['id'] = pokemon.get('id') or pokemon.get('pokemon_id')
-            pokemon['pokemon_id'] = pokemon['id']
-            # Ensure 'name' is present
-            pokemon['name'] = pokemon.get('name', 'Unknown')
-            # Ensure 'assigned_moves' is a list
-            if 'assigned_moves' not in pokemon or not isinstance(pokemon['assigned_moves'], list):
-                pokemon['assigned_moves'] = []
-            enemy_team[i] = pokemon
+            if pokemon:
+                pokemon['current_hp'] = pokemon['max_hp']  # Reset HP to full
+                enemy_team[i] = pokemon
         
         # Initialize battle state with proper field names
         battle_state = {
@@ -399,6 +424,7 @@ def register_routes(app):
             'enemy_pokemon': enemy_team[0],
             'turn': 1,
             'player_level': player_level,
+            'level_info': level_info,
             'battle_log': [f"A wild {enemy_team[0]['name']} appeared!"]
         }
         save_battle_state_to_db(user['_id'], battle_state)
@@ -542,10 +568,14 @@ def register_routes(app):
                 battle_log.append(f"Enemy sent out {new_enemy['name']}!")
             else:
                 battle_log.append("You won the battle!")
-                # Increment player level on victory
+                # Increment player level on victory and generate new enemy team
                 new_level = increment_player_level(user['_id'])
+                new_enemy_team = generate_new_enemy_team_for_level(user['_id'], new_level)
                 battle_log.append(f"Level up! You are now level {new_level}!")
-                save_battle_state_to_db(user['_id'], battle_state)
+                
+                # Clear battle state since battle is complete
+                save_battle_state_to_db(user['_id'], None)
+                
                 return jsonify({
                     'player_pokemon': battle_state['player_pokemon'],
                     'enemy_pokemon': battle_state['enemy_pokemon'],
@@ -557,6 +587,7 @@ def register_routes(app):
                     'battle_ended': True,
                     'winner': 'player',
                     'new_level': new_level,
+                    'redirect_to_team_building': True,
                     'turn': battle_state['turn']
                 })
         if player_hp <= 0:
@@ -578,7 +609,14 @@ def register_routes(app):
                 })
             else:
                 battle_log.append("You lost the battle!")
-                save_battle_state_to_db(user['_id'], battle_state)
+                # Reset player to level 1 and generate new enemy team
+                reset_level = reset_player_to_level_one(user['_id'])
+                new_enemy_team = generate_new_enemy_team_for_level(user['_id'], reset_level)
+                battle_log.append(f"You have been reset to level {reset_level}!")
+                
+                # Clear battle state since battle is complete
+                save_battle_state_to_db(user['_id'], None)
+                
                 return jsonify({
                     'player_pokemon': battle_state['player_pokemon'],
                     'enemy_pokemon': battle_state['enemy_pokemon'],
@@ -589,6 +627,8 @@ def register_routes(app):
                     'battle_log': battle_log,
                     'battle_ended': True,
                     'winner': 'enemy',
+                    'reset_level': reset_level,
+                    'redirect_to_team_building': True,
                     'turn': battle_state['turn']
                 })
         # Continue battle
@@ -670,7 +710,10 @@ def register_routes(app):
                 })
             else:
                 battle_state['battle_log'].append("You lost the battle!")
-                save_battle_state_to_db(user['_id'], battle_state)
+                
+                # Clear battle state since battle is complete
+                save_battle_state_to_db(user['_id'], None)
+                
                 battle_state['player_pokemon'] = battle_state['player_team'][battle_state['current_player_index']]
                 battle_state['enemy_pokemon'] = battle_state['enemy_team'][battle_state['current_enemy_index']]
                 return jsonify({
@@ -724,6 +767,32 @@ def register_routes(app):
             'turn': battle_state['turn']
         })
 
+    @app.route('/api/battle/restore', methods=['POST'])
+    def restore_battle():
+        """Restore existing battle state"""
+        user = get_current_user()
+        if not user:
+            return jsonify({'error': 'Not authenticated'}), 401
+        
+        battle_state = get_battle_state_from_db(user['_id'])
+        if not battle_state:
+            return jsonify({'error': 'No battle to restore'}), 404
+        
+        return jsonify(battle_state)
+
+    @app.route('/api/battle/reset', methods=['POST'])
+    def reset_battle():
+        """Reset battle state and start fresh"""
+        user = get_current_user()
+        if not user:
+            return jsonify({'error': 'Not authenticated'}), 401
+        
+        # Clear existing battle state
+        save_battle_state_to_db(user['_id'], None)
+        
+        # Start new battle
+        return start_battle()
+
     @app.route('/api/battle/end', methods=['POST'])
     def end_battle():
         user = get_current_user()
@@ -735,23 +804,18 @@ def register_routes(app):
 
     @app.route('/api/profile')
     def api_profile():
-        user_id = session.get('user_id')
-        if not user_id:
-            return jsonify({'success': False, 'error': 'Not logged in'}), 401
-        profiles = get_player_profiles_collection()
-        profile = profiles.find_one({'_id': int(user_id)})
-        if not profile:
-            return jsonify({'success': False, 'error': 'Profile not found'}), 404
-
-        conn = get_db_connection()
-        cur = conn.cursor()
-        cur.execute("SELECT username FROM Player WHERE player_id = ?", (user_id,))
-        row = cur.fetchone()
-        conn.close()
-        username = row['username'] if row else ''
-
+        user = get_current_user()
+        if not user:
+            return jsonify({'success': False, 'error': 'Not authenticated'}), 401
+        
+        # Get player level info and profile
+        level_info = get_player_level_info(user['_id'])
+        profile = get_or_create_player_profile(user['_id'])
+        
+        # Convert _id to string for JSON serialization
         profile['_id'] = str(profile['_id'])
-        profile['username'] = username  # Add username to profile
+        profile['username'] = user['username']
+        profile['level_info'] = level_info
 
         return jsonify({'success': True, 'profile': profile})
 
@@ -961,23 +1025,30 @@ def save_battle_state_to_db(user_id, state):
     battles = get_battles_collection()
     battles.update_one({'user_id': user_id}, {'$set': {'state': state}}, upsert=True)
 
-def get_player_level(user_id):
-    """Get the current player level from MongoDB"""
-    battles = get_battles_collection()
-    battle = battles.find_one({'user_id': user_id})
-    return battle.get('player_level', 1) if battle else 1
+# New functions for the updated system
+def get_or_generate_enemy_team(user_id):
+    """Get current enemy team or generate a new one if needed."""
+    profile = get_or_create_player_profile(user_id)
+    current_enemy_team = profile.get('current_enemy_team')
+    
+    if not current_enemy_team:
+        # Generate new enemy team
+        current_level = profile.get('current_level', 1)
+        enemy_team = generate_enemy_team_with_moves(current_level)
+        
+        # Save to profile
+        update_player_profile(user_id, {'current_enemy_team': enemy_team})
+        return enemy_team
+    
+    return current_enemy_team
 
-def set_player_level(user_id, level):
-    """Set the player level in MongoDB"""
-    battles = get_battles_collection()
-    battles.update_one({'user_id': user_id}, {'$set': {'player_level': level}}, upsert=True)
+def generate_new_enemy_team_for_level(user_id, level):
+    """Generate and save a new enemy team for the specified level."""
+    enemy_team = generate_enemy_team_with_moves(level)
+    update_player_profile(user_id, {'current_enemy_team': enemy_team})
+    return enemy_team
 
-def increment_player_level(user_id):
-    """Increment player level by 1"""
-    current_level = get_player_level(user_id)
-    new_level = current_level + 1
-    set_player_level(user_id, new_level)
-    return new_level
+
 
 def get_enemy_team_config(player_level):
     """Get enemy team configuration based on player level"""
@@ -1025,17 +1096,15 @@ def apply_traditional_stats(pokemon, level):
     pokemon['speed'] = stats['speed']
     return pokemon
 
-def generate_enemy_team(player_level):
-    """Generate enemy team based on player level"""
+def generate_enemy_team_with_moves(player_level):
+    """Generate enemy team with pre-assigned moves based on player level"""
+    from app.db import get_pokemon_full_data
+    
     config = get_enemy_team_config(player_level)
     pokemon_count = config['pokemon_count']
     cost_budget = config['cost_budget']
     
-
-    
     enemy_team = []
-    total_cost = 0
-    
     enemy_pokemon_level = min(100, 50 + (player_level - 1))
     
     # Get all Pokémon with their costs
@@ -1051,11 +1120,8 @@ def generate_enemy_team(player_level):
     available_pokemon = cur.fetchall()
     conn.close()
     
-
-    
     if not available_pokemon:
         # Fallback to basic Pokémon if no suitable ones found
-
         fallback_ids = [25, 6, 9, 3, 12, 15]  # Pikachu, Charizard, Blastoise, Venusaur, Butterfree, Beedrill
         for i in range(min(pokemon_count, len(fallback_ids))):
             pokemon = fetch_pokemon_by_id(fallback_ids[i])
@@ -1063,7 +1129,6 @@ def generate_enemy_team(player_level):
                 pokemon['level'] = enemy_pokemon_level
                 pokemon = apply_traditional_stats(pokemon, enemy_pokemon_level)
                 enemy_team.append(pokemon)
-
     else:
         # Select Pokémon that fit within the budget
         selected_pokemon = []
@@ -1083,7 +1148,6 @@ def generate_enemy_team(player_level):
                     pokemon = apply_traditional_stats(pokemon, enemy_pokemon_level)
                     selected_pokemon.append(pokemon)
                     remaining_budget -= cost
-
         
         enemy_team = selected_pokemon
     
@@ -1095,7 +1159,52 @@ def generate_enemy_team(player_level):
             random_pokemon['level'] = enemy_pokemon_level
             random_pokemon = apply_traditional_stats(random_pokemon, enemy_pokemon_level)
             enemy_team.append(random_pokemon)
-
     
-
+    # Pre-assign moves to each enemy Pokémon
+    for i, pokemon in enumerate(enemy_team):
+        if not pokemon:
+            continue
+            
+        # Get full Pokémon data including all available moves
+        pokemon_id = pokemon.get('id') or pokemon.get('pokemon_id')
+        if not pokemon_id:
+            pokemon['assigned_moves'] = [1, 2, 3, 4]  # Default move IDs
+            continue
+            
+        full_data = get_pokemon_full_data(pokemon_id)
+        if not full_data or not full_data['move_ids']:
+            # Fallback to default moves if no moves available
+            pokemon['assigned_moves'] = [1, 2, 3, 4]  # Default move IDs
+            continue
+        
+        # Filter out invalid move IDs (those that don't exist in Move table)
+        valid_moves = []
+        for move_id in full_data['move_ids']:
+            move_data = get_move_data(move_id)
+            if move_data:
+                valid_moves.append(move_id)
+        
+        if not valid_moves:
+            # If no valid moves, use some basic moves
+            pokemon['assigned_moves'] = [1, 2, 3, 4]  # Default move IDs
+            continue
+        
+        # Randomly select 4 moves from available moves
+        if len(valid_moves) <= 4:
+            selected_moves = valid_moves
+        else:
+            selected_moves = random.sample(valid_moves, 4)
+        
+        pokemon['assigned_moves'] = selected_moves
+        
+        # Set up battle-ready stats
+        pokemon['max_hp'] = pokemon['hp']
+        pokemon['current_hp'] = pokemon['hp']
+        pokemon['id'] = pokemon.get('id') or pokemon.get('pokemon_id')
+        pokemon['pokemon_id'] = pokemon['id']
+        pokemon['name'] = pokemon.get('name', 'Unknown')
+        
+        enemy_team[i] = pokemon
+    
     return enemy_team
+

@@ -127,6 +127,138 @@ function setupBattleButton() {
   };
 }
 
+// Load current challenge information
+async function loadCurrentChallenge() {
+  try {
+    const res = await fetch('/api/current-challenge');
+    const data = await res.json();
+    
+    if (data.level_info && data.enemy_team) {
+      // Update level information
+      document.getElementById('current-level').textContent = data.level_info.current_level;
+      document.getElementById('current-streak').textContent = data.level_info.current_streak;
+      document.getElementById('max-level').textContent = data.level_info.max_level_reached;
+      
+      // Update enemy cost
+      if (data.enemy_cost !== undefined) {
+        document.getElementById('enemy-cost').textContent = data.enemy_cost;
+      }
+      
+      // Display enemy team
+      const enemyGrid = document.getElementById('enemy-grid');
+      enemyGrid.innerHTML = '';
+      
+      data.enemy_team.forEach(pokemon => {
+        if (pokemon) {
+          const enemyCard = document.createElement('div');
+          enemyCard.className = 'enemy-pokemon-preview';
+          enemyCard.innerHTML = `
+            <img src="/api/pokemon_image/${pokemon.id}" alt="${pokemon.name}">
+            <div class="pokemon-name">${pokemon.name}</div>
+            <div class="pokemon-level">Level ${pokemon.level}</div>
+            <div class="pokemon-types">
+              ${(pokemon.types || []).map(type => `<span class="type-badge type-${type.toLowerCase()}">${type}</span>`).join('')}
+            </div>
+          `;
+          
+          // Add tooltip with moves
+          if (pokemon.assigned_moves && pokemon.assigned_moves.length > 0) {
+            enemyCard.setAttribute('data-moves', JSON.stringify(pokemon.assigned_moves));
+            enemyCard.classList.add('has-moves');
+          }
+          
+          enemyGrid.appendChild(enemyCard);
+        }
+      });
+      
+      // Load move data for tooltips
+      loadEnemyMoveTooltips();
+      
+      // Show the challenge section
+      document.getElementById('challenge-section').style.display = 'block';
+    }
+  } catch (error) {
+    console.error('Error loading current challenge:', error);
+  }
+}
+
+// Load enemy move tooltips
+async function loadEnemyMoveTooltips() {
+  const enemyCards = document.querySelectorAll('.enemy-pokemon-preview.has-moves');
+  
+  for (const card of enemyCards) {
+    const movesData = JSON.parse(card.getAttribute('data-moves'));
+    
+    try {
+      // Fetch move data for each move
+      const movePromises = movesData.map(moveId =>
+        fetch(`/api/move/${moveId}`)
+          .then(response => response.json())
+          .then(moveData => ({
+            name: moveData.move_name || 'Unknown Move',
+            type: moveData.type_id || 1,
+            power: moveData.power || 0,
+            accuracy: moveData.accuracy || 0,
+            category: moveData.category || 'physical'
+          }))
+          .catch(() => ({ name: 'Unknown Move', type: 1, power: 0, accuracy: 0, category: 'physical' }))
+      );
+      
+      const moves = await Promise.all(movePromises);
+      
+      // Create tooltip content
+      const tooltipContent = moves.map(move => 
+        `<div class="move-tooltip-item">
+          <span class="move-name">${move.name}</span>
+          <span class="move-details">${move.power} power, ${move.accuracy}% acc</span>
+        </div>`
+      ).join('');
+      
+      // Add tooltip functionality
+      card.addEventListener('mouseenter', () => {
+        showTooltip(card, tooltipContent);
+      });
+      
+      card.addEventListener('mouseleave', () => {
+        hideTooltip();
+      });
+      
+    } catch (error) {
+      console.error('Error loading moves for tooltip:', error);
+    }
+  }
+}
+
+// Show tooltip
+function showTooltip(element, content) {
+  hideTooltip(); // Remove any existing tooltip
+  
+  const tooltip = document.createElement('div');
+  tooltip.className = 'enemy-move-tooltip';
+  tooltip.innerHTML = `
+    <div class="tooltip-header">Moves:</div>
+    ${content}
+  `;
+  
+  document.body.appendChild(tooltip);
+  
+  // Position tooltip
+  const rect = element.getBoundingClientRect();
+  tooltip.style.left = rect.right + 10 + 'px';
+  tooltip.style.top = rect.top + 'px';
+  
+  // Add fade-in animation
+  setTimeout(() => tooltip.classList.add('visible'), 10);
+}
+
+// Hide tooltip
+function hideTooltip() {
+  const existingTooltip = document.querySelector('.enemy-move-tooltip');
+  if (existingTooltip) {
+    existingTooltip.remove();
+  }
+}
+
 // Check session on load
 async function checkSessionAndInit() {
   const res = await fetch('/api/me');
@@ -134,6 +266,7 @@ async function checkSessionAndInit() {
   updateAuthUI(data.username);
   await fetchTeams();
   loadTeam(0);
+  await loadCurrentChallenge();
 }
 
 // Initialize page
