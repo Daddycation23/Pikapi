@@ -77,13 +77,11 @@ document.getElementById('register-form').onsubmit = async function(e) {
 // Update UI for logged-in user
 function updateAuthUI(username) {
   if (username) {
-    authSection.innerHTML = `<span style='margin-right:15px;'>Logged in as <b>${username}</b></span><button class='auth-button' id='logout-btn'>Logout</button>`;
-    document.getElementById('logout-btn').onclick = async function() {
-      await fetch('/api/logout', { method: 'POST' });
-      location.reload();
-    };
+    // Logged-in users shouldn't be on this page - redirect to player page
+    window.location.href = '/player';
   } else {
-    authSection.innerHTML = `<button class='auth-button login-btn' id='login-btn'>Login</button><button class='auth-button register-btn' id='register-btn'>Register</button>`;
+    // Show login/register UI for non-logged-in users
+    authSection.innerHTML = `<button class='btn-standard login-btn' id='login-btn' style='background: var(--primary-color); margin-right: 10px;'>Login</button><button class='btn-standard register-btn' id='register-btn' style='background: var(--secondary-color);'>Register</button>`;
     document.getElementById('login-btn').onclick = showLogin;
     document.getElementById('register-btn').onclick = showRegister;
   }

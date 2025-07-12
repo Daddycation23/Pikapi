@@ -8,36 +8,14 @@ let currentTeamIndex = 0;
 function updateAuthUI(username) {
   if (username) {
     authSection.innerHTML = `
-      <button class="btn-base auth-button" id="profile-btn" style="background:#4CAF50;color:white;box-shadow:0 2px 8px rgba(0,0,0,0.08);transition:all 0.2s;">
+      <button class="btn-standard btn-profile" id="profile-btn" style="margin-right:15px;">
         <span style="font-size:18px;vertical-align:middle;">👤</span> <span style="font-weight:500;margin-left:8px;">${username}</span>
       </button>
-      <button class="btn-base auth-button" id="logout-btn" style="margin-left:15px;box-shadow:0 2px 8px rgba(0,0,0,0.08);transition:all 0.2s;">Logout</button>
+      <button class="btn-standard btn-logout" id="logout-btn">Logout</button>
     `;
-    // Add hover effects and click handlers
+    // Add click handlers (hover effects now handled by CSS)
     const profileBtn = document.getElementById('profile-btn');
     const logoutBtn = document.getElementById('logout-btn');
-    
-    // Profile button hover effects
-    profileBtn.addEventListener('mouseenter', function() {
-      this.style.transform = 'translateY(-1px)';
-      this.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
-      this.style.background = '#45a049';
-    });
-    profileBtn.addEventListener('mouseleave', function() {
-      this.style.transform = 'translateY(0)';
-      this.style.boxShadow = '0 2px 8px rgba(0,0,0,0.08)';
-      this.style.background = '#4CAF50';
-    });
-    
-    // Logout button hover effects
-    logoutBtn.addEventListener('mouseenter', function() {
-      this.style.transform = 'translateY(-1px)';
-      this.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
-    });
-    logoutBtn.addEventListener('mouseleave', function() {
-      this.style.transform = 'translateY(0)';
-      this.style.boxShadow = '0 2px 8px rgba(0,0,0,0.08)';
-    });
     
     // Click handlers
     logoutBtn.onclick = async function() {

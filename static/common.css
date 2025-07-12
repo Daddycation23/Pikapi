@@ -56,8 +56,81 @@ body {
     text-decoration: none;
 }
 
-/* Auth button variants */
-.auth-button {
+/* Standardized button style for consistent appearance */
+.btn-standard {
+    padding: 10px 20px !important;
+    border: none !important;
+    border-radius: var(--border-radius-sm) !important;
+    font-size: 14px !important;
+    font-weight: 500 !important;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08) !important;
+    transition: all var(--transition-fast);
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 8px;
+    color: white !important;
+    text-decoration: none;
+    min-height: 40px; /* Ensure consistent height */
+}
+
+.btn-standard:hover {
+    transform: translateY(-1px) !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+}
+
+/* Color variants for standardized buttons */
+.btn-standard.btn-profile {
+    background: #4CAF50; /* Green */
+}
+
+.btn-standard.btn-profile:hover {
+    background: #45a049;
+}
+
+.btn-standard.btn-logout {
+    background: #ff867c; /* Light red */
+}
+
+.btn-standard.btn-logout:hover {
+    background: #ff534e;
+}
+
+.btn-standard.btn-battle {
+    background: var(--danger-color); /* Red */
+}
+
+.btn-standard.btn-battle:hover {
+    background: var(--danger-hover);
+}
+
+.btn-standard.btn-type-chart {
+    background: #8e44ad; /* Purple */
+}
+
+.btn-standard.btn-type-chart:hover {
+    background: #7d3c98;
+}
+
+.btn-standard.btn-resume {
+    background: #3498db; /* Blue */
+}
+
+.btn-standard.btn-resume:hover {
+    background: #2980b9;
+}
+
+.btn-standard.btn-new {
+    background: #9b59b6; /* Purple variant */
+}
+
+.btn-standard.btn-new:hover {
+    background: #8e44ad;
+}
+
+/* Auth button variants - deprecated, use .btn-standard instead */
+.auth-button:not(.btn-standard) {
     padding: 10px 20px;
     /* Extends .btn-base styles */
 }
@@ -80,17 +153,7 @@ body {
     background-color: var(--secondary-hover);
 }
 
-/* -----------------------------
-   Logout button variant
-   ----------------------------- */
-#logout-btn {
-    background-color: #ff867c; /* Light red */
-    color: white;
-}
-
-#logout-btn:hover {
-    background-color: #ff534e; /* Darker red on hover */
-}
+/* Old logout button styles removed - now using .btn-standard.btn-logout */
 
 /* Cost filter buttons */
 .cost-btn {

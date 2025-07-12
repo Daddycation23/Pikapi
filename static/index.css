@@ -24,6 +24,12 @@ body {
     align-items: center;
     gap: 20px;
 }
+
+.header-buttons .btn-standard {
+    /* Ensure header buttons have consistent sizing */
+    white-space: nowrap;
+}
+
 .auth-section {
     display: flex;
     gap: 15px;
@@ -447,30 +453,7 @@ body {
     background: var(--background-hover);
 }
 
-.battle-btn {
-    padding: 10px 20px;
-    border: none;
-    border-radius: var(--border-radius-sm);
-    font-size: 14px;
-    font-weight: 500;
-    cursor: pointer;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-    transition: all var(--transition-fast);
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    color: white;
-    background: var(--danger-color);
-}
-
-.battle-btn:hover {
-    background: var(--danger-hover);
-}
-
-.battle-btn:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-}
+/* Old battle button styles removed - now using .btn-standard.btn-battle */
 
 .battle-icon {
     font-size: 16px;
@@ -483,25 +466,9 @@ body {
     gap: 15px;
 }
 
-/* Resume Battle Button */
-.resume-battle-btn {
-    background: #3498db;
-    color: white;
-}
+/* Old type-effectiveness-btn styles removed - now using .btn-standard.btn-type-chart */
 
-.resume-battle-btn:hover {
-    background: #2980b9;
-}
-
-/* New Battle Button */
-.new-battle-btn {
-    background: #9b59b6;
-    color: white;
-}
-
-.new-battle-btn:hover {
-    background: #8e44ad;
-}
+/* Old resume and new battle button styles removed - now using .btn-standard.btn-resume and .btn-standard.btn-new */
 
 /* Responsive design for battle buttons */
 @media (max-width: 768px) {
@@ -510,7 +477,7 @@ body {
         gap: 5px;
     }
     
-    .battle-btn {
+    .battle-buttons-container .btn-standard {
         font-size: 12px;
         padding: 6px 12px;
     }
