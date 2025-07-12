@@ -227,7 +227,7 @@ async function loadAllPokemon(filters = null) {
       filteredPokemon = [...allPokemon];
     }
     
-    console.log('Loaded Pokemon:', pokemonList.length, 'items');
+    
   } catch (error) {
     console.error('Error loading Pokemon:', error);
   }
@@ -486,7 +486,7 @@ async function applyFilters() {
 function renderPokemonGrid() {
   const grid = document.querySelector('.pokemon-selection-grid');
   if (!grid) {
-    console.error('Pokemon grid element not found');
+    
     return;
   }
 

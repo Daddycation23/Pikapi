@@ -4,5 +4,4 @@ pokemon.db
 *.venv*
 *.pyc
 *__pycache__/
-pokemon.db
 flask_session/

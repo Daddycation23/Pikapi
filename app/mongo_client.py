@@ -28,7 +28,7 @@ def get_db():
 
 # Example collection accessors
 
-def get_player_profiles():
+def get_player_profiles_collection():
     """Returns the player_profiles collection."""
     return get_db()['player_profiles']
 
@@ -36,10 +36,8 @@ def get_battle_logs():
     """Returns the battle_logs collection."""
     return get_db()['battle_logs']
 
-def get_player_profiles_collection():
-    return get_db()['player_profiles']
-
 def get_teams_collection():
+    """Returns the teams collection."""
     return get_db()['teams']
 
 def get_battles_collection():

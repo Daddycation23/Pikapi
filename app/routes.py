@@ -3,21 +3,7 @@ from app.db import fetch_pokemon, fetch_pokemon_by_id, get_db_connection, save_t
 from app.mongo_client import get_player_profiles_collection, get_battles_collection
 import bcrypt
 from datetime import datetime
-import sqlite3
 import random
-import math
-
-
-DB_PATH = 'pokemon.db'
-
-def get_db_connection():
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-    return conn
-
-# Helper functions removed - using enhanced functions from app.db
-
-# Removed local functions - using enhanced functions from app.db
 
 def register_routes(app):
     @app.route('/')
@@ -1029,7 +1015,6 @@ def calculate_damage_advanced(attacker, defender, move_id, level=50):
     
     # Check accuracy
     if move_accuracy > 0:
-        import random
         if random.randint(1, 100) > move_accuracy:
             return 0, False, False, 1.0, f"Move missed (accuracy: {move_accuracy}%)"
     
@@ -1040,7 +1025,6 @@ def calculate_damage_advanced(attacker, defender, move_id, level=50):
     stab = 1.5 if move_type in attacker['types'] else 1.0
     
     # Critical hit calculation (6.25% chance)
-    import random
     critical_hit = random.randint(1, 100) <= 6.25
     crit_multiplier = 2.0 if critical_hit else 1.0
     
@@ -1089,18 +1073,17 @@ def increment_player_level(user_id):
 
 def get_enemy_team_config(player_level):
     """Get enemy team configuration based on player level"""
+    # Team size increases at certain milestones, but cost budget always increases
     if player_level <= 5:
-        return {'pokemon_count': 3, 'cost_budget': 8}
+        pokemon_count = 3
     elif player_level <= 10:
-        return {'pokemon_count': 3, 'cost_budget': 10}
-    elif player_level <= 15:
-        return {'pokemon_count': 4, 'cost_budget': 12}
+        pokemon_count = 4
     elif player_level <= 20:
-        return {'pokemon_count': 4, 'cost_budget': 15}
-    elif player_level <= 25:
-        return {'pokemon_count': 5, 'cost_budget': 18}
+        pokemon_count = 5
     else:
-        return {'pokemon_count': 6, 'cost_budget': 20}
+        pokemon_count = 6
+    cost_budget = 7 + player_level  # Start at 8, +1 per level
+    return {'pokemon_count': pokemon_count, 'cost_budget': cost_budget}
 
 def calculate_pokemon_stats(base_stats, level):
     # Generate random IVs for each stat
@@ -1140,8 +1123,7 @@ def generate_enemy_team(player_level):
     pokemon_count = config['pokemon_count']
     cost_budget = config['cost_budget']
     
-    print(f"DEBUG: Generating enemy team for player level {player_level}")
-    print(f"DEBUG: Config - Pokemon count: {pokemon_count}, Cost budget: {cost_budget}")
+
     
     enemy_team = []
     total_cost = 0
@@ -1161,11 +1143,11 @@ def generate_enemy_team(player_level):
     available_pokemon = cur.fetchall()
     conn.close()
     
-    print(f"DEBUG: Found {len(available_pokemon)} Pokémon within budget {cost_budget}")
+
     
     if not available_pokemon:
         # Fallback to basic Pokémon if no suitable ones found
-        print("DEBUG: No Pokémon found within budget, using fallback")
+
         fallback_ids = [25, 6, 9, 3, 12, 15]  # Pikachu, Charizard, Blastoise, Venusaur, Butterfree, Beedrill
         for i in range(min(pokemon_count, len(fallback_ids))):
             pokemon = fetch_pokemon_by_id(fallback_ids[i])
@@ -1173,7 +1155,7 @@ def generate_enemy_team(player_level):
                 pokemon['level'] = enemy_pokemon_level
                 pokemon = apply_traditional_stats(pokemon, enemy_pokemon_level)
                 enemy_team.append(pokemon)
-                print(f"DEBUG: Added fallback Pokémon: {pokemon['name']}")
+
     else:
         # Select Pokémon that fit within the budget
         selected_pokemon = []
@@ -1193,7 +1175,7 @@ def generate_enemy_team(player_level):
                     pokemon = apply_traditional_stats(pokemon, enemy_pokemon_level)
                     selected_pokemon.append(pokemon)
                     remaining_budget -= cost
-                    print(f"DEBUG: Added Pokémon: {name} (cost: {cost}, remaining budget: {remaining_budget})")
+
         
         enemy_team = selected_pokemon
     
@@ -1205,7 +1187,7 @@ def generate_enemy_team(player_level):
             random_pokemon['level'] = enemy_pokemon_level
             random_pokemon = apply_traditional_stats(random_pokemon, enemy_pokemon_level)
             enemy_team.append(random_pokemon)
-            print(f"DEBUG: Added random Pokémon: {random_pokemon['name']}")
+
     
-    print(f"DEBUG: Final enemy team ({len(enemy_team)} Pokémon): {[p['name'] for p in enemy_team]}")
+
     return enemy_team

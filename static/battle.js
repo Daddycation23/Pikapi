@@ -41,11 +41,7 @@ function initializeBattle() {
 function updateBattleDisplay() {
     if (!battleState) return;
     
-    console.log('Updating battle display with state:', {
-        player: battleState.player_pokemon?.name,
-        enemy: battleState.enemy_pokemon?.name,
-        enemy_index: battleState.current_enemy_index
-    });
+
     
     // Update player level display
     if (battleState.player_level) {
@@ -115,7 +111,7 @@ function updateBattleDisplay() {
             }
             enemyTeamList.appendChild(pokeDiv);
         });
-        console.log('DEBUG: Enemy team:', battleState.enemy_team);
+
     }
     
     // Update battle log
@@ -139,11 +135,7 @@ function updateBattleDisplay() {
 function updateEnemyTeamDisplay() {
     if (!battleState || !battleState.enemy_team) return;
     
-    console.log('Updating enemy team display:', {
-        team_size: battleState.enemy_team.length,
-        current_index: battleState.current_enemy_index,
-        active_pokemon: battleState.enemy_team[battleState.current_enemy_index]?.name
-    });
+
     
     const enemyTeamList = document.getElementById('enemy-team-list');
     if (!enemyTeamList) return;
@@ -176,38 +168,33 @@ function updateEnemyTeamDisplay() {
         enemyTeamList.appendChild(teamItem);
     });
     
-    console.log('Enemy team display updated successfully');
+
 }
 
 function updateMoveButtons() {
     if (!battleState || !battleState.player_pokemon || !battleState.player_pokemon.assigned_moves) {
-        console.log('DEBUG: No battle state or assigned moves found');
         return;
     }
 
     const assignedMoves = battleState.player_pokemon.assigned_moves;
-    console.log('DEBUG: Assigned moves:', assignedMoves);
 
     // Fetch move data with type information for each move
     const movePromises = assignedMoves.map(moveId =>
         fetch(`/api/move/${moveId}`)
             .then(response => response.json())
             .then(moveData => {
-                console.log(`DEBUG: Move data for ${moveId}:`, moveData);
                 return {
                     name: moveData.move_name || 'Unknown Move',
                     type: moveData.type_id || 1 // Default to Normal type
                 };
             })
             .catch(error => {
-                console.error(`DEBUG: Error fetching move ${moveId}:`, error);
                 return { name: 'Unknown Move', type: 1 };
             })
     );
     
     Promise.all(movePromises)
         .then(moveData => {
-            console.log('DEBUG: Final move data:', moveData);
             
             // Get type names for the move types
             const typePromises = moveData.map(move => {
@@ -430,7 +417,7 @@ function populatePokemonList() {
 }
 
 function useMove(moveIndex) {
-    console.log('Using move:', moveIndex);
+    
     // Disable move buttons to prevent spam
     const moveBtns = document.querySelectorAll('.move-btn');
     moveBtns.forEach(btn => btn.disabled = true);
@@ -445,10 +432,7 @@ function useMove(moveIndex) {
     })
     .then(response => response.json())
     .then(data => {
-        console.log('Move response:', data);
-        console.log('DEBUG: Received enemy_pokemon:', data.enemy_pokemon);
-        console.log('DEBUG: Received current_enemy_index:', data.current_enemy_index);
-        console.log('DEBUG: Received enemy_team:', data.enemy_team);
+
         
         if (data.error) {
             console.error('Move error:', data.error);
@@ -464,7 +448,7 @@ function useMove(moveIndex) {
         
         // Handle level up if player won
         if (data.battle_ended && data.winner === 'player' && data.new_level) {
-            console.log(`Player leveled up to level ${data.new_level}!`);
+    
             // Update the level display immediately
             document.getElementById('player-level-display').textContent = data.new_level;
             // Add a visual effect for level up
@@ -478,16 +462,16 @@ function useMove(moveIndex) {
         // Add a small delay to ensure UI updates are visible before any menu changes
         setTimeout(() => {
             if (data.battle_ended) {
-                console.log('Battle ended, handling...');
+        
                 handleBattleEnd(data.winner);
             } else {
                 // Check if player's Pokemon fainted and they need to choose next Pokemon
                 const playerPokemon = data.player_pokemon;
                 if (playerPokemon.current_hp <= 0) {
-                    console.log('Player Pokemon fainted, forcing Pokemon selection');
+    
                     showPokemonSelection();
                 } else {
-                    console.log('Battle continues, showing main menu');
+
                     showMainMenu();
                 }
             }
@@ -540,8 +524,7 @@ function switchPokemon(pokemonIndex) {
 }
 
 function handleBattleEnd(winner) {
-    console.log('Battle ended, winner:', winner);
-    console.log('Current battle state:', battleState);
+    
     
     // Hide move selection and show main menu
     showMainMenu();
@@ -554,7 +537,7 @@ function handleBattleEnd(winner) {
     window.battleEndTimeout = setTimeout(() => {
         const message = winner === 'player' ? 'Battle won! Start a new battle?' : 'Battle lost! Start a new battle?';
         if (confirm(message)) {
-            console.log('User chose to start new battle');
+    
             // End current battle and start new one
             fetch('/api/battle/end', {
                 method: 'POST',
@@ -563,11 +546,9 @@ function handleBattleEnd(winner) {
                 }
             })
             .then(response => {
-                console.log('Battle end response:', response);
                 return response.json();
             })
             .then(data => {
-                console.log('Battle end data:', data);
                 // Preserve the team_id when starting a new battle
                 initializeBattle();
             })
@@ -577,7 +558,7 @@ function handleBattleEnd(winner) {
                 location.reload();
             });
         } else {
-            console.log('User chose to return to main menu');
+    
             // User doesn't want to start new battle, redirect to main menu
             window.location.href = '/';
         }
@@ -658,5 +639,5 @@ async function updatePokemonTypes() {
 function updateTeamDisplay() {
     // This function can be expanded later to show team status
     // For now, it's just a placeholder to prevent errors
-    console.log('DEBUG: Team display updated');
+
 } 
