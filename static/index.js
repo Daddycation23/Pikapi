@@ -92,7 +92,6 @@ async function checkSessionAndInit() {
   const res = await fetch('/api/me');
   const data = await res.json();
   updateAuthUI(data.username);
-  loadTeam();
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -105,36 +104,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
 
-async function loadTeam() {
-  const res = await fetch('/api/team');
-  const data = await res.json();
-  const team = data.team || [];
-  const slots = document.querySelectorAll('.team-grid .pokemon-slot');
-  for (let i = 0; i < 3; i++) {
-    const poke = team[i];
-    if (poke && slots[i]) {
-      slots[i].innerHTML = `
-        <div class="pokemon-image" style="background-image:url('${poke.img}');background-size:contain;background-repeat:no-repeat;background-position:center;"></div>
-        <div class="pokemon-name">${poke.name}</div>
-        <div class="pokemon-cost">Cost: ${poke.cost}</div>
-        <div class="pokemon-types">${(poke.type||[]).map(t => `<span class="type-badge">${t}</span>`).join(' ')}</div>
-      `;
-    } else if (slots[i]) {
-      slots[i].innerHTML = `<div class='pokemon-image'></div><p>Add Pokemon</p>`;
-    }
-  }
-  // Update team cost bar
-  const maxCost = 10;
-  const totalCost = team.filter(p => p).reduce((sum, p) => sum + (p.cost || 0), 0);
-  const costDisplay = document.getElementById('current-cost');
-  const costFill = document.querySelector('.cost-fill');
-  if (costDisplay && costFill) {
-    costDisplay.textContent = totalCost;
-    const percent = Math.min((totalCost / maxCost) * 100, 100);
-    costFill.style.width = percent + '%';
-    costFill.style.backgroundColor = totalCost <= maxCost ? '#4CAF50' : '#e74c3c';
-  }
-}
+/* loadTeam function removed - not used on index page (only for logged-in users) */
 
 // Pokedex functionality
 let allPokemon = [];
