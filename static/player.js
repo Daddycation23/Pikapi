@@ -145,9 +145,9 @@ function setupBattleButtons() {
   // Resume battle button
   const resumeBattleBtn = document.getElementById('resume-battle-btn');
   if (resumeBattleBtn) {
-    resumeBattleBtn.onclick = function() {
+    resumeBattleBtn.onclick = async function() {
       // Check if current team has at least 1 Pokemon
-      if (!validateTeamForBattle()) {
+      if (!(await validateTeamForBattle())) {
         showErrorModal('Please add at least 1 Pokemon to your team before resuming a battle.');
         return;
       }
@@ -164,9 +164,9 @@ function setupBattleButtons() {
   // New battle button
   const newBattleBtn = document.getElementById('new-battle-btn');
   if (newBattleBtn) {
-    newBattleBtn.onclick = function() {
+    newBattleBtn.onclick = async function() {
       // Check if current team has at least 1 Pokemon
-      if (!validateTeamForBattle()) {
+      if (!(await validateTeamForBattle())) {
         showErrorModal('Please add at least 1 Pokemon to your team before starting a new battle.');
         return;
       }
@@ -183,9 +183,9 @@ function setupBattleButtons() {
   // Single battle button (when no existing battle)
   const battleBtn = document.getElementById('battle-btn');
   if (battleBtn) {
-    battleBtn.onclick = function() {
+    battleBtn.onclick = async function() {
       // Check if current team has at least 1 Pokemon
-      if (!validateTeamForBattle()) {
+      if (!(await validateTeamForBattle())) {
         showErrorModal('Please add at least 1 Pokemon to your team before starting a battle.');
         return;
       }
@@ -201,16 +201,26 @@ function setupBattleButtons() {
 }
 
 // Validate team for battle
-function validateTeamForBattle() {
-  // Check if current team has at least 1 Pokemon
+async function validateTeamForBattle() {
+  // Check if we have a current team
   const currentTeam = teamsList[currentTeamIndex];
-  if (!currentTeam || !currentTeam.pokemon || currentTeam.pokemon.length === 0) {
+  if (!currentTeam || !currentTeam.team_id) {
     return false;
   }
   
-  // Check if at least one Pokemon slot is not empty
-  const hasAtLeastOnePokemon = currentTeam.pokemon.some(pokemon => pokemon !== null && pokemon !== undefined);
-  return hasAtLeastOnePokemon;
+  try {
+    // Fetch the actual team data
+    const res = await fetch(`/api/team?team_id=${currentTeam.team_id}`);
+    const data = await res.json();
+    const team = data.team || [];
+    
+    // Check if at least one Pokemon slot is not empty
+    const hasAtLeastOnePokemon = team.some(pokemon => pokemon !== null && pokemon !== undefined);
+    return hasAtLeastOnePokemon;
+  } catch (error) {
+    console.error('Error validating team:', error);
+    return false;
+  }
 }
 
 // Show error modal
