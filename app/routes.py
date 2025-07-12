@@ -87,6 +87,8 @@ def register_routes(app):
 
     @app.route('/api/team/validate', methods=['POST'])
     def validate_team():
+        if not request.json:
+            return jsonify({'error': 'Invalid JSON data'}), 400
         team_data = request.json.get('team', [])
         ids = [p.get('id') for p in team_data if p.get('id')]
         if not ids:
@@ -107,6 +109,8 @@ def register_routes(app):
 
     @app.route('/api/register', methods=['POST'])
     def register():
+        if not request.json:
+            return jsonify({'error': 'Invalid JSON data'}), 400
         data = request.json
         username = data.get('username')
         password = data.get('password')
@@ -152,6 +156,8 @@ def register_routes(app):
 
     @app.route('/api/login', methods=['POST'])
     def login():
+        if not request.json:
+            return jsonify({'error': 'Invalid JSON data'}), 400
         data = request.json
         username = data.get('username')
         password = data.get('password')
@@ -216,6 +222,8 @@ def register_routes(app):
         user = get_current_user()
         if not user:
             return jsonify({'error': 'Not logged in'}), 401
+        if not request.json:
+            return jsonify({'error': 'Invalid JSON data'}), 400
         data = request.json
         pokemon_ids = data.get('pokemon_ids', [])
         team_id = data.get('team_id', None)
@@ -275,6 +283,8 @@ def register_routes(app):
         if not user:
             return jsonify({'error': 'Not authenticated'}), 401
         
+        if not request.json:
+            return jsonify({'error': 'Invalid JSON data'}), 400
         data = request.json
         team_id = data.get('team_id')  # Get the team_id from the request
         
@@ -346,6 +356,8 @@ def register_routes(app):
         
         # Apply traditional stats to player team
         for i, pokemon in enumerate(player_team):
+            if not pokemon:
+                continue
             # Use the Pokémon's level if present, otherwise default to 50
             level = pokemon.get('level', 50)
             pokemon = apply_traditional_stats(pokemon, level)
@@ -412,6 +424,8 @@ def register_routes(app):
         if not battle_state:
             return jsonify({'error': 'No active battle'}), 400
         
+        if not request.json:
+            return jsonify({'error': 'Invalid JSON data'}), 400
         data = request.json
         move_index = data.get('move_index', 0)
         
@@ -602,6 +616,8 @@ def register_routes(app):
         if not battle_state:
             return jsonify({'error': 'No active battle'}), 400
         
+        if not request.json:
+            return jsonify({'error': 'Invalid JSON data'}), 400
         data = request.json
         pokemon_index = data.get('pokemon_index', 0)
         
