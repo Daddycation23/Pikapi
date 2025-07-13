@@ -12,71 +12,156 @@ function renderHistory(records) {
     }
     records.forEach((rec, idx) => {
         const div = document.createElement('div');
-        div.className = 'record';
-        const resultClass = rec.result === 'win' ? 'win' : 'loss';
-        const resultText = rec.result === 'win' ? 'Victory' : 'Defeat';
-        const ts = rec.timestamp ? new Date(rec.timestamp).toLocaleString() : '';
-        div.innerHTML = `
-            <div class="record-header">
-                <span class="result ${resultClass}">${resultText}</span>
-                <span class="timestamp">${ts}</span>
-            </div>
-            <div class="teams">
-                <div class="team">
-                    <div class="team-title">Your Team</div>
-                    <div class="pokemon-list">
-                        ${renderTeam(rec.player_team)}
-                    </div>
-                </div>
-                <div class="team">
-                    <div class="team-title">Enemy Team</div>
-                    <div class="pokemon-list">
-                        ${renderTeam(rec.enemy_team)}
-                    </div>
-                </div>
-            </div>
-            <div class="battle-log-toggle" data-idx="${idx}">Show Battle Log &#9660;</div>
-            <div class="battle-log" id="battle-log-${idx}">
-                ${rec.battle_log.map(line => `<div>${escapeHtml(line)}</div>`).join('')}
-            </div>
-        `;
-        list.appendChild(div);
-    });
-    // Add expand/collapse logic
-    document.querySelectorAll('.battle-log-toggle').forEach(el => {
-        el.addEventListener('click', function() {
-            const idx = this.getAttribute('data-idx');
-            const log = document.getElementById('battle-log-' + idx);
-            if (log.classList.contains('open')) {
-                log.classList.remove('open');
-                this.innerHTML = 'Show Battle Log &#9660;';
+        div.className = 'profile-section battle-card ' + (rec.result === 'win' ? 'battle-win' : 'battle-loss');
+        // Heading
+        const heading = document.createElement('div');
+        heading.className = 'battle-result-heading';
+        heading.textContent = rec.result === 'win' ? 'WIN' : 'LOSS';
+        div.appendChild(heading);
+        // Teams
+        const teams = document.createElement('div');
+        teams.className = 'teams';
+        // Player team
+        const playerTeam = document.createElement('div');
+        playerTeam.className = 'team player-team';
+        const playerTitle = document.createElement('div');
+        playerTitle.className = 'team-title';
+        playerTitle.textContent = 'Your Team';
+        playerTeam.appendChild(playerTitle);
+        const playerList = document.createElement('div');
+        playerList.className = 'pokemon-list';
+        (rec.player_team || []).forEach(p => {
+            const pokeDiv = document.createElement('div');
+            pokeDiv.className = 'pokemon' + (p.fainted ? ' fainted' : '');
+            // Icon
+            const img = document.createElement('img');
+            img.src = `/static/images/${p.id}.png`;
+            img.alt = p.name;
+            if (p.fainted) img.classList.add('fainted');
+            pokeDiv.appendChild(img);
+            // Name
+            const name = document.createElement('div');
+            name.className = 'pokemon-name';
+            name.textContent = p.name;
+            pokeDiv.appendChild(name);
+            // HP
+            const hp = document.createElement('div');
+            hp.className = 'pokemon-hp';
+            const hpText = document.createElement('span');
+            hpText.textContent = `${p.current_hp} / ${p.max_hp}`;
+            hp.appendChild(hpText);
+            // HP bar
+            const hpBar = document.createElement('div');
+            hpBar.className = 'hp-bar';
+            const hpBarInner = document.createElement('div');
+            hpBarInner.className = 'hp-bar-inner';
+            const percent = p.max_hp ? Math.max(0, Math.round((p.current_hp / p.max_hp) * 100)) : 0;
+            hpBarInner.style.width = percent + '%';
+            if (p.fainted || percent === 0) {
+                hpBarInner.style.background = 'var(--border-light)';
+            } else if (percent < 25) {
+                hpBarInner.style.background = 'var(--danger-color)';
+            } else if (percent < 50) {
+                hpBarInner.style.background = 'var(--secondary-color)';
             } else {
-                log.classList.add('open');
-                this.innerHTML = 'Hide Battle Log &#9650;';
+                hpBarInner.style.background = 'var(--primary-color)';
+            }
+            hpBar.appendChild(hpBarInner);
+            hp.appendChild(hpBar);
+            pokeDiv.appendChild(hp);
+            playerList.appendChild(pokeDiv);
+        });
+        playerTeam.appendChild(playerList);
+        // Enemy team
+        const enemyTeam = document.createElement('div');
+        enemyTeam.className = 'team enemy-team';
+        const enemyTitle = document.createElement('div');
+        enemyTitle.className = 'team-title';
+        enemyTitle.textContent = 'Enemy Team';
+        enemyTeam.appendChild(enemyTitle);
+        const enemyList = document.createElement('div');
+        enemyList.className = 'pokemon-list';
+        (rec.enemy_team || []).forEach(p => {
+            const pokeDiv = document.createElement('div');
+            pokeDiv.className = 'pokemon' + (p.fainted ? ' fainted' : '');
+            // Icon
+            const img = document.createElement('img');
+            img.src = `/static/images/${p.id}.png`;
+            img.alt = p.name;
+            if (p.fainted) img.classList.add('fainted');
+            pokeDiv.appendChild(img);
+            // Name
+            const name = document.createElement('div');
+            name.className = 'pokemon-name';
+            name.textContent = p.name;
+            pokeDiv.appendChild(name);
+            // HP
+            const hp = document.createElement('div');
+            hp.className = 'pokemon-hp';
+            const hpText = document.createElement('span');
+            hpText.textContent = `${p.current_hp} / ${p.max_hp}`;
+            hp.appendChild(hpText);
+            // HP bar
+            const hpBar = document.createElement('div');
+            hpBar.className = 'hp-bar';
+            const hpBarInner = document.createElement('div');
+            hpBarInner.className = 'hp-bar-inner';
+            const percent = p.max_hp ? Math.max(0, Math.round((p.current_hp / p.max_hp) * 100)) : 0;
+            hpBarInner.style.width = percent + '%';
+            if (p.fainted || percent === 0) {
+                hpBarInner.style.background = 'var(--border-light)';
+            } else if (percent < 25) {
+                hpBarInner.style.background = 'var(--danger-color)';
+            } else if (percent < 50) {
+                hpBarInner.style.background = 'var(--secondary-color)';
+            } else {
+                hpBarInner.style.background = 'var(--primary-color)';
+            }
+            hpBar.appendChild(hpBarInner);
+            hp.appendChild(hpBar);
+            pokeDiv.appendChild(hp);
+            enemyList.appendChild(pokeDiv);
+        });
+        enemyTeam.appendChild(enemyList);
+        // Center both teams
+        teams.appendChild(playerTeam);
+        teams.appendChild(enemyTeam);
+        div.appendChild(teams);
+        // Timestamp
+        const ts = document.createElement('div');
+        ts.className = 'timestamp';
+        const date = new Date(rec.timestamp);
+        ts.textContent = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
+        div.appendChild(ts);
+        // Battle log
+        const logToggle = document.createElement('div');
+        logToggle.className = 'battle-log-toggle';
+        logToggle.textContent = 'Show Battle Log';
+        logToggle.setAttribute('data-idx', idx);
+        div.appendChild(logToggle);
+        const logDiv = document.createElement('div');
+        logDiv.className = 'battle-log';
+        logDiv.style.display = 'none';
+        logDiv.innerHTML = (rec.battle_log || []).map(line => `&gt; ${line}`).join('<br>');
+        div.appendChild(logDiv);
+        logToggle.addEventListener('click', () => {
+            // Collapse all other logs
+            document.querySelectorAll('.battle-log').forEach((el, i) => {
+                if (i !== idx) {
+                    el.style.display = 'none';
+                    const toggle = document.querySelector(`.battle-log-toggle[data-idx="${i}"]`);
+                    if (toggle) toggle.textContent = 'Show Battle Log';
+                }
+            });
+            // Toggle this one
+            if (logDiv.style.display === 'none') {
+                logDiv.style.display = 'block';
+                logToggle.textContent = 'Hide Battle Log';
+            } else {
+                logDiv.style.display = 'none';
+                logToggle.textContent = 'Show Battle Log';
             }
         });
-    });
-}
-
-function renderTeam(team) {
-    if (!team || !team.length) return '<span style="color:#bbb;">N/A</span>';
-    return team.map(poke => {
-        const hp = poke.hp !== undefined ? poke.hp : poke.current_hp;
-        const maxHp = poke.max_hp || 100;
-        const fainted = (hp === 0);
-        const percent = Math.max(0, Math.min(100, Math.round((hp / maxHp) * 100)));
-        return `
-            <div class="pokemon">
-                <img src="/static/images/${poke.id || poke.pokemon_id || 0}.png" class="${fainted ? 'fainted' : ''}" title="${poke.name || 'Pokémon'}">
-                <div style="font-size:0.9em;">${poke.name || ''}</div>
-                <div class="hp-bar"><div class="hp-bar-inner" style="width:${percent}%;background:${fainted ? '#aaa' : '#4caf50'}"></div></div>
-            </div>
-        `;
-    }).join('');
-}
-
-function escapeHtml(str) {
-    return String(str).replace(/[&<>"']/g, function(m) {
-        return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[m]);
+        list.appendChild(div);
     });
 } 
