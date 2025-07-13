@@ -170,6 +170,50 @@ function updateBattleDisplay() {
     // Update team displays
     updateTeamDisplay();
     updateEnemyTeamDisplay();
+    
+    // Update battle button states if battle is ended
+    const fightBtn = document.getElementById('fight-btn');
+    const runBtn = document.getElementById('run-btn');
+    
+    if (battleState.battle_ended) {
+        // Battle is over - disable all battle buttons
+        if (fightBtn) {
+            fightBtn.disabled = true;
+            fightBtn.style.opacity = '0.5';
+            fightBtn.style.cursor = 'not-allowed';
+        }
+        
+        if (runBtn) {
+            runBtn.disabled = true;
+            runBtn.style.opacity = '0.5';
+            runBtn.style.cursor = 'not-allowed';
+            
+            // Update button text and state based on battle result
+            if (battleState.winner === 'player') {
+                runBtn.textContent = 'VICTORY!';
+                runBtn.setAttribute('data-state', 'victory');
+            } else {
+                runBtn.textContent = 'DEFEAT!';
+                runBtn.setAttribute('data-state', 'defeat');
+            }
+        }
+    } else {
+        // Battle is ongoing - enable all buttons
+        if (fightBtn) {
+            fightBtn.disabled = false;
+            fightBtn.textContent = 'FIGHT';
+            fightBtn.style.opacity = '1';
+            fightBtn.style.cursor = 'pointer';
+        }
+        
+        if (runBtn) {
+            runBtn.disabled = false;
+            runBtn.textContent = 'RUN';
+            runBtn.style.opacity = '1';
+            runBtn.style.cursor = 'pointer';
+            runBtn.removeAttribute('data-state');
+        }
+    }
 }
 
 function updateEnemyTeamDisplay() {
@@ -217,6 +261,9 @@ function updateMoveButtons() {
     if (!battleState || !battleState.player_pokemon || !battleState.player_pokemon.assigned_moves) {
         return;
     }
+    
+    // Clear any existing tooltips
+    hideMoveTooltip();
 
     const assignedMoves = battleState.player_pokemon.assigned_moves;
 
@@ -261,10 +308,25 @@ function updateMoveButtons() {
                 if (moveBtn && movesWithTypes[i]) {
                     const move = movesWithTypes[i];
                     moveBtn.textContent = move.name || '---';
-                    moveBtn.disabled = !move.name;
+                    
+                    // Disable move buttons if battle is ended
+                    if (battleState.battle_ended) {
+                        moveBtn.disabled = true;
+                        moveBtn.style.opacity = '0.5';
+                        moveBtn.style.cursor = 'not-allowed';
+                    } else {
+                        moveBtn.disabled = !move.name;
+                        moveBtn.style.opacity = '1';
+                        moveBtn.style.cursor = 'pointer';
+                    }
                     
                     // Apply type color styling
                     moveBtn.className = `move-btn type-${move.type.toLowerCase()}`;
+                    
+                    // Add tooltip functionality if move has name
+                    if (move.name && move.name !== '---') {
+                        setupMoveTooltip(moveBtn, battleState.player_pokemon.assigned_moves[i]);
+                    }
                 }
             }
         })
@@ -276,8 +338,24 @@ function updateMoveButtons() {
                 const moveBtn = document.getElementById(`move-${i + 1}`);
                 if (moveBtn) {
                     moveBtn.textContent = moves[i] || '---';
-                    moveBtn.disabled = !moves[i];
+                    
+                    // Disable move buttons if battle is ended
+                    if (battleState.battle_ended) {
+                        moveBtn.disabled = true;
+                        moveBtn.style.opacity = '0.5';
+                        moveBtn.style.cursor = 'not-allowed';
+                    } else {
+                        moveBtn.disabled = !moves[i];
+                        moveBtn.style.opacity = '1';
+                        moveBtn.style.cursor = 'pointer';
+                    }
+                    
                     moveBtn.className = 'move-btn type-normal';
+                    
+                    // Add tooltip functionality for assigned moves
+                    if (moves[i] && battleState.player_pokemon.assigned_moves && battleState.player_pokemon.assigned_moves[i]) {
+                        setupMoveTooltip(moveBtn, battleState.player_pokemon.assigned_moves[i]);
+                    }
                 }
             }
         });
@@ -328,6 +406,12 @@ function setupEventListeners() {
     const fightBtn = document.getElementById('fight-btn');
     if (fightBtn) {
         fightBtn.onclick = function() {
+            // Check if battle is ended
+            if (battleState && battleState.battle_ended) {
+                showNotification('Battle Over', 'The battle has already ended!');
+                return;
+            }
+            
             document.getElementById('battle-menu').style.display = 'none';
             document.getElementById('move-selection').style.display = 'flex';
         };
@@ -337,6 +421,12 @@ function setupEventListeners() {
     const runBtn = document.getElementById('run-btn');
     if (runBtn) {
         runBtn.onclick = function() {
+            // Check if battle is ended
+            if (battleState && battleState.battle_ended) {
+                showNotification('Battle Over', 'The battle has already ended!');
+                return;
+            }
+            
             showRunModal();
         };
     }
@@ -425,6 +515,9 @@ function showMainMenu() {
         }
     }
     
+    // Clear any move tooltips
+    hideMoveTooltip();
+    
     // Show main menu and hide others
     document.getElementById('battle-menu').style.display = 'flex';
     document.getElementById('move-selection').style.display = 'none';
@@ -435,9 +528,56 @@ function showMainMenu() {
     if (backBtn) {
         backBtn.style.display = 'block';
     }
+    
+    // Handle battle end state - disable all buttons except exit
+    const fightBtn = document.getElementById('fight-btn');
+    const runBtn = document.getElementById('run-btn');
+    
+    if (battleState && battleState.battle_ended) {
+        // Battle is over - disable all battle buttons
+        if (fightBtn) {
+            fightBtn.disabled = true;
+            fightBtn.style.opacity = '0.5';
+            fightBtn.style.cursor = 'not-allowed';
+        }
+        
+        if (runBtn) {
+            runBtn.disabled = true;
+            runBtn.style.opacity = '0.5';
+            runBtn.style.cursor = 'not-allowed';
+            
+            // Update button text and state based on battle result
+            if (battleState.winner === 'player') {
+                runBtn.textContent = 'VICTORY!';
+                runBtn.setAttribute('data-state', 'victory');
+            } else {
+                runBtn.textContent = 'DEFEAT!';
+                runBtn.setAttribute('data-state', 'defeat');
+            }
+        }
+    } else {
+        // Battle is ongoing - enable all buttons
+        if (fightBtn) {
+            fightBtn.disabled = false;
+            fightBtn.textContent = 'FIGHT';
+            fightBtn.style.opacity = '1';
+            fightBtn.style.cursor = 'pointer';
+        }
+        
+        if (runBtn) {
+            runBtn.disabled = false;
+            runBtn.textContent = 'RUN';
+            runBtn.style.opacity = '1';
+            runBtn.style.cursor = 'pointer';
+            runBtn.removeAttribute('data-state');
+        }
+    }
 }
 
 function showMoveSelection() {
+    // Clear any move tooltips
+    hideMoveTooltip();
+    
     document.getElementById('battle-menu').style.display = 'none';
     document.getElementById('move-selection').style.display = 'block';
     document.getElementById('pokemon-selection').style.display = 'none';
@@ -516,7 +656,40 @@ function setupDragScrolling(element) {
     let startX;
     let scrollLeft;
     
+    // Check if the target element should be excluded from drag scrolling
+    function shouldExcludeTarget(target) {
+        // Check if the target or any of its parents is a button or clickable element
+        const excludedSelectors = [
+            'button',
+            '.pokemon-item',
+            '.back-btn',
+            '.menu-btn',
+            '.move-btn',
+            'input',
+            'select',
+            'textarea',
+            'a'
+        ];
+        
+        let currentElement = target;
+        while (currentElement && currentElement !== element) {
+            // Check if current element matches any excluded selector
+            for (const selector of excludedSelectors) {
+                if (currentElement.matches && currentElement.matches(selector)) {
+                    return true;
+                }
+            }
+            currentElement = currentElement.parentElement;
+        }
+        return false;
+    }
+    
     element.addEventListener('mousedown', (e) => {
+        // Don't start drag if clicking on a button or interactive element
+        if (shouldExcludeTarget(e.target)) {
+            return;
+        }
+        
         isDown = true;
         element.classList.add('dragging');
         startX = e.pageX - element.offsetLeft;
@@ -546,6 +719,11 @@ function setupDragScrolling(element) {
     
     // Touch events for mobile
     element.addEventListener('touchstart', (e) => {
+        // Don't start drag if touching a button or interactive element
+        if (shouldExcludeTarget(e.target)) {
+            return;
+        }
+        
         isDown = true;
         startX = e.touches[0].pageX - element.offsetLeft;
         scrollLeft = element.scrollLeft;
@@ -600,7 +778,41 @@ function setupVerticalDragScrolling(element) {
     let startY;
     let scrollTop;
     
+    // Check if the target element should be excluded from drag scrolling
+    function shouldExcludeTarget(target) {
+        // Check if the target or any of its parents is a button or clickable element
+        const excludedSelectors = [
+            'button',
+            '.swap-in-btn',
+            '.pokemon-item',
+            '.back-btn',
+            '.menu-btn',
+            '.move-btn',
+            'input',
+            'select',
+            'textarea',
+            'a'
+        ];
+        
+        let currentElement = target;
+        while (currentElement && currentElement !== element) {
+            // Check if current element matches any excluded selector
+            for (const selector of excludedSelectors) {
+                if (currentElement.matches && currentElement.matches(selector)) {
+                    return true;
+                }
+            }
+            currentElement = currentElement.parentElement;
+        }
+        return false;
+    }
+    
     element.addEventListener('mousedown', (e) => {
+        // Don't start drag if clicking on a button or interactive element
+        if (shouldExcludeTarget(e.target)) {
+            return;
+        }
+        
         isDown = true;
         element.classList.add('dragging');
         startY = e.pageY - element.offsetTop;
@@ -630,6 +842,11 @@ function setupVerticalDragScrolling(element) {
     
     // Touch events for mobile
     element.addEventListener('touchstart', (e) => {
+        // Don't start drag if touching a button or interactive element
+        if (shouldExcludeTarget(e.target)) {
+            return;
+        }
+        
         isDown = true;
         startY = e.touches[0].pageY - element.offsetTop;
         scrollTop = element.scrollTop;
@@ -885,7 +1102,7 @@ function updateTeamDisplay() {
                 <div class="team-pokemon-health">${Math.round(currentHp)}/${Math.round(maxHp)}</div>
                 ${isFainted ? '<div class="team-pokemon-status">Fainted</div>' : ''}
             </div>
-            ${!isActive && !isFainted ? `<button class="swap-in-btn" onclick="swapInPokemon(${index})">Swap In</button>` : ''}
+            ${!isActive && !isFainted && !battleState.battle_ended ? `<button class="swap-in-btn" onclick="swapInPokemon(${index})">Swap In</button>` : ''}
         `;
         
         playerTeamList.appendChild(teamItem);
@@ -895,6 +1112,12 @@ function updateTeamDisplay() {
 // Function to swap in a Pokemon from the team display
 function swapInPokemon(pokemonIndex) {
     if (!battleState || !battleState.player_team) return;
+    
+    // Check if battle is ended
+    if (battleState.battle_ended) {
+        showNotification('Invalid Action', 'Cannot swap Pokemon after battle has ended!');
+        return;
+    }
     
     const pokemon = battleState.player_team[pokemonIndex];
     if (!pokemon) return;
@@ -1011,9 +1234,34 @@ function runFromBattle() {
             return;
         }
         
-        // Update battle state and handle as loss
-        battleState = data;
-        handleBattleEnd('enemy');
+        // Handle the battle end response
+        if (data.battle_ended && data.winner === 'enemy') {
+            // Update battle state to show defeat
+            battleState = {
+                ...battleState,
+                battle_ended: true,
+                winner: 'enemy'
+            };
+            
+            // Update the display
+            updateBattleDisplay();
+            
+            // Show the level reset message
+            const message = data.message || `You ran from battle and have been reset to level ${data.reset_level || 1}!`;
+            showNotification('Battle Ended', message);
+            
+            // Update level display if we have the reset level
+            if (data.reset_level) {
+                document.getElementById('player-level-display').textContent = data.reset_level;
+            }
+            
+            // Handle battle end
+            handleBattleEnd('enemy');
+        } else {
+            // Fallback - just show that the battle ended
+            showNotification('Battle Ended', 'You ran from battle!');
+            handleBattleEnd('enemy');
+        }
     })
     .catch(error => {
         console.error('Error running from battle:', error);
@@ -1024,4 +1272,80 @@ function runFromBattle() {
         }
         showNotification('Connection Error', 'Connection error. Please try again.');
     });
+} 
+
+// Move tooltip functionality
+async function setupMoveTooltip(moveButton, moveId) {
+    try {
+        // Fetch detailed move information
+        const response = await fetch(`/api/move/${moveId}`);
+        const moveData = await response.json();
+        
+        const moveInfo = {
+            name: moveData.move_name || 'Unknown Move',
+            power: moveData.power || 0,
+            accuracy: moveData.accuracy || 0,
+            category: moveData.category || 'physical',
+            type: moveData.type_id || 1
+        };
+        
+        // Get type name
+        let typeName = 'Normal';
+        if (moveInfo.type !== 1) {
+            try {
+                const typeResponse = await fetch(`/api/type/${moveInfo.type}`);
+                const typeData = await typeResponse.json();
+                typeName = typeData.type_name || 'Normal';
+            } catch (error) {
+                console.error('Error fetching type name:', error);
+            }
+        }
+        
+        // Add event listeners for tooltip
+        moveButton.addEventListener('mouseenter', () => {
+            showMoveTooltip(moveButton, moveInfo, typeName);
+        });
+        
+        moveButton.addEventListener('mouseleave', () => {
+            hideMoveTooltip();
+        });
+        
+    } catch (error) {
+        console.error('Error setting up move tooltip:', error);
+    }
+}
+
+// Show move tooltip
+function showMoveTooltip(element, moveInfo, typeName) {
+    hideMoveTooltip(); // Remove any existing tooltip
+    
+    const tooltip = document.createElement('div');
+    tooltip.className = 'battle-move-tooltip';
+    tooltip.innerHTML = `
+        <div class="tooltip-header">${moveInfo.name}</div>
+        <div class="tooltip-content">
+            <div class="move-stat">Type: <span class="type-badge type-${typeName.toLowerCase()}">${typeName}</span></div>
+            <div class="move-stat">Category: <span class="move-category">${moveInfo.category}</span></div>
+            <div class="move-stat">Power: <span class="move-power">${moveInfo.power || 'N/A'}</span></div>
+            <div class="move-stat">Accuracy: <span class="move-accuracy">${moveInfo.accuracy || 'N/A'}%</span></div>
+        </div>
+    `;
+    
+    document.body.appendChild(tooltip);
+    
+    // Position tooltip
+    const rect = element.getBoundingClientRect();
+    tooltip.style.left = rect.left + (rect.width / 2) - (tooltip.offsetWidth / 2) + 'px';
+    tooltip.style.top = rect.top - tooltip.offsetHeight - 10 + 'px';
+    
+    // Add fade-in animation
+    setTimeout(() => tooltip.classList.add('visible'), 10);
+}
+
+// Hide move tooltip
+function hideMoveTooltip() {
+    const existingTooltip = document.querySelector('.battle-move-tooltip');
+    if (existingTooltip) {
+        existingTooltip.remove();
+    }
 } 

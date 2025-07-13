@@ -443,10 +443,7 @@ body {
     cursor: grabbing;
 }
 
-.battle-scene.dragging .enemy-pokemon,
-.battle-scene.dragging .player-pokemon {
-    pointer-events: none;
-}
+/* Removed pointer-events: none to allow interactions during drag */
 
 .battle-scene::-webkit-scrollbar {
     width: 8px;
@@ -629,11 +626,36 @@ body {
 }
 
 .battle-btn {
-    background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+    background: linear-gradient(135deg, #3498db, #2980b9);
+}
+
+.battle-btn:disabled {
+    background: linear-gradient(135deg, #95a5a6, #7f8c8d) !important;
+    color: white !important;
+    opacity: 0.7 !important;
+    cursor: not-allowed !important;
+    transform: none !important;
 }
 
 .run-btn {
     background: linear-gradient(135deg, #e74c3c, #c0392b);
+}
+
+.run-btn:disabled {
+    color: white !important;
+    opacity: 0.9 !important;
+    cursor: not-allowed !important;
+    transform: none !important;
+}
+
+/* Victory state - green background */
+.run-btn:disabled[data-state="victory"] {
+    background: linear-gradient(135deg, #27ae60, #2ecc71) !important;
+}
+
+/* Defeat state - darker red background */
+.run-btn:disabled[data-state="defeat"] {
+    background: linear-gradient(135deg, #8e44ad, #9b59b6) !important;
 }
 
 .menu-btn:hover {
@@ -789,9 +811,7 @@ body {
     cursor: grabbing;
 }
 
-.pokemon-list.dragging .pokemon-item {
-    pointer-events: none;
-}
+/* Removed pointer-events: none to allow Pokemon selection during drag */
 
 .pokemon-item {
     display: flex;
@@ -877,9 +897,7 @@ body {
     cursor: grabbing;
 }
 
-.battle-log.dragging .log-message {
-    pointer-events: none;
-}
+/* Removed pointer-events: none to allow interactions during drag */
 
 .log-message {
     padding: 10px;
@@ -930,10 +948,7 @@ body {
     cursor: grabbing;
 }
 
-.enemy-team-display.dragging .enemy-team-item, 
-.player-team-display.dragging .player-team-item {
-    pointer-events: none;
-}
+/* Removed pointer-events: none to allow buttons to remain clickable during drag */
 
 .enemy-team-display::-webkit-scrollbar, 
 .player-team-display::-webkit-scrollbar {
@@ -978,7 +993,7 @@ body {
     display: flex;
     align-items: center;
     gap: 10px;
-    padding: 10px;
+        padding: 10px;
     background: rgba(255, 255, 255, 0.1);
     border-radius: 8px;
     border: 1px solid rgba(255, 255, 255, 0.2);
@@ -1342,4 +1357,74 @@ body {
         padding: 10px 20px;
         font-size: 14px;
     }
+}
+
+/* Battle Move Tooltip Styles */
+.battle-move-tooltip {
+    position: fixed;
+    background: linear-gradient(135deg, #2c3e50, #34495e);
+    color: white;
+    padding: 12px;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    z-index: 1000;
+    max-width: 250px;
+    min-width: 200px;
+    font-size: 13px;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: all 0.2s ease;
+    pointer-events: none;
+}
+
+.battle-move-tooltip.visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.battle-move-tooltip .tooltip-header {
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: #3498db;
+    border-bottom: 1px solid #34495e;
+    padding-bottom: 4px;
+    font-size: 14px;
+}
+
+.battle-move-tooltip .tooltip-content {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.battle-move-tooltip .move-stat {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 2px 0;
+    font-size: 12px;
+}
+
+.battle-move-tooltip .move-stat .type-badge {
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.battle-move-tooltip .move-category {
+    color: #f39c12;
+    font-weight: 500;
+    text-transform: capitalize;
+}
+
+.battle-move-tooltip .move-power {
+    color: #e74c3c;
+    font-weight: 500;
+}
+
+.battle-move-tooltip .move-accuracy {
+    color: #27ae60;
+    font-weight: 500;
 }

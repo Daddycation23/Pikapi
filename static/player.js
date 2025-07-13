@@ -8,36 +8,14 @@ let currentTeamIndex = 0;
 function updateAuthUI(username) {
   if (username) {
     authSection.innerHTML = `
-      <button class="btn-base auth-button" id="profile-btn" style="background:#4CAF50;color:white;box-shadow:0 2px 8px rgba(0,0,0,0.08);transition:all 0.2s;">
+      <button class="btn-standard btn-profile" id="profile-btn" style="margin-right:15px;">
         <span style="font-size:18px;vertical-align:middle;">👤</span> <span style="font-weight:500;margin-left:8px;">${username}</span>
       </button>
-      <button class="btn-base auth-button" id="logout-btn" style="margin-left:15px;box-shadow:0 2px 8px rgba(0,0,0,0.08);transition:all 0.2s;">Logout</button>
+      <button class="btn-standard btn-logout" id="logout-btn">Logout</button>
     `;
-    // Add hover effects and click handlers
+    // Add click handlers (hover effects now handled by CSS)
     const profileBtn = document.getElementById('profile-btn');
     const logoutBtn = document.getElementById('logout-btn');
-    
-    // Profile button hover effects
-    profileBtn.addEventListener('mouseenter', function() {
-      this.style.transform = 'translateY(-1px)';
-      this.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
-      this.style.background = '#45a049';
-    });
-    profileBtn.addEventListener('mouseleave', function() {
-      this.style.transform = 'translateY(0)';
-      this.style.boxShadow = '0 2px 8px rgba(0,0,0,0.08)';
-      this.style.background = '#4CAF50';
-    });
-    
-    // Logout button hover effects
-    logoutBtn.addEventListener('mouseenter', function() {
-      this.style.transform = 'translateY(-1px)';
-      this.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
-    });
-    logoutBtn.addEventListener('mouseleave', function() {
-      this.style.transform = 'translateY(0)';
-      this.style.boxShadow = '0 2px 8px rgba(0,0,0,0.08)';
-    });
     
     // Click handlers
     logoutBtn.onclick = async function() {
@@ -145,7 +123,13 @@ function setupBattleButtons() {
   // Resume battle button
   const resumeBattleBtn = document.getElementById('resume-battle-btn');
   if (resumeBattleBtn) {
-    resumeBattleBtn.onclick = function() {
+    resumeBattleBtn.onclick = async function() {
+      // Check if current team has at least 1 Pokemon
+      if (!(await validateTeamForBattle())) {
+        showErrorModal('Please add at least 1 Pokemon to your team before resuming a battle.');
+        return;
+      }
+      
       let teamId = teamsList[currentTeamIndex] && teamsList[currentTeamIndex].team_id;
       if (teamId) {
         window.location.href = `/battle?team_id=${teamId}&action=resume`;
@@ -158,7 +142,13 @@ function setupBattleButtons() {
   // New battle button
   const newBattleBtn = document.getElementById('new-battle-btn');
   if (newBattleBtn) {
-    newBattleBtn.onclick = function() {
+    newBattleBtn.onclick = async function() {
+      // Check if current team has at least 1 Pokemon
+      if (!(await validateTeamForBattle())) {
+        showErrorModal('Please add at least 1 Pokemon to your team before starting a new battle.');
+        return;
+      }
+      
       let teamId = teamsList[currentTeamIndex] && teamsList[currentTeamIndex].team_id;
       if (teamId) {
         window.location.href = `/battle?team_id=${teamId}&action=new`;
@@ -171,7 +161,13 @@ function setupBattleButtons() {
   // Single battle button (when no existing battle)
   const battleBtn = document.getElementById('battle-btn');
   if (battleBtn) {
-    battleBtn.onclick = function() {
+    battleBtn.onclick = async function() {
+      // Check if current team has at least 1 Pokemon
+      if (!(await validateTeamForBattle())) {
+        showErrorModal('Please add at least 1 Pokemon to your team before starting a battle.');
+        return;
+      }
+      
       let teamId = teamsList[currentTeamIndex] && teamsList[currentTeamIndex].team_id;
       if (teamId) {
         window.location.href = `/battle?team_id=${teamId}`;
@@ -179,6 +175,48 @@ function setupBattleButtons() {
         window.location.href = '/battle';
       }
     };
+  }
+}
+
+// Validate team for battle
+async function validateTeamForBattle() {
+  // Check if we have a current team
+  const currentTeam = teamsList[currentTeamIndex];
+  if (!currentTeam || !currentTeam.team_id) {
+    return false;
+  }
+  
+  try {
+    // Fetch the actual team data
+    const res = await fetch(`/api/team?team_id=${currentTeam.team_id}`);
+    const data = await res.json();
+    const team = data.team || [];
+    
+    // Check if at least one Pokemon slot is not empty
+    const hasAtLeastOnePokemon = team.some(pokemon => pokemon !== null && pokemon !== undefined);
+    return hasAtLeastOnePokemon;
+  } catch (error) {
+    console.error('Error validating team:', error);
+    return false;
+  }
+}
+
+// Show error modal
+function showErrorModal(message) {
+  const errorModal = document.getElementById('error-modal');
+  const errorMessage = document.getElementById('error-message');
+  
+  if (errorModal && errorMessage) {
+    errorMessage.textContent = message;
+    errorModal.style.display = 'block';
+  }
+}
+
+// Close error modal
+function closeErrorModal() {
+  const errorModal = document.getElementById('error-modal');
+  if (errorModal) {
+    errorModal.style.display = 'none';
   }
 }
 

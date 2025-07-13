@@ -61,11 +61,7 @@ body.edit-team-pokemon-bg::before {
 .cost-btn + .cost-btn {
     margin-left: 10px;
 }
-.search-filter-row {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 18px;
-}
+/* Common search filter row moved to common.css */
 /* Search input uses common.css */
 .search-input {
     flex: 1;
@@ -206,24 +202,7 @@ body.edit-team-pokemon-bg::before {
     gap: 15px;
     margin-bottom: 18px;
 }
-.stat-row {
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-}
-.stat-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-.stat-label {
-    color: #666;
-    font-weight: 500;
-}
-.stat-value {
-    font-weight: bold;
-    color: #2c3e50;
-}
+/* Common stat components moved to common.css */
 /* Stat bars use common.css */
 .stat-row.winner {
     background: rgba(76, 175, 80, 0.2);

@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pokemon Team Builder</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='common.css')}}"> 
-    <link rel="stylesheet" href="{{ url_for('static', filename='index.css')}}"> 
 </head>
 <body>
     <div class="container">
@@ -23,7 +22,7 @@
                 <div class="team-tab active">Team 1</div>
                 <div class="team-tab">Team 2</div>
                 <div class="team-tab">Team 3</div>
-                <button class="btn-base auth-button edit-team-btn" style="margin-left: auto;">Edit Team</button>
+                <button class="btn-standard btn-profile edit-team-btn" style="margin-left: auto;">Edit Team</button>
             </div>
             <div class="team-grid">
                 <div class="pokemon-slot edit-team-btn">
@@ -58,17 +57,18 @@
                 </div>
                 <!-- Battle Buttons -->
                 <div class="battle-buttons-container">
+                    <button class="btn-standard btn-type-chart" onclick="window.location.href='/type_effectiveness'" style="margin-right: 10px;">Type Chart</button>
                     {% if has_existing_battle %}
-                        <button id="resume-battle-btn" class="battle-btn resume-battle-btn" style="margin-right: 10px;">
+                        <button id="resume-battle-btn" class="btn-standard btn-resume" style="margin-right: 10px;">
                             <span class="battle-icon">⚔️</span>
                             Resume Battle
                         </button>
-                        <button id="new-battle-btn" class="battle-btn new-battle-btn">
+                        <button id="new-battle-btn" class="btn-standard btn-new">
                             <span class="battle-icon">🔄</span>
                             New Battle
                         </button>
                     {% else %}
-                        <button id="battle-btn" class="battle-btn">
+                        <button id="battle-btn" class="btn-standard btn-battle">
                             <span class="battle-icon">⚔️</span>
                             Start Battle
                         </button>
@@ -135,6 +135,18 @@
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Error Modal -->
+    <div id="error-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" onclick="closeErrorModal()">&times;</span>
+            <div class="error-modal-content">
+                <h2>⚠️ Cannot Start Battle</h2>
+                <p id="error-message">Please add at least 1 Pokemon to your team before starting a battle.</p>
+                <button class="btn-standard btn-profile" onclick="closeErrorModal()">OK</button>
             </div>
         </div>
     </div>
