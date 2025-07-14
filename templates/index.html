@@ -6,19 +6,55 @@
     <title>Pokemon Team Builder</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='common.css')}}"> 
     <link rel="stylesheet" href="{{ url_for('static', filename='index.css')}}"> 
+    <link rel="stylesheet" href="{{ url_for('static', filename='battle_history.css')}}"> 
 </head>
 <body class="index-pokemon-bg">
-    <div class="container">
-        <div class="header">
-            <h1>Pokemon Team Builder</h1>
-            <div class="header-buttons">
-                <button class="btn-standard btn-type-chart" onclick="window.location.href='/type_effectiveness'">Type Chart</button>
-                <div class="auth-section" id="auth-section">
-                    <button class="btn-standard login-btn" id="login-btn" style="background: var(--primary-color);">Login</button>
-                    <button class="btn-standard register-btn" id="register-btn" style="background: var(--secondary-color);">Register</button>
-                </div>
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <!-- App Logo/Brand -->
+            <div class="nav-brand">
+                <a href="/" class="brand-link">
+                    <span class="brand-icon">⚡</span>
+                    <span class="brand-text">Pikapi</span>
+                </a>
             </div>
+            
+            <!-- Main Navigation Links -->
+            <div class="nav-links" id="nav-links">
+                <a href="/player" class="nav-link">
+                    <span class="nav-icon">🏗️</span>
+                    <span>Team Builder</span>
+                </a>
+                <a href="/profile" class="nav-link">
+                    <span class="nav-icon">👤</span>
+                    <span>Profile</span>
+                </a>
+                <a href="/battle-history" class="nav-link">
+                    <span class="nav-icon">⚔️</span>
+                    <span>Battle History</span>
+                </a>
+                <a href="/type_effectiveness" class="nav-link">
+                    <span class="nav-icon">🔥</span>
+                    <span>Type Chart</span>
+                </a>
+            </div>
+            
+            <!-- User Authentication Section -->
+            <div class="nav-auth" id="nav-auth">
+                <!-- Will be populated by JavaScript -->
+            </div>
+            
+            <!-- Mobile Menu Toggle -->
+            <button class="mobile-menu-toggle" id="mobile-menu-toggle">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
         </div>
+    </nav>
+
+    <div class="container">
 
         <div class="pokedex-section">
             <h2>Pokedex</h2>

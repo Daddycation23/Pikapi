@@ -6,15 +6,61 @@
     <title>Pokemon Battle - Pikapi</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='common.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='battle.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='battle_history.css') }}"> 
     <meta name="theme-color" content="#667eea">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 </head>
 <body>
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <!-- App Logo/Brand -->
+            <div class="nav-brand">
+                <a href="/" class="brand-link">
+                    <span class="brand-icon">⚡</span>
+                    <span class="brand-text">Pikapi</span>
+                </a>
+            </div>
+            
+            <!-- Main Navigation Links -->
+            <div class="nav-links" id="nav-links">
+                <a href="/player" class="nav-link">
+                    <span class="nav-icon">🏗️</span>
+                    <span>Team Builder</span>
+                </a>
+                <a href="/profile" class="nav-link">
+                    <span class="nav-icon">👤</span>
+                    <span>Profile</span>
+                </a>
+                <a href="/battle-history" class="nav-link">
+                    <span class="nav-icon">⚔️</span>
+                    <span>Battle History</span>
+                </a>
+                <a href="/type_effectiveness" class="nav-link">
+                    <span class="nav-icon">🔥</span>
+                    <span>Type Chart</span>
+                </a>
+            </div>
+            
+            <!-- User Authentication Section -->
+            <div class="nav-auth" id="nav-auth">
+                <!-- Will be populated by JavaScript -->
+            </div>
+            
+            <!-- Mobile Menu Toggle -->
+            <button class="mobile-menu-toggle" id="mobile-menu-toggle">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+        </div>
+    </nav>
+
     <div class="battle-container" data-team-id="{{ team_id|default('null') }}" data-has-existing-battle="{{ has_existing_battle|lower }}" data-action="{{ action|default('') }}">
         <!-- Battle Header -->
         <div class="battle-header">
-            <button class="exit-btn" onclick="window.location.href='/'">← Exit</button>
+            <button class="exit-btn" onclick="window.location.href='/player'">← Exit</button>
             <div class="player-level">
                 <span class="level-label">Stage Level:</span>
                 <span id="player-level-display" class="level-value">1</span>

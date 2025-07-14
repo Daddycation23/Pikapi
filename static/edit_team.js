@@ -7,6 +7,62 @@ let selectedPokemon = null;
 let maxCost = 10;
 let teamId = null;
 
+// Setup mobile menu functionality
+function setupMobileMenu() {
+    const mobileToggle = document.getElementById('mobile-menu-toggle');
+    const navLinks = document.getElementById('nav-links');
+    const navAuth = document.getElementById('nav-auth');
+    
+    if (mobileToggle) {
+        mobileToggle.addEventListener('click', () => {
+            mobileToggle.classList.toggle('active');
+            navLinks.classList.toggle('active');
+            navAuth.classList.toggle('active');
+        });
+    }
+    
+    // Close mobile menu when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.navbar')) {
+            mobileToggle?.classList.remove('active');
+            navLinks?.classList.remove('active');
+            navAuth?.classList.remove('active');
+        }
+    });
+}
+
+// Setup navbar authentication
+async function setupNavAuth() {
+    try {
+        const response = await fetch('/api/me');
+        const data = await response.json();
+        
+        const authSection = document.getElementById('nav-auth');
+        if (data.username) {
+            authSection.innerHTML = `
+                <span class="welcome-text">Welcome, ${data.username}</span>
+                <button class="btn-standard btn-logout" onclick="logout()">Logout</button>
+            `;
+        } else {
+            window.location.href = '/';
+        }
+    } catch (error) {
+        console.error('Error checking auth status:', error);
+        window.location.href = '/';
+    }
+}
+
+// Logout function
+async function logout() {
+    try {
+        await fetch('/api/logout', { method: 'POST' });
+        window.location.href = '/';
+    } catch (error) {
+        console.error('Logout error:', error);
+        window.location.href = '/';
+    }
+}
+
 // Parse team_id from URL
 function getTeamIdFromUrl() {
   const params = new URLSearchParams(window.location.search);
@@ -880,7 +936,10 @@ async function saveTeam() {
 }
 
 // Initial load
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+  setupMobileMenu();
+  await setupNavAuth();
+  
   fetchData();
   setupCostFilter();
   setupFilters();

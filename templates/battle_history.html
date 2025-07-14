@@ -2,16 +2,119 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Battle History</title>
-    <link rel="stylesheet" href="/static/common.css">
-    <link rel="stylesheet" href="/static/battle_history.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Battle History - Pikapi</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='common.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='battle_history.css') }}">
 </head>
 <body>
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <!-- App Logo/Brand -->
+            <div class="nav-brand">
+                <a href="/" class="brand-link">
+                    <span class="brand-icon">⚡</span>
+                    <span class="brand-text">Pikapi</span>
+                </a>
+            </div>
+            
+            <!-- Main Navigation Links -->
+            <div class="nav-links" id="nav-links">
+                <a href="/player" class="nav-link">
+                    <span class="nav-icon">🏗️</span>
+                    <span>Team Builder</span>
+                </a>
+                <a href="/profile" class="nav-link">
+                    <span class="nav-icon">👤</span>
+                    <span>Profile</span>
+                </a>
+                <a href="/battle-history" class="nav-link active">
+                    <span class="nav-icon">⚔️</span>
+                    <span>Battle History</span>
+                </a>
+                <a href="/type_effectiveness" class="nav-link">
+                    <span class="nav-icon">🔥</span>
+                    <span>Type Chart</span>
+                </a>
+            </div>
+            
+            <!-- User Authentication Section -->
+            <div class="nav-auth" id="nav-auth">
+                <!-- Will be populated by JavaScript -->
+            </div>
+            
+            <!-- Mobile Menu Toggle -->
+            <button class="mobile-menu-toggle" id="mobile-menu-toggle">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+        </div>
+    </nav>
+
     <div class="container">
-        <a href="/profile" class="btn-standard btn-profile" style="margin-bottom: 18px;">&larr; Back to Profile</a>
-        <h1 style="margin-top: 0; text-align: center;">Battle History</h1>
-        <div id="history-list"></div>
+        <!-- Page Content -->
+        <div class="page-header">
+            <div class="page-info">
+                <h1>Battle History</h1>
+                <p class="page-description">View your complete battle history, statistics, and detailed logs</p>
+            </div>
+        </div>
+
+        <!-- Stats overview section -->
+        <div class="stats-overview" id="stats-overview">
+            <div class="stat-card">
+                <div class="stat-number" id="total-battles">-</div>
+                <div class="stat-label">Total Battles</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="total-wins">-</div>
+                <div class="stat-label">Victories</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="total-losses">-</div>
+                <div class="stat-label">Defeats</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="win-rate">-</div>
+                <div class="stat-label">Win Rate</div>
+            </div>
+        </div>
+
+        <!-- Loading state -->
+        <div class="loading-state" id="loading-state">
+            <div class="loading-spinner"></div>
+            <p>Loading battle history...</p>
+        </div>
+
+        <!-- Battle history list -->
+        <div class="battle-history-section">
+            <div class="section-header">
+                <h3>Recent Battles</h3>
+                <div class="filter-controls">
+                    <select id="result-filter" class="filter-select">
+                        <option value="">All Results</option>
+                        <option value="win">Victories Only</option>
+                        <option value="loss">Defeats Only</option>
+                    </select>
+                </div>
+            </div>
+            <div id="history-list" class="history-list">
+                <!-- Battle records will be populated here -->
+            </div>
+        </div>
+
+        <!-- Empty state -->
+        <div class="empty-state" id="empty-state" style="display: none;">
+            <div class="empty-icon">⚔️</div>
+            <h3>No Battles Yet</h3>
+            <p>Start your first battle to see your history here!</p>
+            <a href="/player" class="btn-standard btn-battle">Start Battle</a>
+        </div>
     </div>
-    <script src="/static/battle_history.js"></script>
+
+    <script src="{{ url_for('static', filename='index.js') }}"></script>
+    <script src="{{ url_for('static', filename='battle_history.js') }}"></script>
 </body>
 </html> 

@@ -5,17 +5,55 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pokemon Team Builder</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='common.css')}}"> 
+    <link rel="stylesheet" href="{{ url_for('static', filename='battle_history.css')}}"> 
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>Pokemon Team Builder</h1>
-            <div class="header-buttons">
-                <div class="auth-section" id="auth-section">
-                    <!-- Will be populated by JavaScript -->
-                </div>
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <!-- App Logo/Brand -->
+            <div class="nav-brand">
+                <a href="/" class="brand-link">
+                    <span class="brand-icon">⚡</span>
+                    <span class="brand-text">Pikapi</span>
+                </a>
             </div>
+            
+            <!-- Main Navigation Links -->
+            <div class="nav-links" id="nav-links">
+                <a href="/player" class="nav-link active">
+                    <span class="nav-icon">🏗️</span>
+                    <span>Team Builder</span>
+                </a>
+                <a href="/profile" class="nav-link">
+                    <span class="nav-icon">👤</span>
+                    <span>Profile</span>
+                </a>
+                <a href="/battle-history" class="nav-link">
+                    <span class="nav-icon">⚔️</span>
+                    <span>Battle History</span>
+                </a>
+                <a href="/type_effectiveness" class="nav-link">
+                    <span class="nav-icon">🔥</span>
+                    <span>Type Chart</span>
+                </a>
+            </div>
+            
+            <!-- User Authentication Section -->
+            <div class="nav-auth" id="nav-auth">
+                <!-- Will be populated by JavaScript -->
+            </div>
+            
+            <!-- Mobile Menu Toggle -->
+            <button class="mobile-menu-toggle" id="mobile-menu-toggle">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
         </div>
+    </nav>
+
+    <div class="container">
 
         <div class="team-section">
             <div class="team-tabs">

@@ -1,167 +1,322 @@
+// ===== BATTLE HISTORY - MODERN IMPLEMENTATION =====
+
+let allBattles = [];
+let filteredBattles = [];
+
+// Initialize page when DOM loads
 document.addEventListener('DOMContentLoaded', () => {
-    fetch('/api/battle/history')
-        .then(res => res.json())
-        .then(data => renderHistory(data.records || []));
+    initializePage();
 });
 
-function renderHistory(records) {
-    const list = document.getElementById('history-list');
-    if (!records.length) {
-        list.innerHTML = '<div style="text-align:center;color:#888;">No battle history yet.</div>';
+async function initializePage() {
+    // Check authentication and setup UI
+    await checkAuthAndSetupUI();
+    
+    // Setup mobile menu
+    setupMobileMenu();
+    
+    // Load battle history
+    await loadBattleHistory();
+    
+    // Setup event listeners
+    setupEventListeners();
+}
+
+function setupMobileMenu() {
+    const mobileToggle = document.getElementById('mobile-menu-toggle');
+    const navLinks = document.getElementById('nav-links');
+    const navAuth = document.getElementById('nav-auth');
+    
+    if (mobileToggle) {
+        mobileToggle.addEventListener('click', () => {
+            mobileToggle.classList.toggle('active');
+            navLinks.classList.toggle('active');
+            navAuth.classList.toggle('active');
+        });
+    }
+    
+    // Close mobile menu when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.navbar')) {
+            mobileToggle?.classList.remove('active');
+            navLinks?.classList.remove('active');
+            navAuth?.classList.remove('active');
+        }
+    });
+}
+
+async function checkAuthAndSetupUI() {
+    try {
+        const response = await fetch('/api/me');
+        const data = await response.json();
+        
+        const authSection = document.getElementById('nav-auth');
+        if (data.username) {
+            authSection.innerHTML = `
+                <span class="welcome-text">Welcome, ${data.username}</span>
+                <button class="btn-standard btn-logout" onclick="logout()">Logout</button>
+            `;
+        } else {
+            authSection.innerHTML = `
+                <button class="btn-standard btn-profile" onclick="showAuthModal('login')">Login</button>
+                <button class="btn-standard btn-profile" onclick="showAuthModal('register')">Register</button>
+            `;
+        }
+    } catch (error) {
+        console.error('Error checking auth status:', error);
+    }
+}
+
+async function loadBattleHistory() {
+    const loadingState = document.getElementById('loading-state');
+    const historyList = document.getElementById('history-list');
+    const emptyState = document.getElementById('empty-state');
+    
+    try {
+        // Show loading state
+        loadingState.style.display = 'block';
+        historyList.style.display = 'none';
+        emptyState.style.display = 'none';
+        
+        const response = await fetch('/api/battle/history');
+        if (!response.ok) {
+            throw new Error('Failed to fetch battle history');
+        }
+        
+        const data = await response.json();
+        allBattles = data.records || [];
+        filteredBattles = [...allBattles];
+        
+        // Hide loading state
+        loadingState.style.display = 'none';
+        
+        if (allBattles.length === 0) {
+            // Show empty state
+            emptyState.style.display = 'block';
+            historyList.style.display = 'none';
+        } else {
+            // Show battle history
+            historyList.style.display = 'block';
+            emptyState.style.display = 'none';
+            
+            // Calculate and display stats
+            displayStatistics();
+            
+            // Render battle records
+            renderBattleHistory();
+        }
+        
+    } catch (error) {
+        console.error('Error loading battle history:', error);
+        loadingState.style.display = 'none';
+        historyList.innerHTML = `
+            <div class="error-message">
+                <h3>Error Loading Battle History</h3>
+                <p>Failed to load your battle records. Please try refreshing the page.</p>
+                <button class="btn-standard btn-profile" onclick="loadBattleHistory()">Retry</button>
+            </div>
+        `;
+        historyList.style.display = 'block';
+    }
+}
+
+function displayStatistics() {
+    const totalBattles = allBattles.length;
+    const totalWins = allBattles.filter(b => b.result === 'win').length;
+    const totalLosses = allBattles.filter(b => b.result === 'loss').length;
+    const winRate = totalBattles > 0 ? Math.round((totalWins / totalBattles) * 100) : 0;
+    
+    document.getElementById('total-battles').textContent = totalBattles;
+    document.getElementById('total-wins').textContent = totalWins;
+    document.getElementById('total-losses').textContent = totalLosses;
+    document.getElementById('win-rate').textContent = `${winRate}%`;
+}
+
+function renderBattleHistory() {
+    const historyList = document.getElementById('history-list');
+    
+    if (filteredBattles.length === 0) {
+        historyList.innerHTML = `
+            <div class="no-results">
+                <h3>No battles match your filter</h3>
+                <p>Try adjusting your filter settings to see more results.</p>
+            </div>
+        `;
         return;
     }
-    records.forEach((rec, idx) => {
-        const div = document.createElement('div');
-        div.className = 'profile-section battle-card ' + (rec.result === 'win' ? 'battle-win' : 'battle-loss');
-        // Heading
-        const heading = document.createElement('div');
-        heading.className = 'battle-result-heading';
-        heading.textContent = rec.result === 'win' ? 'WIN' : 'LOSS';
-        div.appendChild(heading);
-        // Teams
-        const teams = document.createElement('div');
-        teams.className = 'teams';
-        // Player team
-        const playerTeam = document.createElement('div');
-        playerTeam.className = 'team player-team';
-        const playerTitle = document.createElement('div');
-        playerTitle.className = 'team-title';
-        playerTitle.textContent = 'Your Team';
-        playerTeam.appendChild(playerTitle);
-        const playerList = document.createElement('div');
-        playerList.className = 'pokemon-list';
-        (rec.player_team || []).forEach(p => {
-            const pokeDiv = document.createElement('div');
-            pokeDiv.className = 'pokemon' + (p.fainted ? ' fainted' : '');
-            // Icon
-            const img = document.createElement('img');
-            img.src = `/static/images/${p.id}.png`;
-            img.alt = p.name;
-            if (p.fainted) img.classList.add('fainted');
-            pokeDiv.appendChild(img);
-            // Name
-            const name = document.createElement('div');
-            name.className = 'pokemon-name';
-            name.textContent = p.name;
-            pokeDiv.appendChild(name);
-            // HP
-            const hp = document.createElement('div');
-            hp.className = 'pokemon-hp';
-            const hpText = document.createElement('span');
-            hpText.textContent = `${p.current_hp} / ${p.max_hp}`;
-            hp.appendChild(hpText);
-            // HP bar
-            const hpBar = document.createElement('div');
-            hpBar.className = 'hp-bar';
-            const hpBarInner = document.createElement('div');
-            hpBarInner.className = 'hp-bar-inner';
-            const percent = p.max_hp ? Math.max(0, Math.round((p.current_hp / p.max_hp) * 100)) : 0;
-            hpBarInner.style.width = percent + '%';
-            if (p.fainted || percent === 0) {
-                hpBarInner.style.background = 'var(--border-light)';
-            } else if (percent < 25) {
-                hpBarInner.style.background = 'var(--danger-color)';
-            } else if (percent < 50) {
-                hpBarInner.style.background = 'var(--secondary-color)';
-            } else {
-                hpBarInner.style.background = 'var(--primary-color)';
+    
+    historyList.innerHTML = filteredBattles.map((battle, index) => createBattleCard(battle, index)).join('');
+}
+
+function createBattleCard(battle, index) {
+    const date = new Date(battle.timestamp);
+    const dateStr = date.toLocaleDateString();
+    const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    
+    const level = battle.level || 'Unknown';
+    const result = battle.result;
+    const resultClass = result === 'win' ? 'win' : 'loss';
+    const resultText = result === 'win' ? 'Victory' : 'Defeat';
+    
+    return `
+        <div class="battle-record battle-${result}" data-battle-index="${index}">
+            <!-- Battle Header -->
+            <div class="battle-header">
+                <div class="battle-result-row">
+                    <div class="battle-result ${resultClass}">
+                        ${resultText}
+                    </div>
+                    <div class="battle-meta">
+                        <div class="battle-date">
+                            📅 ${dateStr} at ${timeStr}
+                        </div>
+                        <div class="battle-level">
+                            ⭐ Level ${level}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Teams Container -->
+            <div class="teams-container">
+                <div class="teams-row">
+                    <!-- Player Team -->
+                    <div class="team-section player-team">
+                        <div class="team-title">Your Team</div>
+                        <div class="pokemon-grid">
+                            ${createTeamPokemon(battle.player_team || [])}
+                        </div>
+                    </div>
+                    
+                    <!-- VS Divider -->
+                    <div class="vs-divider">VS</div>
+                    
+                    <!-- Enemy Team -->
+                    <div class="team-section enemy-team">
+                        <div class="team-title">Enemy Team</div>
+                        <div class="pokemon-grid">
+                            ${createTeamPokemon(battle.enemy_team || [])}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Battle Log Section -->
+            <div class="battle-log-section">
+                <div class="battle-log-toggle" onclick="toggleBattleLog(${index})">
+                    <span>Battle Log</span>
+                </div>
+                <div class="battle-log" id="battle-log-${index}">
+                    <div class="battle-log-content">
+                        ${createBattleLogContent(battle.battle_log || [])}
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function createTeamPokemon(team) {
+    if (!team || team.length === 0) {
+        return '<div class="pokemon-card empty">No Pokemon</div>';
+    }
+    
+    return team.map(pokemon => {
+        const isFainted = pokemon.current_hp === 0 || pokemon.fainted;
+        const hpPercent = pokemon.max_hp ? Math.max(0, (pokemon.current_hp / pokemon.max_hp) * 100) : 0;
+        
+        let hpClass = 'high';
+        if (isFainted || hpPercent === 0) hpClass = 'fainted';
+        else if (hpPercent < 25) hpClass = 'low';
+        else if (hpPercent < 50) hpClass = 'medium';
+        
+        const pokemonId = pokemon.id || pokemon.pokemon_id;
+        const imageUrl = `/static/images/${pokemonId}.png`;
+        
+        return `
+            <div class="pokemon-card ${isFainted ? 'fainted' : ''}">
+                <div class="pokemon-image">
+                    <img src="${imageUrl}" alt="${pokemon.name}" 
+                         onerror="this.src='/static/images/1.png'" />
+                </div>
+                <div class="pokemon-name">${pokemon.name}</div>
+                <div class="pokemon-hp">${pokemon.current_hp || 0} / ${pokemon.max_hp || 0}</div>
+                <div class="hp-bar">
+                    <div class="hp-bar-fill ${hpClass}" style="width: ${hpPercent}%"></div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function createBattleLogContent(battleLog) {
+    if (!battleLog || battleLog.length === 0) {
+        return '<div class="battle-log-line">No battle log available</div>';
+    }
+    
+    return battleLog.map(line => `<div class="battle-log-line">&gt; ${line}</div>`).join('');
+}
+
+function toggleBattleLog(index) {
+    const logElement = document.getElementById(`battle-log-${index}`);
+    const toggleElement = document.querySelector(`[onclick="toggleBattleLog(${index})"]`);
+    
+    // Close all other logs first
+    document.querySelectorAll('.battle-log').forEach((log, i) => {
+        if (i !== index) {
+            log.classList.remove('expanded');
+            const otherToggle = document.querySelector(`[onclick="toggleBattleLog(${i})"]`);
+            if (otherToggle) {
+                otherToggle.classList.remove('expanded');
             }
-            hpBar.appendChild(hpBarInner);
-            hp.appendChild(hpBar);
-            pokeDiv.appendChild(hp);
-            playerList.appendChild(pokeDiv);
-        });
-        playerTeam.appendChild(playerList);
-        // Enemy team
-        const enemyTeam = document.createElement('div');
-        enemyTeam.className = 'team enemy-team';
-        const enemyTitle = document.createElement('div');
-        enemyTitle.className = 'team-title';
-        enemyTitle.textContent = 'Enemy Team';
-        enemyTeam.appendChild(enemyTitle);
-        const enemyList = document.createElement('div');
-        enemyList.className = 'pokemon-list';
-        (rec.enemy_team || []).forEach(p => {
-            const pokeDiv = document.createElement('div');
-            pokeDiv.className = 'pokemon' + (p.fainted ? ' fainted' : '');
-            // Icon
-            const img = document.createElement('img');
-            img.src = `/static/images/${p.id}.png`;
-            img.alt = p.name;
-            if (p.fainted) img.classList.add('fainted');
-            pokeDiv.appendChild(img);
-            // Name
-            const name = document.createElement('div');
-            name.className = 'pokemon-name';
-            name.textContent = p.name;
-            pokeDiv.appendChild(name);
-            // HP
-            const hp = document.createElement('div');
-            hp.className = 'pokemon-hp';
-            const hpText = document.createElement('span');
-            hpText.textContent = `${p.current_hp} / ${p.max_hp}`;
-            hp.appendChild(hpText);
-            // HP bar
-            const hpBar = document.createElement('div');
-            hpBar.className = 'hp-bar';
-            const hpBarInner = document.createElement('div');
-            hpBarInner.className = 'hp-bar-inner';
-            const percent = p.max_hp ? Math.max(0, Math.round((p.current_hp / p.max_hp) * 100)) : 0;
-            hpBarInner.style.width = percent + '%';
-            if (p.fainted || percent === 0) {
-                hpBarInner.style.background = 'var(--border-light)';
-            } else if (percent < 25) {
-                hpBarInner.style.background = 'var(--danger-color)';
-            } else if (percent < 50) {
-                hpBarInner.style.background = 'var(--secondary-color)';
-            } else {
-                hpBarInner.style.background = 'var(--primary-color)';
-            }
-            hpBar.appendChild(hpBarInner);
-            hp.appendChild(hpBar);
-            pokeDiv.appendChild(hp);
-            enemyList.appendChild(pokeDiv);
-        });
-        enemyTeam.appendChild(enemyList);
-        // Center both teams
-        teams.appendChild(playerTeam);
-        teams.appendChild(enemyTeam);
-        div.appendChild(teams);
-        // Timestamp
-        const ts = document.createElement('div');
-        ts.className = 'timestamp';
-        const date = new Date(rec.timestamp);
-        ts.textContent = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
-        div.appendChild(ts);
-        // Battle log
-        const logToggle = document.createElement('div');
-        logToggle.className = 'battle-log-toggle';
-        logToggle.textContent = 'Show Battle Log';
-        logToggle.setAttribute('data-idx', idx);
-        div.appendChild(logToggle);
-        const logDiv = document.createElement('div');
-        logDiv.className = 'battle-log';
-        logDiv.style.display = 'none';
-        logDiv.innerHTML = (rec.battle_log || []).map(line => `&gt; ${line}`).join('<br>');
-        div.appendChild(logDiv);
-        logToggle.addEventListener('click', () => {
-            // Collapse all other logs
-            document.querySelectorAll('.battle-log').forEach((el, i) => {
-                if (i !== idx) {
-                    el.style.display = 'none';
-                    const toggle = document.querySelector(`.battle-log-toggle[data-idx="${i}"]`);
-                    if (toggle) toggle.textContent = 'Show Battle Log';
-                }
-            });
-            // Toggle this one
-            if (logDiv.style.display === 'none') {
-                logDiv.style.display = 'block';
-                logToggle.textContent = 'Hide Battle Log';
-            } else {
-                logDiv.style.display = 'none';
-                logToggle.textContent = 'Show Battle Log';
-            }
-        });
-        list.appendChild(div);
+        }
     });
+    
+    // Toggle this log
+    const isExpanded = logElement.classList.contains('expanded');
+    if (isExpanded) {
+        logElement.classList.remove('expanded');
+        toggleElement.classList.remove('expanded');
+    } else {
+        logElement.classList.add('expanded');
+        toggleElement.classList.add('expanded');
+    }
+}
+
+function setupEventListeners() {
+    // Filter by result
+    const resultFilter = document.getElementById('result-filter');
+    if (resultFilter) {
+        resultFilter.addEventListener('change', (e) => {
+            filterBattles(e.target.value);
+        });
+    }
+}
+
+function filterBattles(resultFilter) {
+    if (resultFilter === '') {
+        filteredBattles = [...allBattles];
+    } else {
+        filteredBattles = allBattles.filter(battle => battle.result === resultFilter);
+    }
+    
+    renderBattleHistory();
+}
+
+// Utility functions for auth (should match other pages)
+async function logout() {
+    try {
+        const response = await fetch('/api/logout', { method: 'POST' });
+        if (response.ok) {
+            window.location.href = '/';
+        }
+    } catch (error) {
+        console.error('Logout error:', error);
+    }
+}
+
+function showAuthModal(type) {
+    // This function should match the implementation in other pages
+    // For now, redirect to home page for auth
+    window.location.href = '/';
 } 

@@ -1,26 +1,51 @@
 // Modal logic
 const loginModal = document.getElementById('login-modal');
 const registerModal = document.getElementById('register-modal');
-const loginBtn = document.getElementById('login-btn');
-const registerBtn = document.getElementById('register-btn');
-const loginClose = document.getElementById('login-close');
-const registerClose = document.getElementById('register-close');
-const authSection = document.getElementById('auth-section');
+const authSection = document.getElementById('nav-auth');
 let currentUser = null;
+
+// Setup mobile menu functionality
+function setupMobileMenu() {
+    const mobileToggle = document.getElementById('mobile-menu-toggle');
+    const navLinks = document.getElementById('nav-links');
+    const navAuth = document.getElementById('nav-auth');
+    
+    if (mobileToggle) {
+        mobileToggle.addEventListener('click', () => {
+            mobileToggle.classList.toggle('active');
+            navLinks.classList.toggle('active');
+            navAuth.classList.toggle('active');
+        });
+    }
+    
+    // Close mobile menu when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.navbar')) {
+            mobileToggle?.classList.remove('active');
+            navLinks?.classList.remove('active');
+            navAuth?.classList.remove('active');
+        }
+    });
+}
 
 function showLogin() { loginModal.style.display = 'block'; }
 function showRegister() { registerModal.style.display = 'block'; }
 function closeLogin() { loginModal.style.display = 'none'; document.getElementById('login-error').textContent = ''; }
 function closeRegister() { registerModal.style.display = 'none'; document.getElementById('register-error').textContent = ''; }
 
-loginBtn.onclick = showLogin;
-registerBtn.onclick = showRegister;
-loginClose.onclick = closeLogin;
-registerClose.onclick = closeRegister;
-window.onclick = function(event) {
-  if (event.target === loginModal) closeLogin();
-  if (event.target === registerModal) closeRegister();
-};
+// Setup modal close handlers
+function setupModalHandlers() {
+    const loginClose = document.getElementById('login-close');
+    const registerClose = document.getElementById('register-close');
+    
+    if (loginClose) loginClose.onclick = closeLogin;
+    if (registerClose) registerClose.onclick = closeRegister;
+    
+    window.onclick = function(event) {
+        if (event.target === loginModal) closeLogin();
+        if (event.target === registerModal) closeRegister();
+    };
+}
 
 // Login form submit
 document.getElementById('login-form').onsubmit = async function(e) {
@@ -81,10 +106,22 @@ function updateAuthUI(username) {
     window.location.href = '/player';
   } else {
     // Show login/register UI for non-logged-in users
-    authSection.innerHTML = `<button class='btn-standard login-btn' id='login-btn' style='background: var(--primary-color); margin-right: 10px;'>Login</button><button class='btn-standard register-btn' id='register-btn' style='background: var(--secondary-color);'>Register</button>`;
-    document.getElementById('login-btn').onclick = showLogin;
-    document.getElementById('register-btn').onclick = showRegister;
+    authSection.innerHTML = `
+        <button class="btn-standard btn-profile" onclick="showLogin()">Login</button>
+        <button class="btn-standard btn-profile" onclick="showRegister()">Register</button>
+    `;
   }
+}
+
+// Logout function
+async function logout() {
+    try {
+        await fetch('/api/logout', { method: 'POST' });
+        window.location.href = '/';
+    } catch (error) {
+        console.error('Logout error:', error);
+        window.location.href = '/';
+    }
 }
 
 // Check session on load
@@ -95,6 +132,8 @@ async function checkSessionAndInit() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+  setupMobileMenu();
+  setupModalHandlers();
   checkSessionAndInit();
   initPokedex();
   document.querySelectorAll('.edit-team-btn').forEach(btn => {

@@ -1,37 +1,58 @@
 // Player page JavaScript - Team Building Interface
-const authSection = document.getElementById('auth-section');
+const authSection = document.getElementById('nav-auth');
 
 let teamsList = [];
 let currentTeamIndex = 0;
+
+// Setup mobile menu functionality
+function setupMobileMenu() {
+    const mobileToggle = document.getElementById('mobile-menu-toggle');
+    const navLinks = document.getElementById('nav-links');
+    const navAuth = document.getElementById('nav-auth');
+    
+    if (mobileToggle) {
+        mobileToggle.addEventListener('click', () => {
+            mobileToggle.classList.toggle('active');
+            navLinks.classList.toggle('active');
+            navAuth.classList.toggle('active');
+        });
+    }
+    
+    // Close mobile menu when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.navbar')) {
+            mobileToggle?.classList.remove('active');
+            navLinks?.classList.remove('active');
+            navAuth?.classList.remove('active');
+        }
+    });
+}
 
 // Update UI for logged-in user
 function updateAuthUI(username) {
   if (username) {
     authSection.innerHTML = `
-      <button class="btn-standard btn-profile" id="profile-btn" style="margin-right:15px;">
-        <span style="font-size:18px;vertical-align:middle;">👤</span> <span style="font-weight:500;margin-left:8px;">${username}</span>
-      </button>
-      <button class="btn-standard btn-logout" id="logout-btn">Logout</button>
+        <span class="welcome-text">Welcome, ${username}</span>
+        <button class="btn-standard btn-logout" onclick="logout()">Logout</button>
     `;
-    // Add click handlers (hover effects now handled by CSS)
-    const profileBtn = document.getElementById('profile-btn');
-    const logoutBtn = document.getElementById('logout-btn');
-    
-    // Click handlers
-    logoutBtn.onclick = async function() {
-      const response = await fetch('/api/logout', { method: 'POST' });
-      const data = await response.json();
-      if (data.success) {
-        window.location.href = '/';
-      }
-    };
-    profileBtn.onclick = function() {
-      window.location.href = '/profile';
-    };
   } else {
     // User not logged in, redirect to home
     window.location.href = '/';
   }
+}
+
+// Logout function
+async function logout() {
+    try {
+        const response = await fetch('/api/logout', { method: 'POST' });
+        const data = await response.json();
+        if (data.success) {
+            window.location.href = '/';
+        }
+    } catch (error) {
+        console.error('Logout error:', error);
+        window.location.href = '/';
+    }
 }
 
 // Fetch all teams for the user
@@ -364,6 +385,7 @@ async function checkSessionAndInit() {
 
 // Initialize page
 document.addEventListener('DOMContentLoaded', () => {
+  setupMobileMenu();
   checkSessionAndInit();
   setupTeamTabs();
   setupEditTeamButtons();
