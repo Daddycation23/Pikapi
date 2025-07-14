@@ -3,7 +3,8 @@ import subprocess
 import sys
 from flask import Flask
 from flask_session import Session
-from app.routes import register_routes
+# from app.routes import register_routes
+from app.routes_minimal import register_routes
 
 def check_and_init_database():
     """Check if pokemon.db exists, if not run init_db.py"""
