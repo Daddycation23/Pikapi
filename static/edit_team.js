@@ -164,14 +164,14 @@ async function addPokemonToTeam(pokemon) {
   // Check for duplicate Pokemon
   const isDuplicate = team.some(slot => slot && slot.id === pokemon.id);
   if (isDuplicate) {
-    alert(`${pokemon.name} is already in your team! You cannot have duplicate Pokemon.`);
+    showNotification('Duplicate Pokemon', `${pokemon.name} is already in your team! You cannot have duplicate Pokemon.`);
     return;
   }
   
   // Find first empty slot
   const emptySlot = team.findIndex(slot => !slot);
   if (emptySlot === -1) {
-    alert('Team is full! Remove a Pokemon first.');
+    showNotification('Team Full', 'Team is full! Remove a Pokemon first.');
     return;
   }
   
@@ -181,7 +181,7 @@ async function addPokemonToTeam(pokemon) {
   const validation = await validateTeam(newTeam);
   
   if (!validation.valid) {
-    alert(`Cannot add ${pokemon.name}. Total cost would be ${validation.total_cost}/${maxCost}.`);
+    showNotification('Cost Limit Exceeded', `Cannot add ${pokemon.name}. Total cost would be ${validation.total_cost}/${maxCost}.`);
     return;
   }
   
@@ -206,7 +206,7 @@ async function removePokemonFromTeam(slotIdx) {
 // Replace Pokemon in team
 async function replacePokemonInTeam() {
   if (selectedTeamIdx === null || selectedPokeIdx === null) {
-    alert('Please select both a team slot and a Pokemon to replace with!');
+    showNotification('Selection Required', 'Please select both a team slot and a Pokemon to replace with!');
     return;
   }
 
@@ -215,7 +215,7 @@ async function replacePokemonInTeam() {
   // Check for duplicate Pokemon (excluding the slot being replaced)
   const isDuplicate = team.some((slot, idx) => slot && slot.id === pokemonToAdd.id && idx !== selectedTeamIdx);
   if (isDuplicate) {
-    alert(`${pokemonToAdd.name} is already in your team! You cannot have duplicate Pokemon.`);
+    showNotification('Duplicate Pokemon', `${pokemonToAdd.name} is already in your team! You cannot have duplicate Pokemon.`);
     return;
   }
   
@@ -225,7 +225,7 @@ async function replacePokemonInTeam() {
   const validation = await validateTeam(newTeam);
   
   if (!validation.valid) {
-    alert(`Cannot replace with ${pokemonToAdd.name}. Total cost would be ${validation.total_cost}/${maxCost}.`);
+    showNotification('Cost Limit Exceeded', `Cannot replace with ${pokemonToAdd.name}. Total cost would be ${validation.total_cost}/${maxCost}.`);
     return;
   }
   
@@ -424,7 +424,7 @@ async function renderDetails(poke) {
       if (selectedTeamIdx !== null && team[selectedTeamIdx] && selectedPokeIdx !== null) {
         showComparison(team[selectedTeamIdx], pokedex[selectedPokeIdx]);
       } else {
-        alert('Please select both a team Pokemon and a selection Pokemon to compare!');
+        showNotification('Selection Required', 'Please select both a team Pokemon and a selection Pokemon to compare!');
       }
     };
   }
@@ -888,13 +888,39 @@ async function saveTeam() {
     });
     const result = await res.json();
     if (result.success) {
-      alert('Team saved successfully!');
+      showNotification('Success', 'Team saved successfully!');
     } else {
-      alert('Error saving team: ' + (result.message || 'Unknown error'));
+      showNotification('Save Failed', 'Error saving team: ' + (result.message || 'Unknown error'));
     }
   } catch (error) {
     console.error('Error saving team:', error);
-    alert('Error saving team. Please try again.');
+    showNotification('Network Error', 'Error saving team. Please try again.');
+  }
+}
+
+// Notification Modal Functions
+function showNotification(title, message) {
+  const modal = document.getElementById('notification-modal');
+  const titleElement = document.getElementById('notification-title');
+  const messageElement = document.getElementById('notification-message');
+  const okButton = document.getElementById('notification-ok-btn');
+  
+  if (modal && titleElement && messageElement) {
+    titleElement.textContent = title;
+    messageElement.textContent = message;
+    modal.style.display = 'flex';
+    
+    // Set up OK button to close the modal
+    okButton.onclick = function() {
+      hideNotification();
+    };
+  }
+}
+
+function hideNotification() {
+  const modal = document.getElementById('notification-modal');
+  if (modal) {
+    modal.style.display = 'none';
   }
 }
 
@@ -915,5 +941,15 @@ document.addEventListener('DOMContentLoaded', async () => {
   const saveBtn = document.getElementById('save-team-btn');
   if (saveBtn) {
     saveBtn.onclick = saveTeam;
+  }
+  
+  // Setup notification modal click-outside-to-close
+  const notificationModal = document.getElementById('notification-modal');
+  if (notificationModal) {
+    notificationModal.addEventListener('click', (event) => {
+      if (event.target === notificationModal) {
+        hideNotification();
+      }
+    });
   }
 });

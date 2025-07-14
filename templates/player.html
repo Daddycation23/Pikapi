@@ -136,13 +136,16 @@
     </div>
 
     <!-- Error Modal -->
-    <div id="error-modal" class="modal">
-        <div class="modal-content">
-            <span class="close-button" onclick="closeErrorModal()">&times;</span>
-            <div class="error-modal-content">
-                <h2>⚠️ Cannot Start Battle</h2>
+    <div id="error-modal" class="notification-modal" style="display: none;">
+        <div class="notification-modal-content">
+            <div class="notification-modal-header">
+                <h3>⚠️ Cannot Start Battle</h3>
+            </div>
+            <div class="notification-modal-body">
                 <p id="error-message">Please add at least 1 Pokemon to your team before starting a battle.</p>
-                <button class="btn-standard btn-profile" onclick="closeErrorModal()">OK</button>
+            </div>
+            <div class="notification-modal-footer">
+                <button class="notification-modal-btn" onclick="closeErrorModal()">OK</button>
             </div>
         </div>
     </div>

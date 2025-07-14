@@ -196,7 +196,7 @@ function showErrorModal(message) {
   
   if (errorModal && errorMessage) {
     errorMessage.textContent = message;
-    errorModal.style.display = 'block';
+    errorModal.style.display = 'flex';
   }
 }
 

@@ -45,6 +45,12 @@ function setupMobileMenu() {
     });
 }
 
+// Back button functionality
+function goBack() {
+    // Go back to previous page in browser history
+    window.history.back();
+}
+
 // Setup navbar authentication
 async function setupNavAuth() {
     try {
