@@ -593,7 +593,7 @@ def register_routes(app):
                 # --- MongoDB stats update for win ---
                 profiles = get_player_profiles_collection()
                 user_id = user['_id']
-                profile = get_or_create_player_profile(str(user_id))
+                get_or_create_player_profile(str(user_id))
                 # Increment total_wins
                 profiles.update_one({'_id': str(user_id)}, {'$inc': {'statistics.total_wins': 1}})
                 # Get the current team composition as a list of Pokémon IDs
@@ -668,13 +668,13 @@ def register_routes(app):
                 battle_log.append("You lost the battle!")
                 # Reset player to level 1 and generate new enemy team
                 reset_level = reset_player_to_level_one(user['_id'])
-                new_enemy_team = generate_new_enemy_team_for_level(user['_id'], reset_level)
+                generate_new_enemy_team_for_level(user['_id'], reset_level)
                 battle_log.append(f"You have been reset to level {reset_level}!")
                 
                 # --- MongoDB stats update for loss ---
                 profiles = get_player_profiles_collection()
                 user_id = user['_id']
-                profile = get_or_create_player_profile(str(user_id))
+                get_or_create_player_profile(str(user_id))
                 # Get the current team composition as a list of Pokémon IDs
                 player_team = battle_state.get('player_team', [])
                 team_comp = [poke.get('id') or poke.get('pokemon_id') for poke in player_team]
@@ -919,12 +919,12 @@ def register_routes(app):
             
             # Reset player to level 1 and generate new enemy team
             reset_level = reset_player_to_level_one(user['_id'])
-            new_enemy_team = generate_new_enemy_team_for_level(user['_id'], reset_level)
+            generate_new_enemy_team_for_level(user['_id'], reset_level)
             
             # Update MongoDB stats for loss
             profiles = get_player_profiles_collection()
             user_id = user['_id']
-            profile = get_or_create_player_profile(str(user_id))
+            get_or_create_player_profile(str(user_id))
             profiles.update_one({'_id': str(user_id)}, {'$inc': {'statistics.total_losses': 1}})
             
             # Update team and Pokemon usage if we have battle state
@@ -1301,6 +1301,7 @@ def generate_new_enemy_team_for_level(user_id, level):
     """Generate and save a new enemy team for the specified level."""
     enemy_team = generate_enemy_team_with_moves(level)
     update_player_profile(str(user_id), {'current_enemy_team': enemy_team})
+    return enemy_team
 
 def save_battle_record(user_id, result, player_team, enemy_team, battle_log, level=None):
     battle_logs = get_battle_logs_collection()
