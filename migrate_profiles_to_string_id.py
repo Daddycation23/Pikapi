@@ -6,7 +6,6 @@ db = client["pokemon_app"]  # Replace with your DB name
 profiles = db["player_profiles"]
 
 SESSION_FIELDS = [
-    "current_level",
     "current_streak",
     "current_enemy_team",
     "current_enemy_team_id",
@@ -30,5 +29,17 @@ for doc in profiles.find({"_id": {"$type": "string"}}):
     if unset_fields:
         profiles.update_one({"_id": doc["_id"]}, {"$unset": unset_fields})
         print(f"Cleaned session fields from profile {doc['_id']}")
+
+# 3. Remove best stage level and streak fields from all profiles (reset legacy fields)
+for doc in profiles.find({}):
+    unset_fields = {}
+    for field in ["max_level_reached", "current_streak", "best_streak", "preferences"]:
+        if field in doc:
+            unset_fields[field] = ""
+        if "statistics" in doc and "most_used_team_id" in doc["statistics"]:
+            unset_fields["statistics.most_used_team_id"] = ""
+    if unset_fields:
+        profiles.update_one({"_id": doc["_id"]}, {"$unset": unset_fields})
+        print(f"Removed legacy fields from profile {doc['_id']}")
 
 print("Migration and cleanup complete.")

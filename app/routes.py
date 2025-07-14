@@ -162,8 +162,8 @@ def register_routes(app):
             'current_enemy_team': enemy_team,
             'statistics.total_wins': 0,
             'statistics.total_losses': 0,
-            'statistics.most_used_team': None,
-            'statistics.most_used_pokemon_id': None
+            'statistics.team_usage': None,
+            'statistics.pokemon_usage': None
         })
 
         return jsonify({'success': True})
@@ -273,17 +273,16 @@ def register_routes(app):
         if not user:
             return jsonify({'error': 'Not authenticated'}), 401
         
-        # Get level info and enemy team
+        # Get level info
         level_info = get_player_level_info(user['_id'])
+        # Always generate enemy team for the current level
         enemy_team = get_or_generate_enemy_team(user['_id'])
-        
-        # Calculate enemy team cost
+        # Calculate enemy team cost for the current level
         enemy_cost = 0
         if enemy_team:
             for pokemon in enemy_team:
                 if pokemon and pokemon.get('cost'):
                     enemy_cost += pokemon['cost']
-        
         return jsonify({
             'level_info': level_info,
             'enemy_team': enemy_team,
@@ -589,7 +588,7 @@ def register_routes(app):
                 battle_log.append("You won the battle!")
                 # Increment player level on victory and generate new enemy team
                 new_level = increment_player_level(user['_id'])
-                new_enemy_team = generate_new_enemy_team_for_level(user['_id'], new_level)
+                generate_new_enemy_team_for_level(user['_id'], new_level)
                 battle_log.append(f"Level up! You are now level {new_level}!")
                 # --- MongoDB stats update for win ---
                 profiles = get_player_profiles_collection()
@@ -1302,7 +1301,6 @@ def generate_new_enemy_team_for_level(user_id, level):
     """Generate and save a new enemy team for the specified level."""
     enemy_team = generate_enemy_team_with_moves(level)
     update_player_profile(str(user_id), {'current_enemy_team': enemy_team})
-    return enemy_team
 
 def save_battle_record(user_id, result, player_team, enemy_team, battle_log, level=None):
     battle_logs = get_battle_logs_collection()

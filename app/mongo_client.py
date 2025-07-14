@@ -57,13 +57,11 @@ def get_or_create_player_profile(player_id):
             "_id": player_id,
             "current_level": 1,
             "max_level_reached": 1,
-            "current_streak": 0,
-            "best_streak": 0,
             "current_enemy_team": None,  # Will be generated when first accessed
             "statistics": {
                 "total_wins": 0,
                 "total_losses": 0,
-                "most_used_team_id": None,
+                "most_used_team": None,
                 "most_used_pokemon_id": None
             },
             "preferences": {
@@ -83,46 +81,34 @@ def update_player_profile(player_id, updates):
     profiles.update_one({"_id": player_id}, {"$set": updates})
 
 def get_player_level_info(player_id):
-    """Get current level, max level, and streak information."""
+    """Get current level and best stage level (highest reached in battle history or current)."""
     profile = get_or_create_player_profile(str(player_id))
+    current_level = profile.get("current_level", 1)
+    # Find highest level in battle_logs
+    battle_logs = get_battle_logs_collection()
+    max_level_battle = battle_logs.find_one({'user_id': str(player_id), 'level': {'$exists': True}}, sort=[('level', -1)])
+    highest_battle_level = max_level_battle["level"] if max_level_battle and "level" in max_level_battle else 1
+    best_level = max(current_level, highest_battle_level)
     return {
-        "current_level": profile.get("current_level", 1),
-        "max_level_reached": profile.get("max_level_reached", 1),
-        "current_streak": profile.get("current_streak", 0),
-        "best_streak": profile.get("best_streak", 0)
+        "current_level": current_level,
+        "max_level_reached": best_level
     }
 
 def increment_player_level(player_id):
-    """Increment player level and update streaks."""
+    """Increment player level."""
     profiles = get_player_profiles_collection()
     player_id = str(player_id)
     profile = profiles.find_one({"_id": player_id})
-    
     if not profile:
         return 1
-    
     current_level = profile.get("current_level", 1)
-    max_level = profile.get("max_level_reached", 1)
-    current_streak = profile.get("current_streak", 0)
-    best_streak = profile.get("best_streak", 0)
-    
     new_level = current_level + 1
-    new_streak = current_streak + 1
-    new_max_level = max(max_level, new_level)
-    new_best_streak = max(best_streak, new_streak)
-    
     profiles.update_one(
         {"_id": player_id},
-        {
-            "$set": {
-                "current_level": new_level,
-                "max_level_reached": new_max_level,
-                "current_streak": new_streak,
-                "best_streak": new_best_streak
-            }
-        }
+        {"$set": {
+            "current_level": new_level,
+        }}
     )
-    
     return new_level
 
 def reset_player_to_level_one(player_id):
@@ -130,25 +116,16 @@ def reset_player_to_level_one(player_id):
     profiles = get_player_profiles_collection()
     player_id = str(player_id)
     profile = profiles.find_one({"_id": player_id})
-    
     if not profile:
         return 1
-    
     current_level = profile.get("current_level", 1)
     max_level = profile.get("max_level_reached", 1)
-    
-    # Update max level if current level was higher
     new_max_level = max(max_level, current_level)
-    
     profiles.update_one(
         {"_id": player_id},
-        {
-            "$set": {
-                "current_level": 1,
-                "max_level_reached": new_max_level,
-                "current_streak": 0
-            }
-        }
+        {"$set": {
+            "current_level": 1,
+            "max_level_reached": new_max_level
+        }}
     )
-    
     return 1 
