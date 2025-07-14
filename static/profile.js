@@ -72,8 +72,15 @@ document.addEventListener('DOMContentLoaded', async () => {
             else if (hpPercent < 50) hpClass = 'medium';
             const pokemonId = pokemon.id || pokemon.pokemon_id;
             const imageUrl = `/static/images/${pokemonId}.png`;
+            // Add data-moves if moves are present
+            let movesAttr = '';
+            if (pokemon.assigned_moves && pokemon.assigned_moves.length > 0) {
+                movesAttr = ` data-moves='${JSON.stringify(pokemon.assigned_moves)}'`;
+            } else if (pokemon.moves && pokemon.moves.length > 0) {
+                movesAttr = ` data-moves='${JSON.stringify(pokemon.moves)}'`;
+            }
             return `
-                <div class="pokemon-card ${isFainted ? 'fainted' : ''}">
+                <div class="pokemon-card ${isFainted ? 'fainted' : ''}"${movesAttr}>
                     <div class="pokemon-image">
                         <img src="${imageUrl}" alt="${pokemon.name}" onerror="this.src='/static/images/1.png'" />
                     </div>
@@ -117,7 +124,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                             <div class="battle-result ${resultClass}">${resultText}</div>
                             <div class="battle-meta">
                                 <div class="battle-date">📅 ${dateStr} at ${timeStr}</div>
-                                <div class="battle-level">⭐ Level ${level}</div>
+                                <div class="battle-level" data-tooltip="The level of your most recent battle.">⭐ Level ${level}</div>
                             </div>
                         </div>
                     </div>
@@ -175,7 +182,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                             <div class="battle-result ${resultClass}">${resultText}</div>
                             <div class="battle-meta">
                                 <div class="battle-date">📅 ${dateStr} at ${timeStr}</div>
-                                <div class="battle-level">⭐ Level ${level}</div>
+                                <div class="battle-level" data-tooltip="The highest level you have reached in any battle.">⭐ Level ${level}</div>
                             </div>
                         </div>
                     </div>
@@ -232,6 +239,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     wrapper.appendChild(statsSection);
     wrapper.appendChild(lastBattleSection);
     wrapper.appendChild(highestLevelBattleSection);
+
+    // Ensure move tooltips are initialized after DOM is updated
+    setupPokemonMoveTooltips();
 });
 
 // Add toggle logic for profile battle log
@@ -259,4 +269,117 @@ window.toggleProfileHighestLevelBattleLog = function() {
         logElement.classList.add('expanded');
         toggleElement.classList.add('expanded');
     }
+}
+
+// Tooltip logic for data-tooltip elements
+function setupLevelTooltips() {
+    document.body.addEventListener('mouseenter', function(e) {
+        const target = e.target.closest('[data-tooltip]');
+        if (target) {
+            showSimpleTooltip(target, target.getAttribute('data-tooltip'));
+        }
+    }, true);
+    document.body.addEventListener('mouseleave', function(e) {
+        const target = e.target.closest('[data-tooltip]');
+        if (target) {
+            hideSimpleTooltip();
+        }
+    }, true);
+}
+function showSimpleTooltip(element, text) {
+    hideSimpleTooltip();
+    const tooltip = document.createElement('div');
+    tooltip.className = 'simple-tooltip';
+    tooltip.textContent = text;
+    document.body.appendChild(tooltip);
+    const rect = element.getBoundingClientRect();
+    tooltip.style.left = rect.left + window.scrollX + 'px';
+    tooltip.style.top = (rect.top + window.scrollY - tooltip.offsetHeight - 8) + 'px';
+    setTimeout(() => tooltip.classList.add('visible'), 10);
+}
+function hideSimpleTooltip() {
+    const existing = document.querySelector('.simple-tooltip');
+    if (existing) existing.remove();
+}
+
+/* Add minimal CSS for tooltip */
+const style = document.createElement('style');
+style.textContent = `
+.simple-tooltip {
+  position: absolute;
+  background: #222;
+  color: #fff;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 0.95em;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s;
+  z-index: 9999;
+  white-space: pre-line;
+}
+.simple-tooltip.visible {
+  opacity: 1;
+}
+`;
+document.head.appendChild(style);
+
+function setupPokemonMoveTooltips() {
+    document.body.addEventListener('click', async function(e) {
+        const card = e.target.closest('.pokemon-card[data-moves]');
+        if (card && !card.classList.contains('empty')) {
+            // If tooltip is already open for this card, close it
+            if (card.classList.contains('tooltip-open')) {
+                hideMoveTooltip();
+                card.classList.remove('tooltip-open');
+                return;
+            }
+            // Close any other open tooltip
+            hideMoveTooltip();
+            document.querySelectorAll('.pokemon-card.tooltip-open').forEach(c => c.classList.remove('tooltip-open'));
+            card.classList.add('tooltip-open');
+            const movesData = JSON.parse(card.getAttribute('data-moves'));
+            if (!Array.isArray(movesData) || movesData.length === 0) return;
+            try {
+                const movePromises = movesData.map(moveId =>
+                    fetch(`/api/move/${moveId}`)
+                        .then(response => response.json())
+                        .then(moveData => ({
+                            name: moveData.move_name || 'Unknown Move',
+                            type: moveData.type_id || 1,
+                            power: moveData.power || 0,
+                            accuracy: moveData.accuracy || 0,
+                            category: moveData.category || 'physical'
+                        }))
+                        .catch(() => ({ name: 'Unknown Move', type: 1, power: 0, accuracy: 0, category: 'physical' }))
+                );
+                const moves = await Promise.all(movePromises);
+                const tooltipContent = moves.map(move =>
+                    `<div class=\"move-tooltip-item\">\n                        <span class=\"move-name\">${move.name}</span>\n                        <span class=\"move-details\">${move.power} power, ${move.accuracy}% acc</span>\n                    </div>`
+                ).join('');
+                showMoveTooltip(card, tooltipContent);
+            } catch (error) {
+                // fail silently
+            }
+        } else {
+            // Clicked outside any card: close tooltip
+            hideMoveTooltip();
+            document.querySelectorAll('.pokemon-card.tooltip-open').forEach(c => c.classList.remove('tooltip-open'));
+        }
+    });
+}
+function showMoveTooltip(element, content) {
+    hideMoveTooltip();
+    const tooltip = document.createElement('div');
+    tooltip.className = 'enemy-move-tooltip';
+    tooltip.innerHTML = `<div class=\"tooltip-header\">Moves:</div>${content}`;
+    document.body.appendChild(tooltip);
+    const rect = element.getBoundingClientRect();
+    tooltip.style.left = rect.right + 10 + 'px';
+    tooltip.style.top = rect.top + 'px';
+    setTimeout(() => tooltip.classList.add('visible'), 10);
+}
+function hideMoveTooltip() {
+    const existingTooltip = document.querySelector('.enemy-move-tooltip');
+    if (existingTooltip) existingTooltip.remove();
 }
