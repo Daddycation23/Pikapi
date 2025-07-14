@@ -407,7 +407,6 @@ async function renderDetails(poke) {
     </div>
     <div class="comparison-overlay" id="comparison-overlay">
       <div class="comparison-content">
-        <button class="comparison-close" onclick="hideComparison()">&times;</button>
         <div class="comparison-pokemon" id="comparison-pokemon">
           <!-- Comparison content will be inserted here -->
         </div>
@@ -497,13 +496,15 @@ async function applySimpleFilters() {
 }
 
 // Show comparison overlay
-function showComparison(pokemon1, pokemon2) {
+async function showComparison(pokemon1, pokemon2) {
   const overlay = document.getElementById('comparison-overlay');
   const comparisonContainer = document.getElementById('comparison-pokemon');
   
   const stats = ['hp', 'attack', 'defense', 'sp_atk', 'sp_def', 'speed'];
   const statLabels = ['HP', 'Attack', 'Defense', 'Sp. Attack', 'Sp. Defense', 'Speed'];
   
+  // Only show current team Pokemon (pokemon1) in overlay
+  // The details-right continues to show pokemon2 naturally
   const typeDisplay = (pokemon1.type||[]).map(t => 
     `<span class="type-badge type-${t.toLowerCase()}">${t}</span>`
   ).join(' ');
@@ -512,12 +513,10 @@ function showComparison(pokemon1, pokemon2) {
   stats.forEach((stat, idx) => {
     const value1 = pokemon1[stat];
     const value2 = pokemon2[stat];
-    const isWinner = value1 > value2;
-    const isLoser = value1 < value2;
     
     let statClass = '';
-    if (isWinner) statClass = 'winner';
-    else if (isLoser) statClass = 'loser';
+    if (value1 > value2) statClass = 'winner';
+    else if (value1 < value2) statClass = 'loser';
     
     statsHTML += `
       <div class="stat-row ${statClass}">
@@ -530,51 +529,68 @@ function showComparison(pokemon1, pokemon2) {
     `;
   });
   
+  // Generate moves HTML for current team Pokemon
+  let movesHTML = '';
+  if (pokemon1.moves && pokemon1.moves.length > 0) {
+    // Fetch moves with proper types
+    let movesWithTypes = [];
+    if (pokemon1.id) {
+      try {
+        const movesResponse = await fetch(`/api/pokemon/${pokemon1.id}/moves-with-types`);
+        const movesData = await movesResponse.json();
+        if (movesData.moves) {
+          movesWithTypes = movesData.moves;
+        } else {
+          movesWithTypes = pokemon1.moves.map(move => ({ name: move, type: 'Normal' }));
+        }
+      } catch (error) {
+        console.error('Error fetching moves with types for comparison:', error);
+        movesWithTypes = pokemon1.moves.map(move => ({ name: move, type: 'Normal' }));
+      }
+    } else {
+      movesWithTypes = pokemon1.moves.map(move => ({ name: move, type: 'Normal' }));
+    }
+    
+    movesHTML = `
+      <h4>Moves</h4>
+      <div class="moves-container">
+        ${movesWithTypes.map(move => 
+          `<span class="move-badge type-${move.type.toLowerCase()}">${move.name.replace('-', ' ')}</span>`
+        ).join('')}
+      </div>
+    `;
+  } else {
+    movesHTML = `<h4>Moves</h4><p style="color: var(--text-secondary); font-size: 14px;">No moves available</p>`;
+  }
+
   const comparisonHTML = `
-    <div class="comparison-pokemon-details">
-      <div class="details-info">
-        <div class="details-name">${pokemon1.name}</div>
-        <div class="details-type">${typeDisplay}</div>
-        <div class="details-cost">Cost: ${pokemon1.cost}</div>
-      </div>
-      <div class="details-stats">
-        ${statsHTML}
-      </div>
-      <div class="action-buttons">
-        <button class="replace-btn" id="comparison-replace-btn">Replace</button>
-      </div>
+    <div class="details-info">
+      <div class="details-name">${pokemon1.name}</div>
+      <div class="details-type">${typeDisplay}</div>
+      <div class="details-cost">Cost: ${pokemon1.cost}</div>
+    </div>
+    <div class="details-stats">
+      ${statsHTML}
+    </div>
+    <div class="details-physical">
+      <strong>Height:</strong> ${(pokemon1.height_cm !== null && pokemon1.height_cm !== undefined) ? pokemon1.height_cm + ' cm' : 'Unknown'} | 
+      <strong>Weight:</strong> ${(pokemon1.weight_kg !== null && pokemon1.weight_kg !== undefined) ? pokemon1.weight_kg + ' kg' : 'Unknown'}
+    </div>
+    <div class="details-generation"><strong>Generation:</strong> ${pokemon1.gen || 'Unknown'}</div>
+    <div class="details-moves">
+      ${movesHTML}
     </div>
   `;
   
   comparisonContainer.innerHTML = comparisonHTML;
   
-  // Add event listener for comparison replace button
-  const comparisonReplaceBtn = document.getElementById('comparison-replace-btn');
-  
-  comparisonReplaceBtn.onclick = () => {
-    replacePokemonInTeam();
-    hideComparison(); // Close comparison after replacement
-  };
-  
-  // Hide main action buttons when comparison is active
-  const mainActionButtons = document.querySelector('.action-buttons');
-  if (mainActionButtons) {
-    mainActionButtons.style.display = 'none';
-  }
-  
-  overlay.style.display = 'block';
+  overlay.style.display = 'flex';
 }
 
 // Hide comparison overlay
 function hideComparison() {
   const overlay = document.getElementById('comparison-overlay');
   overlay.style.display = 'none';
-  
-  // Show main action buttons when comparison is closed
-  const mainActionButtons = document.querySelector('.action-buttons');
-  if (mainActionButtons) {
-    mainActionButtons.style.display = 'flex';
-  }
 }
 
 // Add cost tracker to team section
@@ -617,7 +633,7 @@ function setupAdvancedFilters() {
 
   // Open modal
   openBtn.onclick = () => {
-    modal.style.display = 'block';
+    modal.style.display = 'flex';
     document.body.style.overflow = 'hidden';
   };
 

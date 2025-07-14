@@ -16,7 +16,7 @@ body {
 
 .pokemon-detail-container {
     display: flex;
-    max-height: 500px;
+    max-height: 80vh;
     min-height: 400px;
 }
 
@@ -35,7 +35,26 @@ body {
     display: flex;
     flex-direction: column;
     background: white;
-    overflow: hidden;
+    overflow-y: auto;
+}
+
+/* Add visible scrollbar styling for detail-right */
+.detail-right::-webkit-scrollbar {
+    width: 8px;
+}
+
+.detail-right::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+.detail-right::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 4px;
+}
+
+.detail-right::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
 }
 
 .detail-image {
@@ -92,34 +111,21 @@ body {
     margin-bottom: 8px;
 }
 
-.detail-moves {
-    margin-top: 15px;
-    flex-shrink: 0;
-    min-height: 0;
-}
-
-.detail-moves h4 {
-    color: var(--text-primary);
-    font-size: 16px;
-    margin-bottom: 10px;
-    margin-top: 0;
-}
+/* Remove duplicate styling - using common.css instead */
 
 .moves-container {
     display: flex;
     flex-wrap: wrap;
     gap: 6px;
-    max-height: 80px;
+    max-height: 120px;
     overflow-y: auto;
-    padding-right: 8px;
+    padding: 8px;
     border: 1px solid #e9ecef;
     border-radius: var(--border-radius-md);
-    padding: 8px;
     background: #f8f9fa;
 }
 
 .move-badge {
-    background: linear-gradient(135deg, #6c757d, #5a6268);
     color: white;
     padding: 4px 8px;
     border-radius: var(--border-radius-sm);
@@ -239,6 +245,34 @@ body.index-pokemon-bg::before {
     height: 100%;
     background: rgba(255, 255, 255, 0.5);
     z-index: -1;
+}
+
+/* --- Override default modal skin for Pokémon details (index page only) --- */
+.notification-modal-content.pokemon-detail-modal {
+    /* Replace dark gradient card with plain white so inner columns align visually */
+    background: #ffffff;
+    border: 1px solid var(--border-light);
+    box-shadow: var(--shadow-medium);
+    max-height: 90vh;            /* stay within viewport */
+    overflow-y: auto;            /* allow scrolling if content taller than viewport */
+}
+
+/* Remove inner rigid max-height so it can grow naturally */
+.notification-modal-content.pokemon-detail-modal .pokemon-detail-container {
+    max-height: none;
+}
+
+/* Remove the inner body gradient/padding that created the dark gutters */
+.notification-modal-content.pokemon-detail-modal .notification-modal-body {
+    background: transparent;
+    padding: 0; /* actual spacing is handled by .detail-left / .detail-right */
+    text-align: left; /* ensure normal text alignment */
+    color: var(--text-primary);
+}
+
+/* Ensure moves header is readable on the white card */
+.notification-modal-content.pokemon-detail-modal .detail-moves h4 {
+    color: var(--text-primary);
 }
 
 
