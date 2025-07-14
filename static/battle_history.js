@@ -5,8 +5,19 @@ let filteredBattles = [];
 
 // Update navigation visibility based on authentication status
 function updateNavigationVisibility(isAuthenticated) {
+    // Handle auth-required items (show when authenticated)
     const authRequiredItems = document.querySelectorAll('.auth-required');
     authRequiredItems.forEach(item => {
+        if (isAuthenticated) {
+            item.classList.add('authenticated');
+        } else {
+            item.classList.remove('authenticated');
+        }
+    });
+    
+    // Handle guest-only items (hide when authenticated)
+    const guestOnlyItems = document.querySelectorAll('.guest-only');
+    guestOnlyItems.forEach(item => {
         if (isAuthenticated) {
             item.classList.add('authenticated');
         } else {

@@ -12,9 +12,20 @@ body.edit-team-pokemon-bg::before {
     z-index: -1;
 }
 
+/* Fix navbar positioning for edit-team page to prevent scroll issues */
+body.edit-team-pokemon-bg .navbar {
+    position: fixed !important;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+}
+
 .edit-team-container {
     display: flex;
-    height: 100vh;
+    height: var(--viewport-minus-navbar); /* Full viewport minus navbar height */
+    margin-top: var(--navbar-height); /* Push content below fixed navbar */
+    overflow: hidden; /* Prevent main container scroll */
 }
 
 /* Left: Current Team */
@@ -56,6 +67,7 @@ body.edit-team-pokemon-bg::before {
     padding: 30px 20px;
     display: flex;
     flex-direction: column;
+    overflow: hidden; /* Prevent column-level scroll */
 }
 /* Cost filter uses common.css */
 .cost-btn + .cost-btn {
@@ -78,6 +90,8 @@ body.edit-team-pokemon-bg::before {
     grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
     gap: 16px;
     overflow-y: auto;
+    flex: 1; /* Take remaining space */
+    min-height: 0; /* Allow flex child to shrink */
 }
 .pokemon-card-img {
     width: 70px;
@@ -115,7 +129,7 @@ body.edit-team-pokemon-bg::before {
     display: flex;
     flex-direction: column;
     overflow-y: auto;
-    max-height: calc(100vh - 40px);
+    max-height: calc(var(--viewport-minus-navbar) - 40px); /* Account for padding */
 }
 
 .details-img {

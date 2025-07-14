@@ -20,6 +20,10 @@
     --shadow-medium: 0 2px 10px rgba(0, 0, 0, 0.1);
     --shadow-heavy: 0 4px 12px rgba(0,0,0,0.15);
     
+    /* Layout measurements */
+    --navbar-height: 64px;
+    --viewport-minus-navbar: calc(100vh - var(--navbar-height));
+    
     /* Common measurements */
     --border-radius-sm: 6px;
     --border-radius-md: 8px;
@@ -269,6 +273,15 @@ body {
 
 .auth-required.authenticated {
     display: inline-flex !important;
+}
+
+/* Guest-only navigation visibility (opposite of auth-required) */
+.guest-only {
+    display: inline-flex !important;
+}
+
+.guest-only.authenticated {
+    display: none !important;
 }
 
 /* Common button base styles */
