@@ -117,17 +117,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         </div>
     `;
 
-    // Preferences card
-    const prefsSection = document.createElement('div');
-    prefsSection.className = 'profile-section';
-    prefsSection.innerHTML = `
-        <h2>Preferences</h2>
-        <ul>
-            <li><span class="profile-label">Sound</span> <span class="profile-value">${p.preferences.sound ? 'On' : 'Off'}</span></li>
-            <li><span class="profile-label">Theme</span> <span class="profile-value">${p.preferences.theme}</span></li>
-        </ul>
-    `;
-
     // Last Battle card
     const lastBattleSection = document.createElement('div');
     lastBattleSection.className = 'profile-section';
@@ -140,6 +129,5 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Append all sections
     wrapper.appendChild(statsSection);
-    wrapper.appendChild(prefsSection);
     wrapper.appendChild(lastBattleSection);
 });
