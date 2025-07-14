@@ -225,7 +225,6 @@ async function loadCurrentChallenge() {
     if (data.level_info && data.enemy_team) {
       // Update level information
       document.getElementById('current-level').textContent = data.level_info.current_level;
-      document.getElementById('current-streak').textContent = data.level_info.current_streak;
       document.getElementById('max-level').textContent = data.level_info.max_level_reached;
       
       // Update enemy cost

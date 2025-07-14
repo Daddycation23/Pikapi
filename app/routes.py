@@ -162,8 +162,8 @@ def register_routes(app):
             'current_enemy_team': enemy_team,
             'statistics.total_wins': 0,
             'statistics.total_losses': 0,
-            'statistics.most_used_team': None,
-            'statistics.most_used_pokemon_id': None
+            'statistics.team_usage': None,
+            'statistics.pokemon_usage': None
         })
 
         return jsonify({'success': True})
@@ -273,17 +273,16 @@ def register_routes(app):
         if not user:
             return jsonify({'error': 'Not authenticated'}), 401
         
-        # Get level info and enemy team
+        # Get level info
         level_info = get_player_level_info(user['_id'])
+        # Always generate enemy team for the current level
         enemy_team = get_or_generate_enemy_team(user['_id'])
-        
-        # Calculate enemy team cost
+        # Calculate enemy team cost for the current level
         enemy_cost = 0
         if enemy_team:
             for pokemon in enemy_team:
                 if pokemon and pokemon.get('cost'):
                     enemy_cost += pokemon['cost']
-        
         return jsonify({
             'level_info': level_info,
             'enemy_team': enemy_team,
@@ -589,12 +588,12 @@ def register_routes(app):
                 battle_log.append("You won the battle!")
                 # Increment player level on victory and generate new enemy team
                 new_level = increment_player_level(user['_id'])
-                new_enemy_team = generate_new_enemy_team_for_level(user['_id'], new_level)
+                generate_new_enemy_team_for_level(user['_id'], new_level)
                 battle_log.append(f"Level up! You are now level {new_level}!")
                 # --- MongoDB stats update for win ---
                 profiles = get_player_profiles_collection()
                 user_id = user['_id']
-                profile = get_or_create_player_profile(str(user_id))
+                get_or_create_player_profile(str(user_id))
                 # Increment total_wins
                 profiles.update_one({'_id': str(user_id)}, {'$inc': {'statistics.total_wins': 1}})
                 # Get the current team composition as a list of Pokémon IDs
@@ -669,13 +668,13 @@ def register_routes(app):
                 battle_log.append("You lost the battle!")
                 # Reset player to level 1 and generate new enemy team
                 reset_level = reset_player_to_level_one(user['_id'])
-                new_enemy_team = generate_new_enemy_team_for_level(user['_id'], reset_level)
+                generate_new_enemy_team_for_level(user['_id'], reset_level)
                 battle_log.append(f"You have been reset to level {reset_level}!")
                 
                 # --- MongoDB stats update for loss ---
                 profiles = get_player_profiles_collection()
                 user_id = user['_id']
-                profile = get_or_create_player_profile(str(user_id))
+                get_or_create_player_profile(str(user_id))
                 # Get the current team composition as a list of Pokémon IDs
                 player_team = battle_state.get('player_team', [])
                 team_comp = [poke.get('id') or poke.get('pokemon_id') for poke in player_team]
@@ -920,12 +919,12 @@ def register_routes(app):
             
             # Reset player to level 1 and generate new enemy team
             reset_level = reset_player_to_level_one(user['_id'])
-            new_enemy_team = generate_new_enemy_team_for_level(user['_id'], reset_level)
+            generate_new_enemy_team_for_level(user['_id'], reset_level)
             
             # Update MongoDB stats for loss
             profiles = get_player_profiles_collection()
             user_id = user['_id']
-            profile = get_or_create_player_profile(str(user_id))
+            get_or_create_player_profile(str(user_id))
             profiles.update_one({'_id': str(user_id)}, {'$inc': {'statistics.total_losses': 1}})
             
             # Update team and Pokemon usage if we have battle state
