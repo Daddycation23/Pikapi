@@ -595,6 +595,8 @@ def register_routes(app):
                 profiles = get_player_profiles_collection()
                 user_id = user['_id']
                 profile = get_or_create_player_profile(str(user_id))
+                # Increment total_wins
+                profiles.update_one({'_id': str(user_id)}, {'$inc': {'statistics.total_wins': 1}})
                 # Get the current team composition as a list of Pokémon IDs
                 player_team = battle_state.get('player_team', [])
                 team_comp = [poke.get('id') or poke.get('pokemon_id') for poke in player_team]
@@ -1131,6 +1133,11 @@ def register_routes(app):
             return jsonify({'error': 'Not authenticated'}), 401
         profiles = get_player_profiles_collection()
         profile = profiles.find_one({'_id': user['_id']})
+        # --- NEW: Calculate from logs ---
+        battle_logs = get_battle_logs_collection()
+        win_count = battle_logs.count_documents({'user_id': str(user['_id']), 'result': 'win'})
+        loss_count = battle_logs.count_documents({'user_id': str(user['_id']), 'result': 'loss'})
+        # --- END NEW ---
         stats = profile.get('statistics', {}) if profile else {}
         raw_team = stats.get('most_used_team')
         if isinstance(raw_team, list):
@@ -1165,8 +1172,8 @@ def register_routes(app):
             except (ValueError, TypeError):
                 pokemon_details = None
         return jsonify({
-            'total_wins': stats.get('total_wins', 0),
-            'total_losses': stats.get('total_losses', 0),
+            'total_wins': win_count,      # Use calculated value
+            'total_losses': loss_count,   # Use calculated value
             'most_used_team': team_details,
             'most_used_pokemon': pokemon_details
         })
