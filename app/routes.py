@@ -442,7 +442,7 @@ def register_routes(app):
             'turn': 1,
             'player_level': player_level,
             'level_info': level_info,
-            'battle_log': [f"A wild {enemy_team[0]['name']} appeared!"],
+            'battle_log': [f"Enemy sent out {enemy_team[0]['name']}!"],
             'team_id': team_id  # <-- Always include team_id
 
         }
