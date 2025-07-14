@@ -1,11 +1,12 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Player Profile</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='common.css')}}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='battle_history.css')}}"> 
-    <style>
+{% extends "base.html" %}
+
+{% block title %}Player Profile{% endblock %}
+
+{% block nav_profile_active %}active{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='battle_history.css')}}">
+<style>
         body {
             background: linear-gradient(120deg, #e0eafc 0%, #cfdef3 100%);
             min-height: 100vh;
@@ -154,55 +155,11 @@
                 padding: 18px 2vw;
             }
         }
-    </style>
-</head>
-<body>
-    <!-- Navigation Bar -->
-    <nav class="navbar">
-        <div class="nav-container">
-            <!-- App Logo/Brand -->
-            <div class="nav-brand">
-                <a href="/" class="brand-link">
-                    <span class="brand-icon">⚡</span>
-                    <span class="brand-text">Pikapi</span>
-                </a>
-            </div>
-            
-            <!-- Main Navigation Links -->
-            <div class="nav-links" id="nav-links">
-                <a href="/player" class="nav-link">
-                    <span class="nav-icon">🏗️</span>
-                    <span>Team Builder</span>
-                </a>
-                <a href="/profile" class="nav-link active">
-                    <span class="nav-icon">👤</span>
-                    <span>Profile</span>
-                </a>
-                <a href="/battle-history" class="nav-link">
-                    <span class="nav-icon">⚔️</span>
-                    <span>Battle History</span>
-                </a>
-                <a href="/type_effectiveness" class="nav-link">
-                    <span class="nav-icon">🔥</span>
-                    <span>Type Chart</span>
-                </a>
-            </div>
-            
-            <!-- User Authentication Section -->
-            <div class="nav-auth" id="nav-auth">
-                <!-- Will be populated by JavaScript -->
-            </div>
-            
-            <!-- Mobile Menu Toggle -->
-            <button class="mobile-menu-toggle" id="mobile-menu-toggle">
-                <span></span>
-                <span></span>
-                <span></span>
-            </button>
-        </div>
-    </nav>
+</style>
+{% endblock %}
 
-    <div class="container">
+{% block content %}
+<div class="container">
         <div class="profile-card" style="position: relative; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 16px; padding: 0; overflow: hidden; box-shadow: 0 8px 32px rgba(0,0,0,0.1);">
             <button class="profile-back-btn" style="position: absolute; left: 24px; top: 24px; z-index: 2; background: rgba(255,255,255,0.9); color: #333;" onclick="window.location.href='/player'">← Back to Team Builder</button>
 
@@ -231,6 +188,8 @@
             </div>
         </div>
     </div>
-    <script src="{{ url_for('static', filename='profile.js') }}"></script>
-</body>
-</html>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='profile.js') }}"></script>
+{% endblock %}

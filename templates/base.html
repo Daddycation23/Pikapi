@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Pikapi - Pokemon Team Builder{% endblock %}</title>
+    
+    <!-- Common CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='common.css')}}">
+    
+    <!-- Page-specific CSS -->
+    {% block extra_css %}{% endblock %}
+</head>
+<body {% block body_class %}{% endblock %}>
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <!-- App Logo/Brand -->
+            <div class="nav-brand">
+                <a href="/" class="brand-link">
+                    <span class="brand-icon">⚡</span>
+                    <span class="brand-text">Pikapi</span>
+                </a>
+            </div>
+            
+            <!-- Main Navigation Links -->
+            <div class="nav-links" id="nav-links">
+                <a href="/" class="nav-link {% block nav_home_active %}{% endblock %}">
+                    <span class="nav-icon">📚</span>
+                    <span>Pokédex</span>
+                </a>
+                <a href="/player" class="nav-link auth-required {% block nav_player_active %}{% endblock %}" data-auth="true">
+                    <span class="nav-icon">🏗️</span>
+                    <span>Team Builder</span>
+                </a>
+                <a href="/profile" class="nav-link auth-required {% block nav_profile_active %}{% endblock %}" data-auth="true">
+                    <span class="nav-icon">👤</span>
+                    <span>Profile</span>
+                </a>
+                <a href="/battle-history" class="nav-link auth-required {% block nav_battle_history_active %}{% endblock %}" data-auth="true">
+                    <span class="nav-icon">⚔️</span>
+                    <span>Battle History</span>
+                </a>
+                <a href="/type_effectiveness" class="nav-link {% block nav_type_effectiveness_active %}{% endblock %}">
+                    <span class="nav-icon">🔥</span>
+                    <span>Type Chart</span>
+                </a>
+            </div>
+            
+            <!-- User Authentication Section -->
+            <div class="nav-auth" id="nav-auth">
+                <!-- Will be populated by JavaScript -->
+            </div>
+            
+            <!-- Mobile Menu Toggle -->
+            <button class="mobile-menu-toggle" id="mobile-menu-toggle">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Page Content -->
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Common Modals -->
+    {% block modals %}{% endblock %}
+
+    <!-- Common JavaScript -->
+    <script src="{{ url_for('static', filename='common_nav.js')}}"></script>
+    
+    <!-- Page-specific JavaScript -->
+    {% block extra_js %}{% endblock %}
+</body>
+</html> 

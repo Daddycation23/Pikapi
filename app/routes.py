@@ -1173,6 +1173,10 @@ def register_routes(app):
 
     @app.route('/battle-history')
     def battle_history_page():
+        user_id = session.get('user_id')
+        username = session.get('username')
+        if not user_id or not username:
+            return redirect(url_for('home'))
         return render_template('battle_history.html')
     
     @app.route('/api/battle/history')

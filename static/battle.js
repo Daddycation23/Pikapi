@@ -2,6 +2,18 @@
 let battleState = null;
 let eventListenersSetup = false;
 
+// Update navigation visibility based on authentication status
+function updateNavigationVisibility(isAuthenticated) {
+    const authRequiredItems = document.querySelectorAll('.auth-required');
+    authRequiredItems.forEach(item => {
+        if (isAuthenticated) {
+            item.classList.add('authenticated');
+        } else {
+            item.classList.remove('authenticated');
+        }
+    });
+}
+
 // Setup mobile menu functionality
 function setupMobileMenu() {
     const mobileToggle = document.getElementById('mobile-menu-toggle');
@@ -34,11 +46,15 @@ async function setupNavAuth() {
         
         const authSection = document.getElementById('nav-auth');
         if (data.username) {
+            // Update navigation visibility for authenticated user
+            updateNavigationVisibility(true);
             authSection.innerHTML = `
                 <span class="welcome-text">Welcome, ${data.username}</span>
                 <button class="btn-standard btn-logout" onclick="logout()">Logout</button>
             `;
         } else {
+            // Update navigation visibility for non-authenticated user
+            updateNavigationVisibility(false);
             window.location.href = '/';
         }
     } catch (error) {

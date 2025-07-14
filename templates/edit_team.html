@@ -1,60 +1,18 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Edit Team - Pokemon Team Builder</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='common.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='edit_team.css') }}"> 
-    <link rel="stylesheet" href="{{ url_for('static', filename='battle_history.css') }}"> 
-</head>
-  <body class="edit-team-pokemon-bg">
-    <!-- Navigation Bar -->
-    <nav class="navbar">
-        <div class="nav-container">
-            <!-- App Logo/Brand -->
-            <div class="nav-brand">
-                <a href="/" class="brand-link">
-                    <span class="brand-icon">⚡</span>
-                    <span class="brand-text">Pikapi</span>
-                </a>
-            </div>
-            
-            <!-- Main Navigation Links -->
-            <div class="nav-links" id="nav-links">
-                <a href="/player" class="nav-link active">
-                    <span class="nav-icon">🏗️</span>
-                    <span>Team Builder</span>
-                </a>
-                <a href="/profile" class="nav-link">
-                    <span class="nav-icon">👤</span>
-                    <span>Profile</span>
-                </a>
-                <a href="/battle-history" class="nav-link">
-                    <span class="nav-icon">⚔️</span>
-                    <span>Battle History</span>
-                </a>
-                <a href="/type_effectiveness" class="nav-link">
-                    <span class="nav-icon">🔥</span>
-                    <span>Type Chart</span>
-                </a>
-            </div>
-            
-            <!-- User Authentication Section -->
-            <div class="nav-auth" id="nav-auth">
-                <!-- Will be populated by JavaScript -->
-            </div>
-            
-            <!-- Mobile Menu Toggle -->
-            <button class="mobile-menu-toggle" id="mobile-menu-toggle">
-                <span></span>
-                <span></span>
-                <span></span>
-            </button>
-        </div>
-    </nav>
+{% extends "base.html" %}
 
-    <div class="edit-team-container">
+{% block title %}Edit Team - Pokemon Team Builder{% endblock %}
+
+{% block nav_player_active %}active{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='edit_team.css')}}">
+<link rel="stylesheet" href="{{ url_for('static', filename='battle_history.css')}}">
+{% endblock %}
+
+{% block body_class %}class="edit-team-pokemon-bg"{% endblock %}
+
+{% block content %}
+<div class="edit-team-container">
         <!-- Left: Current Team -->
         <div class="team-column">
             <div class="team-pokemon-slot" id="team-slot-1">
@@ -248,11 +206,12 @@
             </div>
         </div>
     </div>
+{% endblock %}
 
-    <!-- Pass team data to JavaScript -->
-    <script>
-        window.team = {{ team|tojson }};
-    </script>
-    <script src="{{ url_for('static', filename='edit_team.js') }}"></script>
-</body>
-</html>
+{% block extra_js %}
+<!-- Pass team data to JavaScript -->
+<script>
+    window.team = {{ team|tojson }};
+</script>
+<script src="{{ url_for('static', filename='edit_team.js') }}"></script>
+{% endblock %}

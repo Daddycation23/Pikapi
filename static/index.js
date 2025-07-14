@@ -1,32 +1,7 @@
-// Modal logic
+// Index page specific logic
 const loginModal = document.getElementById('login-modal');
 const registerModal = document.getElementById('register-modal');
-const authSection = document.getElementById('nav-auth');
 let currentUser = null;
-
-// Setup mobile menu functionality
-function setupMobileMenu() {
-    const mobileToggle = document.getElementById('mobile-menu-toggle');
-    const navLinks = document.getElementById('nav-links');
-    const navAuth = document.getElementById('nav-auth');
-    
-    if (mobileToggle) {
-        mobileToggle.addEventListener('click', () => {
-            mobileToggle.classList.toggle('active');
-            navLinks.classList.toggle('active');
-            navAuth.classList.toggle('active');
-        });
-    }
-    
-    // Close mobile menu when clicking outside
-    document.addEventListener('click', (e) => {
-        if (!e.target.closest('.navbar')) {
-            mobileToggle?.classList.remove('active');
-            navLinks?.classList.remove('active');
-            navAuth?.classList.remove('active');
-        }
-    });
-}
 
 function showLogin() { loginModal.style.display = 'block'; }
 function showRegister() { registerModal.style.display = 'block'; }
@@ -100,41 +75,34 @@ document.getElementById('register-form').onsubmit = async function(e) {
 };
 
 // Update UI for logged-in user
-function updateAuthUI(username) {
-  if (username) {
-    // Logged-in users shouldn't be on this page - redirect to player page
-    window.location.href = '/player';
-  } else {
-    // Show login/register UI for non-logged-in users
-    authSection.innerHTML = `
-        <button class="btn-standard btn-profile" onclick="showLogin()">Login</button>
-        <button class="btn-standard btn-profile" onclick="showRegister()">Register</button>
-    `;
-  }
-}
-
-// Logout function
-async function logout() {
+// Index page authentication handling
+async function checkIndexAuth() {
     try {
-        await fetch('/api/logout', { method: 'POST' });
-        window.location.href = '/';
+        const response = await fetch('/api/me');
+        const data = await response.json();
+        
+        if (data.username) {
+            // Logged-in users shouldn't be on this page - redirect to player page
+            window.location.href = '/player';
+            return;
+        }
+        
+        // Setup login/register buttons for non-authenticated users
+        const authSection = document.getElementById('nav-auth');
+        if (authSection && !authSection.innerHTML.trim()) {
+            authSection.innerHTML = `
+                <button class="btn-standard btn-profile" onclick="showLogin()">Login</button>
+                <button class="btn-standard btn-profile" onclick="showRegister()">Register</button>
+            `;
+        }
     } catch (error) {
-        console.error('Logout error:', error);
-        window.location.href = '/';
+        console.error('Error checking auth status:', error);
     }
 }
 
-// Check session on load
-async function checkSessionAndInit() {
-  const res = await fetch('/api/me');
-  const data = await res.json();
-  updateAuthUI(data.username);
-}
-
 document.addEventListener('DOMContentLoaded', () => {
-  setupMobileMenu();
   setupModalHandlers();
-  checkSessionAndInit();
+  checkIndexAuth();
   initPokedex();
   document.querySelectorAll('.edit-team-btn').forEach(btn => {
     btn.addEventListener('click', function() {

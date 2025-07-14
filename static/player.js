@@ -1,57 +1,24 @@
 // Player page JavaScript - Team Building Interface
-const authSection = document.getElementById('nav-auth');
-
 let teamsList = [];
 let currentTeamIndex = 0;
 
-// Setup mobile menu functionality
-function setupMobileMenu() {
-    const mobileToggle = document.getElementById('mobile-menu-toggle');
-    const navLinks = document.getElementById('nav-links');
-    const navAuth = document.getElementById('nav-auth');
-    
-    if (mobileToggle) {
-        mobileToggle.addEventListener('click', () => {
-            mobileToggle.classList.toggle('active');
-            navLinks.classList.toggle('active');
-            navAuth.classList.toggle('active');
-        });
-    }
-    
-    // Close mobile menu when clicking outside
-    document.addEventListener('click', (e) => {
-        if (!e.target.closest('.navbar')) {
-            mobileToggle?.classList.remove('active');
-            navLinks?.classList.remove('active');
-            navAuth?.classList.remove('active');
-        }
-    });
-}
-
-// Update UI for logged-in user
-function updateAuthUI(username) {
-  if (username) {
-    authSection.innerHTML = `
-        <span class="welcome-text">Welcome, ${username}</span>
-        <button class="btn-standard btn-logout" onclick="logout()">Logout</button>
-    `;
-  } else {
-    // User not logged in, redirect to home
-    window.location.href = '/';
-  }
-}
-
-// Logout function
-async function logout() {
+// Player page authentication handling
+async function checkPlayerAuth() {
     try {
-        const response = await fetch('/api/logout', { method: 'POST' });
+        const response = await fetch('/api/me');
         const data = await response.json();
-        if (data.success) {
+        
+        if (!data.username) {
+            // User not logged in, redirect to home
             window.location.href = '/';
+            return null;
         }
+        
+        return data.username;
     } catch (error) {
-        console.error('Logout error:', error);
+        console.error('Error checking auth status:', error);
         window.location.href = '/';
+        return null;
     }
 }
 
@@ -374,19 +341,19 @@ function hideTooltip() {
 }
 
 // Check session on load
-async function checkSessionAndInit() {
-  const res = await fetch('/api/me');
-  const data = await res.json();
-  updateAuthUI(data.username);
-  await fetchTeams();
-  loadTeam(0);
-  await loadCurrentChallenge();
+async function initializePlayerPage() {
+    const username = await checkPlayerAuth();
+    if (!username) return; // Will redirect if not authenticated
+    
+    // Continue with player page initialization
+    await fetchTeams();
+    loadTeam(0);
+    await loadCurrentChallenge();
 }
 
 // Initialize page
 document.addEventListener('DOMContentLoaded', () => {
-  setupMobileMenu();
-  checkSessionAndInit();
+  initializePlayerPage();
   setupTeamTabs();
   setupEditTeamButtons();
   setupBattleButtons();
