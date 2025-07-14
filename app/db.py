@@ -32,6 +32,15 @@ def fetch_pokemon(filters=None):
 
     # Other filters
     if filters:
+        if 'costs' in filters and filters['costs']:
+            # Accept comma-separated string or list
+            if isinstance(filters['costs'], str):
+                cost_list = [int(c) for c in filters['costs'].split(',') if c.strip().isdigit()]
+            else:
+                cost_list = [int(c) for c in filters['costs'] if isinstance(c, int) or (isinstance(c, str) and c.isdigit())]
+            if cost_list:
+                where_clauses.append(f"p.cost IN ({','.join(['?']*len(cost_list))})")
+                params.extend(cost_list)
         if 'search' in filters and filters['search']:
             where_clauses.append("LOWER(p.name) LIKE ?")
             params.append(f"%{filters['search'].lower()}%")

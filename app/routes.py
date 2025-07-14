@@ -73,6 +73,7 @@ def register_routes(app):
     def get_pokemon():
         filters = {
             'search': request.args.get('search', ''),
+            'costs': request.args.get('costs', ''),
             'cost': request.args.get('cost', type=int),
             'cost_min': request.args.get('cost_min', type=int),
             'cost_max': request.args.get('cost_max', type=int),
@@ -541,7 +542,7 @@ def register_routes(app):
                 dmg, crit, hit, eff, log_details = calculate_damage_advanced(player_full, enemy_full, player_move_id)
                 if hit:
                     enemy_hp = max(0, enemy_hp - dmg)
-                battle_log.append(f"You used {player_move['move_name']}! {log_details}")
+                battle_log.append(f"You used {player_move['move_name']}! It dealt {dmg} damage. {log_details}")
                 if not hit:
                     battle_log.append(f"{player_full['name']}'s attack missed!")
                 if crit:
@@ -557,7 +558,7 @@ def register_routes(app):
                 dmg, crit, hit, eff, log_details = calculate_damage_advanced(enemy_full, player_full, enemy_move_id)
                 if hit:
                     player_hp = max(0, player_hp - dmg)
-                battle_log.append(f"Enemy used {enemy_move['move_name']}! {log_details}")
+                battle_log.append(f"Enemy used {enemy_move['move_name']}! It dealt {dmg} damage. {log_details}")
                 if not hit:
                     battle_log.append(f"Enemy {enemy_full['name']}'s attack missed!")
                 if crit:

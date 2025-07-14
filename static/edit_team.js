@@ -56,11 +56,11 @@ async function fetchData() {
 }
 
 // Fetch Pokemon with filters
-async function fetchPokemon(search = '', type = '', cost = '') {
+async function fetchPokemon(search = '', type = '', costs = []) {
   const params = new URLSearchParams();
   if (search) params.append('search', search);
   if (type) params.append('type', type);
-  if (cost) params.append('cost', cost);
+  if (costs && costs.length > 0) params.append('costs', costs.join(','));
   
   const res = await fetch(`/api/pokemon?${params}`);
   pokedex = await res.json();
@@ -127,7 +127,7 @@ function renderSelection() {
     img.style.height = '60px';
     img.setAttribute('loading', 'lazy');
     
-    // Add cost badge
+    // Remove cost badge
     const costBadge = document.createElement('div');
     costBadge.textContent = poke.cost;
     costBadge.style.cssText = 'position:absolute; top:2px; left:2px; background:#e74c3c; color:white; border-radius:50%; width:18px; height:18px; text-align:center; font-size:12px; line-height:18px;';
@@ -663,9 +663,19 @@ function setupAdvancedFilters() {
   // Apply filters
   applyBtn.onclick = () => {
     closeModal();
+    activeFilters.costs = getSelectedCosts();
     applyAdvancedFilters();
     updateFilterCount();
   };
+
+  // Add event listeners to cost checkboxes
+  document.querySelectorAll('.cost-checkbox').forEach(cb => {
+    cb.addEventListener('change', () => {
+      activeFilters.costs = getSelectedCosts();
+      applyAdvancedFilters();
+      updateFilterCount();
+    });
+  });
 }
 
 function convertRomanToNumber(roman) {
@@ -739,32 +749,7 @@ function setupStatRangeSliders() {
     minSlider.oninput = updateValues;
     maxSlider.oninput = updateValues;
   });
-
-  // Cost range slider
-  const costMin = document.getElementById('cost-min');
-  const costMax = document.getElementById('cost-max');
-  const costValue = document.getElementById('cost-value');
-  
-  const updateCostValues = () => {
-    const min = parseInt(costMin.value);
-    const max = parseInt(costMax.value);
-    
-    if (min > max) {
-      costMin.value = max;
-    }
-    if (max < min) {
-      costMax.value = min;
-    }
-    
-    const finalMin = parseInt(costMin.value);
-    const finalMax = parseInt(costMax.value);
-    
-    activeFilters.cost = { min: finalMin, max: finalMax };
-    costValue.textContent = `${finalMin}-${finalMax}`;
-  };
-  
-  costMin.oninput = updateCostValues;
-  costMax.oninput = updateCostValues;
+  // Removed cost slider logic
 }
 
 function toggleArrayFilter(array, value) {
@@ -807,7 +792,7 @@ function clearAllFilters() {
     const valueDisplay = document.getElementById(`${stat}-value`);
     valueDisplay.textContent = '0-255';
   });
-  document.getElementById('cost-value').textContent = '1-5';
+  // Removed cost value display reset
 }
 
 function updateFilterDisplay() {
@@ -849,26 +834,20 @@ function hasModifiedCostRange() {
 
 async function applyAdvancedFilters() {
   const search = document.querySelector('.search-input').value;
-  
-  // Build filter parameters
   const params = new URLSearchParams();
   if (search) params.append('search', search);
-  
   // Add type filters
-  if (activeFilters.types.length > 0) {
+  if (activeFilters.types && activeFilters.types.length > 0) {
     params.append('types', activeFilters.types.join(','));
   }
-  
   // Add generation filters
-  if (activeFilters.generations.length > 0) {
+  if (activeFilters.generations && activeFilters.generations.length > 0) {
     params.append('generations', activeFilters.generations.join(','));
   }
-  
   // Add rarity filters
-  if (activeFilters.special.length > 0) {
+  if (activeFilters.special && activeFilters.special.length > 0) {
     params.append('rarity', activeFilters.special.join(','));
   }
-  
   // Add stat range filters
   Object.keys(activeFilters.stats).forEach(stat => {
     const range = activeFilters.stats[stat];
@@ -877,13 +856,16 @@ async function applyAdvancedFilters() {
       params.append(`${stat}_max`, range.max);
     }
   });
-  
-  // Add cost range filter
-  if (activeFilters.cost.min > 1 || activeFilters.cost.max < 5) {
-    params.append('cost_min', activeFilters.cost.min);
-    params.append('cost_max', activeFilters.cost.max);
+  // Always collect selected costs from checkboxes
+  const selectedCosts = getSelectedCosts();
+  if (selectedCosts.length === 0) {
+    pokedex = [];
+    renderSelection();
+    return;
   }
-  
+  if (selectedCosts.length > 0) {
+    params.append('costs', selectedCosts.join(','));
+  }
   // Fetch filtered Pokemon
   const res = await fetch(`/api/pokemon?${params}`);
   pokedex = await res.json();
@@ -939,6 +921,16 @@ function hideNotification() {
     modal.style.display = 'none';
   }
 }
+
+// Advanced filter: collect selected costs from checkboxes
+function getSelectedCosts() {
+    const checkboxes = document.querySelectorAll('.cost-checkbox');
+    const selected = [];
+    checkboxes.forEach(cb => { if (cb.checked) selected.push(parseInt(cb.value)); });
+    return selected;
+}
+// When applying filters, use getSelectedCosts() to set activeFilters.costs
+// Update fetch/filter logic to use activeFilters.costs (array of ints)
 
 // Initial load
 document.addEventListener('DOMContentLoaded', async () => {
