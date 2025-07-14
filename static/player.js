@@ -261,9 +261,10 @@ async function loadCurrentChallenge() {
       
       // Load move data for tooltips
       loadEnemyMoveTooltips();
-      
       // Show the challenge section
       document.getElementById('challenge-section').style.display = 'block';
+      // Load enemy type summary
+      loadEnemyTypeSummary();
     }
   } catch (error) {
     console.error('Error loading current challenge:', error);
@@ -345,6 +346,33 @@ function hideTooltip() {
   if (existingTooltip) {
     existingTooltip.remove();
   }
+}
+
+// Fetch and display enemy team type effectiveness summary
+async function loadEnemyTypeSummary() {
+    const summarySection = document.getElementById('enemy-type-summary');
+    const weaknessesDiv = document.getElementById('enemy-weaknesses');
+    const resistancesDiv = document.getElementById('enemy-resistances');
+    if (!summarySection || !weaknessesDiv || !resistancesDiv) return;
+    summarySection.style.display = 'block';
+    weaknessesDiv.innerHTML = '<span>Loading...</span>';
+    resistancesDiv.innerHTML = '';
+    try {
+        const res = await fetch('/api/enemy_team_type_summary');
+        if (!res.ok) throw new Error('Failed to fetch type summary');
+        const data = await res.json();
+        const weaknesses = data.weaknesses || [];
+        const resistances = data.resistances || [];
+        weaknessesDiv.innerHTML = weaknesses.length ?
+            `<strong>Weak to:</strong> ${weaknesses.map(t => `<span class='type-badge type-${t.toLowerCase()}'>${t}</span>`).join(' ')}` :
+            '<strong>Weak to:</strong> None';
+        resistancesDiv.innerHTML = resistances.length ?
+            `<strong>Resists:</strong> ${resistances.map(t => `<span class='type-badge type-${t.toLowerCase()}'>${t}</span>`).join(' ')}` :
+            '<strong>Resists:</strong> None';
+    } catch (error) {
+        weaknessesDiv.innerHTML = '<span class="error">Could not calculate type summary.</span>';
+        resistancesDiv.innerHTML = '';
+    }
 }
 
 // Check session on load

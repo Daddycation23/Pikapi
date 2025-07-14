@@ -1177,6 +1177,43 @@ def register_routes(app):
             'most_used_pokemon': pokemon_details
         })
 
+    @app.route('/api/enemy_team_type_summary')
+    def api_enemy_team_type_summary():
+        user = get_current_user()
+        if not user:
+            return jsonify({'error': 'Not authenticated'}), 401
+        profile = get_or_create_player_profile(str(user['_id']))
+        enemy_team = profile.get('current_enemy_team')
+        if not enemy_team:
+            current_level = profile.get('current_level', 1)
+            enemy_team = generate_enemy_team_with_moves(current_level)
+        from app.db import get_pokemon_full_data, get_type_effectiveness
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute("SELECT type_id, type_name FROM Type")
+        type_rows = cur.fetchall()
+        type_id_to_name = {row['type_id']: row['type_name'] for row in type_rows}
+        all_type_ids = list(type_id_to_name.keys())
+        enemy_type_ids = []
+        for poke in enemy_team:
+            if poke:
+                full = get_pokemon_full_data(poke.get('id') or poke.get('pokemon_id'))
+                if full and 'types' in full:
+                    enemy_type_ids.extend(full['types'])
+        effectiveness_list = []
+        for atk_id in all_type_ids:
+            eff = 1.0
+            for def_id in enemy_type_ids:
+                eff *= get_type_effectiveness(atk_id, [def_id])
+            effectiveness_list.append((type_id_to_name[atk_id], eff))
+        # Ignore 0x (immunity) types
+        weaknesses = sorted([t for t, e in effectiveness_list if e > 1.01 and e > 0.01], key=lambda t: t)
+        resistances = sorted([t for t, e in effectiveness_list if e < 0.99 and e > 0.01], key=lambda t: t)
+        return jsonify({
+            'weaknesses': weaknesses,
+            'resistances': resistances
+        })
+
     @app.route('/battle-history')
     def battle_history_page():
         user_id = session.get('user_id')
