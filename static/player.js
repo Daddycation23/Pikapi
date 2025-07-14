@@ -208,6 +208,14 @@ function closeErrorModal() {
   }
 }
 
+// Close Pokemon detail modal
+function closePokemonModal() {
+  const pokemonModal = document.getElementById('pokemon-modal');
+  if (pokemonModal) {
+    pokemonModal.style.display = 'none';
+  }
+}
+
 // Load current challenge information
 async function loadCurrentChallenge() {
   try {

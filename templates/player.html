@@ -80,56 +80,68 @@
 
 {% block modals %}
     <!-- Pokemon Detail Modal -->
-    <div id="pokemon-modal" class="modal">
-        <div class="modal-content">
-            <span class="close-button">&times;</span>
-            <div class="pokemon-detail">
-                <div class="detail-image"></div>
-                <div class="detail-info">
-                    <h2>Pikachu</h2>
-                    <div class="pokemon-cost">Cost: 3</div>
-                    <div class="pokemon-types">
-                        <span class="type-badge" style="background-color: #F7D02C;">Electric</span>
+    <div id="pokemon-modal" class="notification-modal" style="display: none;">
+        <div class="notification-modal-content pokemon-detail-modal">
+            <div class="notification-modal-header">
+                <h3 id="pokemon-modal-title">Pokemon Details</h3>
+                <span class="modal-close-btn" onclick="closePokemonModal()">&times;</span>
+            </div>
+            <div class="notification-modal-body pokemon-detail-body">
+                <div class="pokemon-detail-container">
+                    <div class="detail-left">
+                        <div class="detail-image"></div>
                     </div>
-                    <div class="detail-stats">
-                        <div>
-                            <h4>HP</h4>
-                            <div class="stat-bar">
-                                <div class="stat-fill" style="width: 35%"></div>
+                    <div class="detail-right">
+                        <div class="detail-info">
+                            <div class="detail-name">Pikachu</div>
+                            <div class="pokemon-cost">Cost: 3</div>
+                            <div class="pokemon-types">
+                                <span class="type-badge" style="background-color: #F7D02C;">Electric</span>
                             </div>
                         </div>
-                        <div>
-                            <h4>Attack</h4>
-                            <div class="stat-bar">
-                                <div class="stat-fill" style="width: 55%"></div>
+                        <div class="detail-stats">
+                            <div class="stat-row">
+                                <span class="stat-label">HP</span>
+                                <div class="stat-bar">
+                                    <div class="stat-fill" style="width: 35%"></div>
+                                </div>
                             </div>
-                        </div>
-                        <div>
-                            <h4>Defense</h4>
-                            <div class="stat-bar">
-                                <div class="stat-fill" style="width: 40%"></div>
+                            <div class="stat-row">
+                                <span class="stat-label">Attack</span>
+                                <div class="stat-bar">
+                                    <div class="stat-fill" style="width: 55%"></div>
+                                </div>
                             </div>
-                        </div>
-                        <div>
-                            <h4>Special Attack</h4>
-                            <div class="stat-bar">
-                                <div class="stat-fill" style="width: 50%"></div>
+                            <div class="stat-row">
+                                <span class="stat-label">Defense</span>
+                                <div class="stat-bar">
+                                    <div class="stat-fill" style="width: 40%"></div>
+                                </div>
                             </div>
-                        </div>
-                        <div>
-                            <h4>Special Defense</h4>
-                            <div class="stat-bar">
-                                <div class="stat-fill" style="width: 50%"></div>
+                            <div class="stat-row">
+                                <span class="stat-label">Sp. Attack</span>
+                                <div class="stat-bar">
+                                    <div class="stat-fill" style="width: 50%"></div>
+                                </div>
                             </div>
-                        </div>
-                        <div>
-                            <h4>Speed</h4>
-                            <div class="stat-bar">
-                                <div class="stat-fill" style="width: 90%"></div>
+                            <div class="stat-row">
+                                <span class="stat-label">Sp. Defense</span>
+                                <div class="stat-bar">
+                                    <div class="stat-fill" style="width: 50%"></div>
+                                </div>
+                            </div>
+                            <div class="stat-row">
+                                <span class="stat-label">Speed</span>
+                                <div class="stat-bar">
+                                    <div class="stat-fill" style="width: 90%"></div>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
+            </div>
+            <div class="notification-modal-footer">
+                <button class="notification-modal-btn" onclick="closePokemonModal()">Close</button>
             </div>
         </div>
     </div>

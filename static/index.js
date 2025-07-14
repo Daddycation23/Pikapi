@@ -3,10 +3,18 @@ const loginModal = document.getElementById('login-modal');
 const registerModal = document.getElementById('register-modal');
 let currentUser = null;
 
-function showLogin() { loginModal.style.display = 'block'; }
-function showRegister() { registerModal.style.display = 'block'; }
+function showLogin() { loginModal.style.display = 'flex'; }
+function showRegister() { registerModal.style.display = 'flex'; }
 function closeLogin() { loginModal.style.display = 'none'; document.getElementById('login-error').textContent = ''; }
 function closeRegister() { registerModal.style.display = 'none'; document.getElementById('register-error').textContent = ''; }
+
+// Close Pokemon detail modal
+function closePokemonModal() {
+  const pokemonModal = document.getElementById('pokemon-modal');
+  if (pokemonModal) {
+    pokemonModal.style.display = 'none';
+  }
+}
 
 // Setup modal close handlers
 function setupModalHandlers() {
@@ -104,6 +112,8 @@ document.addEventListener('DOMContentLoaded', () => {
   setupModalHandlers();
   checkIndexAuth();
   initPokedex();
+  setupPokemonModalDrag();
+  setupPokemonModalDragScroll(); // enable drag-scroll inside Pokémon details modal
   document.querySelectorAll('.edit-team-btn').forEach(btn => {
     btn.addEventListener('click', function() {
       window.location.href = '/edit_team';
@@ -241,7 +251,7 @@ function setupPokedexEventListeners() {
 
   if (advancedFilterBtn) {
     advancedFilterBtn.addEventListener('click', () => {
-      filterModal.style.display = 'block';
+      filterModal.style.display = 'flex';
     });
   }
 
@@ -612,7 +622,7 @@ async function showPokemonDetails(pokemon) {
     }
   }
   
-  modal.style.display = 'block';
+  modal.style.display = 'flex';
 }
 
 // Close modal functionality for Pokemon details
@@ -632,3 +642,106 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 });
+
+// ---------------------------
+// DRAG-SCROLL SUPPORT FOR POKÉMON DETAILS MODAL
+// ---------------------------
+function setupPokemonModalDragScroll() {
+  const content = document.querySelector('#pokemon-modal .notification-modal-content');
+  if (!content) return;
+
+  let isDown = false;
+  let startY = 0;
+  let startScrollTop = 0;
+
+  content.addEventListener('mousedown', (e) => {
+    // Allow normal clicks on buttons, links, and the close icon
+    if (e.target.closest('button') || e.target.classList.contains('modal-close-btn')) {
+      return;
+    }
+
+    isDown = true;
+    startY = e.clientY;
+    startScrollTop = content.scrollTop;
+    content.style.cursor = 'grabbing';
+    e.preventDefault();
+  });
+
+  window.addEventListener('mousemove', (e) => {
+    if (!isDown) return;
+    const deltaY = e.clientY - startY;
+    content.scrollTop = startScrollTop - deltaY;
+  });
+
+  window.addEventListener('mouseup', () => {
+    if (!isDown) return;
+    isDown = false;
+    content.style.cursor = '';
+  });
+}
+
+// ---------------------------
+// DRAGGABLE POKÉMON DETAILS MODAL
+// ---------------------------
+function setupPokemonModalDrag() {
+  const modal = document.getElementById('pokemon-modal');
+  if (!modal) return;
+  const content = modal.querySelector('.notification-modal-content');
+  if (!content) return;
+  const header = content.querySelector('.notification-modal-header');
+  if (!header) return;
+
+  // Avoid re-initialising multiple times
+  if (header.dataset.dragInit) return;
+  header.dataset.dragInit = 'true';
+
+  header.style.cursor = 'move';
+
+  let isDragging = false;
+  let offsetX = 0;
+  let offsetY = 0;
+
+  header.addEventListener('mousedown', (e) => {
+    // Ignore clicks that originate on close (<span>) or any <button>
+    if (e.target.closest('button') || e.target.classList.contains('modal-close-btn')) {
+      return;
+    }
+
+    isDragging = true;
+    const rect = content.getBoundingClientRect();
+    offsetX = e.clientX - rect.left;
+    offsetY = e.clientY - rect.top;
+
+    // Switch to absolute positioning so we can freely move the card
+    content.style.position = 'absolute';
+    content.style.margin = '0';
+    content.style.transform = 'none';
+    content.style.left = `${rect.left}px`;
+    content.style.top = `${rect.top}px`;
+    // Prevent text selection during drag
+    document.body.style.userSelect = 'none';
+  });
+
+  window.addEventListener('mousemove', (e) => {
+    if (!isDragging) return;
+    e.preventDefault();
+    let newLeft = e.clientX - offsetX;
+    let newTop = e.clientY - offsetY;
+
+    // Keep the card inside the viewport
+    const maxLeft = window.innerWidth - content.offsetWidth;
+    const maxTop = window.innerHeight - content.offsetHeight;
+    newLeft = Math.min(Math.max(0, newLeft), maxLeft);
+    newTop = Math.min(Math.max(0, newTop), maxTop);
+
+    content.style.left = `${newLeft}px`;
+    content.style.top = `${newTop}px`;
+  });
+
+  window.addEventListener('mouseup', () => {
+    if (isDragging) {
+      isDragging = false;
+      document.body.style.userSelect = '';
+    }
+  });
+}
