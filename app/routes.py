@@ -1321,11 +1321,11 @@ def save_battle_record(user_id, result, player_team, enemy_team, battle_log, lev
 def get_enemy_team_config(player_level):
     """Get enemy team configuration based on player level"""
     # Team size increases at certain milestones, but cost budget always increases
-    if player_level <= 5:
+    if player_level <= 10:
         pokemon_count = 3
-    elif player_level <= 10:
-        pokemon_count = 4
     elif player_level <= 20:
+        pokemon_count = 4
+    elif player_level <= 30:
         pokemon_count = 5
     else:
         pokemon_count = 6
@@ -1373,7 +1373,7 @@ def generate_enemy_team_with_moves(player_level):
     cost_budget = config['cost_budget']
     
     enemy_team = []
-    enemy_pokemon_level = min(100, 50 + (player_level - 1))
+    enemy_pokemon_level = min(100, 50 + ((player_level - 1) // 2))
     
     # Get all Pokémon with their costs
     conn = get_db_connection()
