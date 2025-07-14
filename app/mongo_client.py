@@ -64,11 +64,6 @@ def get_or_create_player_profile(player_id):
                 "most_used_team": None,
                 "most_used_pokemon_id": None
             },
-            "preferences": {
-                "sound": True,
-                "theme": "light"
-            },
-            "last_battle_id": None
         }
         profiles.insert_one(profile)
     

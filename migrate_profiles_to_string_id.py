@@ -33,7 +33,7 @@ for doc in profiles.find({"_id": {"$type": "string"}}):
 # 3. Remove best stage level and streak fields from all profiles (reset legacy fields)
 for doc in profiles.find({}):
     unset_fields = {}
-    for field in ["max_level_reached", "current_streak", "best_streak", "preferences"]:
+    for field in ["current_streak", "best_streak", "preferences"]:
         if field in doc:
             unset_fields[field] = ""
         if "statistics" in doc and "most_used_team_id" in doc["statistics"]:
