@@ -1,5 +1,4 @@
-from re import S
-from flask import render_template, request, jsonify, session, Response, abort, make_response, redirect, url_for
+from flask import render_template, request, jsonify, session, abort, make_response, redirect, url_for
 from app.db import fetch_pokemon, fetch_pokemon_by_id, get_db_connection, save_team as db_save_team, get_team as db_get_team, list_teams, get_team_by_id, save_team_by_id, create_team, get_move_data, get_type_effectiveness, get_pokemon_full_data
 from datetime import datetime
 import random
@@ -51,12 +50,6 @@ def register_routes(app):
 
     @app.route('/edit_team')
     def edit_team():
-        def get_current_user():
-            user_id = session.get('user_id')
-            username = session.get('username')
-            if not user_id or not username:
-                return None
-            return {'_id': user_id, 'username': username}
         user = get_current_user()
         team = []
         # if user:
@@ -615,13 +608,9 @@ def register_routes(app):
                 else:
                     team_usage = {}
                     pokemon_usage = {}
-                print('DEBUG: team_usage', team_usage)
-                print('DEBUG: pokemon_usage', pokemon_usage)
                 most_used_team_key = max(team_usage, key=lambda k: team_usage[k]) if team_usage else None
                 most_used_team = json.loads(most_used_team_key) if most_used_team_key else []
                 most_used_pokemon_id = max(pokemon_usage, key=lambda k: pokemon_usage[k]) if pokemon_usage else None
-                print('DEBUG: most_used_team', most_used_team)
-                print('DEBUG: most_used_pokemon_id', most_used_pokemon_id)
                 # Always set statistics.most_used_team to the composition (list of IDs)
                 profiles.update_one({'_id': str(user_id)}, {'$set': {'statistics.most_used_team': most_used_team, 'statistics.most_used_pokemon_id': int(most_used_pokemon_id) if most_used_pokemon_id else None}})
                 # --- end MongoDB stats update ---
@@ -694,13 +683,9 @@ def register_routes(app):
                 else:
                     team_usage = {}
                     pokemon_usage = {}
-                print('DEBUG: team_usage', team_usage)
-                print('DEBUG: pokemon_usage', pokemon_usage)
                 most_used_team_key = max(team_usage, key=lambda k: team_usage[k]) if team_usage else None
                 most_used_team = json.loads(most_used_team_key) if most_used_team_key else []
                 most_used_pokemon_id = max(pokemon_usage, key=lambda k: pokemon_usage[k]) if pokemon_usage else None
-                print('DEBUG: most_used_team', most_used_team)
-                print('DEBUG: most_used_pokemon_id', most_used_pokemon_id)
                 # Always set statistics.most_used_team to the composition (list of IDs)
                 profiles.update_one({'_id': str(user_id)}, {'$set': {'statistics.most_used_team': most_used_team, 'statistics.most_used_pokemon_id': int(most_used_pokemon_id) if most_used_pokemon_id else None}})
                 # --- end MongoDB stats update ---
@@ -1400,6 +1385,48 @@ def apply_traditional_stats(pokemon, level):
     pokemon['sp_atk'] = stats['sp_atk']
     pokemon['sp_def'] = stats['sp_def']
     pokemon['speed'] = stats['speed']
+    return pokemon
+
+def assign_random_moves(pokemon):
+    """Assigns 4 random moves to a Pokémon."""
+    # Get full Pokémon data including all available moves
+    # Handle both 'id' and 'pokemon_id' fields
+    pokemon_id = pokemon.get('id') or pokemon.get('pokemon_id')
+    if not pokemon_id:
+        print(f"DEBUG: No valid ID found for {pokemon.get('name', 'Unknown')}")
+        pokemon['assigned_moves'] = [1, 2, 3, 4]  # Default move IDs
+        return pokemon
+        
+    full_data = get_pokemon_full_data(pokemon_id)
+    if not full_data or not full_data['move_ids']:
+        # Fallback to default moves if no moves available
+        pokemon['assigned_moves'] = [1, 2, 3, 4]  # Default move IDs
+        print(f"DEBUG: {pokemon['name']} has no moves, using defaults: {pokemon['assigned_moves']}")
+        return pokemon
+    
+    # Filter out invalid move IDs (those that don't exist in Move table)
+    valid_moves = []
+    for move_id in full_data['move_ids']:
+        move_data = get_move_data(move_id)
+        if move_data:
+            valid_moves.append(move_id)
+        else:
+            print(f"DEBUG: Invalid move_id {move_id} for {pokemon['name']}")
+    
+    if not valid_moves:
+        # If no valid moves, use some basic moves
+        pokemon['assigned_moves'] = [1, 2, 3, 4]  # Default move IDs
+        print(f"DEBUG: {pokemon['name']} has no valid moves, using defaults: {pokemon['assigned_moves']}")
+        return pokemon
+    
+    # Randomly select 4 moves from available moves
+    if len(valid_moves) <= 4:
+        selected_moves = valid_moves
+    else:
+        selected_moves = random.sample(valid_moves, 4)
+    
+    pokemon['assigned_moves'] = selected_moves
+    print(f"DEBUG: {pokemon['name']} assigned moves: {selected_moves}")
     return pokemon
 
 def generate_enemy_team_with_moves(player_level):
