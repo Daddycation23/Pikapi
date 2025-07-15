@@ -1006,35 +1006,33 @@ def register_routes(app):
     @app.route('/api/pokemon/<int:pokemon_id>/moves-with-types')
     def get_pokemon_moves_with_types(pokemon_id):
         """Get the moves with their type information for a specific Pokémon"""
-        from app.db import get_pokemon_full_data, get_move_data
+        conn = get_db_connection()
+        cur = conn.cursor()
         
-        pokemon_data = get_pokemon_full_data(pokemon_id)
-        if not pokemon_data:
-            return jsonify({'error': 'Pokémon not found'}), 404
+        cur.execute("""
+            SELECT 
+                m.move_name,
+                m.power,
+                m.accuracy,
+                m.category,
+                t.type_name
+            FROM PokemonHasMove phm
+            JOIN Move m ON phm.move_id = m.move_id
+            JOIN Type t ON m.type_id = t.type_id
+            WHERE phm.pokemon_id = ?
+            ORDER BY m.move_name
+        """, (pokemon_id,))
         
-        # Get move data with type information for the move_ids
-        moves_with_types = []
-        for move_id in pokemon_data['move_ids']:
-            move_data = get_move_data(move_id)
-            if move_data:
-                # Get type name for the move
-                conn = get_db_connection()
-                cur = conn.cursor()
-                cur.execute("SELECT type_name FROM Type WHERE type_id = ?", (move_data['type_id'],))
-                type_row = cur.fetchone()
-                conn.close()
-                
-                type_name = type_row['type_name'] if type_row else 'Unknown'
-                
-                moves_with_types.append({
-                    'name': move_data['move_name'],
-                    'type': type_name,
-                    'power': move_data['power'],
-                    'accuracy': move_data['accuracy'],
-                    'category': move_data['category']
-                })
+        moves = [{
+            'name': row['move_name'],
+            'type': row['type_name'],
+            'power': row['power'],
+            'accuracy': row['accuracy'],
+            'category': row['category']
+        } for row in cur.fetchall()]
         
-        return jsonify({'moves': moves_with_types})
+        conn.close()
+        return jsonify({'moves': moves})
 
     @app.route('/api/move/<int:move_id>')
     def get_move_by_id(move_id):

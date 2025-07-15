@@ -482,7 +482,7 @@ function renderPokemonGrid() {
     card.className = 'pokemon-card';
     card.innerHTML = `
       <div class="pokemon-card-image">
-        <img src="${pokemon.img}" alt="${pokemon.name}" onerror="this.src='/static/images/placeholder.png'">
+        <img src="${pokemon.img}" alt="${pokemon.name}" loading="lazy" onerror="this.src='/static/images/placeholder.png'">
       </div>
       <div class="pokemon-card-info">
         <div class="pokemon-card-name">${pokemon.name}</div>
