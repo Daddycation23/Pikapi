@@ -10,32 +10,48 @@
 {% block body_class %}class="index-pokemon-bg"{% endblock %}
 
 {% block content %}
-<div class="container">
-
-        <div class="pokedex-section">
-            <h2>Pokedex</h2>
-            <div class="cost-filter">
-                <button class="cost-btn active">All</button>
-                <h3>Cost</h3>
-                <button class="cost-btn">1</button>
-                <button class="cost-btn">2</button>
-                <button class="cost-btn">3</button>
-                <button class="cost-btn">4</button>
-                <button class="cost-btn">5</button>
-            </div>
-            <div class="search-filter-row">
-                <input type="text" class="search-input" placeholder="Search Pokemon...">
-                <button class="advanced-filter-btn" id="advanced-filter-btn">
-                    <span class="filter-icon">⚙️</span>
-                    <span class="filter-count" id="filter-count"></span>
-                </button>
-
-            </div>
-            <div class="pokemon-selection-grid">
-                <!-- Pokemon cards will be generated dynamically -->
+<div class="index-container">
+    <!-- Left: Empty spacer or welcome section -->
+    <div class="left-column">
+        <div class="welcome-section">
+            <h2>Welcome to Pikapi</h2>
+            <p>Explore the Pokédex and discover amazing Pokémon!</p>
+            <div class="quick-stats">
+                <div class="stat-item">
+                    <span class="stat-number" id="total-pokemon">---</span>
+                    <span class="stat-label" id="pokemon-label">Pokémon</span>
+                </div>
             </div>
         </div>
     </div>
+
+    <!-- Middle: Pokédex Selection Panel -->
+    <div class="selection-column">
+        <div class="search-filter-row">
+            <input type="text" class="search-input" placeholder="Search Pokemon...">
+            <button class="advanced-filter-btn" id="advanced-filter-btn">
+                <span class="filter-icon">⚙️</span>
+                <span class="filter-count" id="filter-count"></span>
+            </button>
+        </div>
+        <div class="pokemon-selection-grid">
+            <!-- Pokemon cards will be generated dynamically -->
+        </div>
+    </div>
+
+    <!-- Right: Empty spacer or tips section -->
+    <div class="right-column">
+        <div class="tips-section">
+            <h3>Tips</h3>
+            <ul class="tips-list">
+                <li>Click on any Pokémon to view detailed stats and moves</li>
+                <li>Use the search bar to find specific Pokémon</li>
+                <li>Try the advanced filters to narrow down your search</li>
+                <li>Register to build and save your own teams!</li>
+            </ul>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block modals %}
@@ -115,6 +131,18 @@
             </div>
             
             <div class="filter-body">
+                <!-- Cost Section (moved to first position, using checkboxes like edit_team) -->
+                <div class="filter-section">
+                    <h3>Cost</h3>
+                    <div class="cost-multiselect" id="cost-multiselect">
+                        <label class="cost-checkbox-btn"><input type="checkbox" class="cost-checkbox" value="1" checked><span>1</span></label>
+                        <label class="cost-checkbox-btn"><input type="checkbox" class="cost-checkbox" value="2" checked><span>2</span></label>
+                        <label class="cost-checkbox-btn"><input type="checkbox" class="cost-checkbox" value="3" checked><span>3</span></label>
+                        <label class="cost-checkbox-btn"><input type="checkbox" class="cost-checkbox" value="4" checked><span>4</span></label>
+                        <label class="cost-checkbox-btn"><input type="checkbox" class="cost-checkbox" value="5" checked><span>5</span></label>
+                    </div>
+                </div>
+
                 <!-- Types Section -->
                 <div class="filter-section">
                     <h3>Types</h3>
@@ -213,18 +241,6 @@
                                 <input type="range" id="speed-min" min="0" max="255" value="0" class="stat-range-min">
                                 <input type="range" id="speed-max" min="0" max="255" value="255" class="stat-range-max">
                             </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Cost Range Section -->
-                <div class="filter-section">
-                    <h3>Cost Range</h3>
-                    <div class="cost-range-container">
-                        <label>Cost: <span id="cost-value">1-5</span></label>
-                        <div class="range-slider">
-                            <input type="range" id="cost-min" min="1" max="5" value="1" class="stat-range-min">
-                            <input type="range" id="cost-max" min="1" max="5" value="5" class="stat-range-max">
                         </div>
                     </div>
                 </div>

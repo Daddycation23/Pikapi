@@ -127,8 +127,8 @@ document.addEventListener('DOMContentLoaded', () => {
 let allPokemon = [];
 let filteredPokemon = [];
 let activeFilters = {
-  cost: 'all',
   search: '',
+  costs: [1, 2, 3, 4, 5], // Changed to array of selected costs like edit_team
   types: [],
   generations: [],
   special: [],
@@ -139,14 +139,15 @@ let activeFilters = {
     'sp-attack': [0, 255],
     'sp-defense': [0, 255],
     speed: [0, 255]
-  },
-  costRange: [1, 5]
+  }
 };
 
 async function initPokedex() {
   await loadAllPokemon();
   setupPokedexEventListeners();
   applyFilters();
+  // Update total Pokemon count in welcome section
+  updatePokemonCount();
 }
 
 async function loadAllPokemon(filters = null) {
@@ -160,16 +161,26 @@ async function loadAllPokemon(filters = null) {
         params.append('search', filters.search);
       }
       
-      // Add cost filter
-      if (filters.cost && filters.cost !== 'all') {
-        params.append('cost', filters.cost);
+      // Add cost filter - only if costs are selected
+      if (filters.costs && filters.costs.length > 0) {
+        params.append('costs', filters.costs.join(','));
+      } else if (filters.costs && filters.costs.length === 0) {
+        // If no costs are selected, return empty result immediately
+        if (filters) {
+          filteredPokemon = [];
+        } else {
+          allPokemon = [];
+          filteredPokemon = [];
+        }
+        updatePokemonCount();
+        return;
       }
       
-      // Add cost range filters
-      if (filters.costRange) {
-        params.append('cost_min', filters.costRange[0]);
-        params.append('cost_max', filters.costRange[1]);
-      }
+      // Add cost range filters - remove these lines since we now use checkbox costs
+      // if (filters.costRange) {
+      //   params.append('cost_min', filters.costRange[0]);
+      //   params.append('cost_max', filters.costRange[1]);
+      // }
       
       // Add type filters
       if (filters.types && filters.types.length > 0) {
@@ -212,6 +223,8 @@ async function loadAllPokemon(filters = null) {
       filteredPokemon = [...allPokemon];
     }
     
+    // Update Pokemon count after loading
+    updatePokemonCount();
     
   } catch (error) {
     console.error('Error loading Pokemon:', error);
@@ -219,16 +232,6 @@ async function loadAllPokemon(filters = null) {
 }
 
 function setupPokedexEventListeners() {
-  // Cost filter buttons
-  document.querySelectorAll('.cost-btn').forEach(btn => {
-    btn.addEventListener('click', async () => {
-      document.querySelectorAll('.cost-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      activeFilters.cost = btn.textContent.toLowerCase();
-      await applyFilters();
-    });
-  });
-
   // Search input
   const searchInput = document.querySelector('.search-input');
   if (searchInput) {
@@ -251,7 +254,7 @@ function setupPokedexEventListeners() {
 
   if (advancedFilterBtn) {
     advancedFilterBtn.addEventListener('click', () => {
-      filterModal.style.display = 'flex';
+      filterModal.style.display = 'block';
     });
   }
 
@@ -269,44 +272,27 @@ function setupPokedexEventListeners() {
   }
 
   if (filterClear) {
-    filterClear.addEventListener('click', async () => {
-      await clearAllFilters();
+    filterClear.addEventListener('click', () => {
+      clearAllFilters();
     });
   }
 
-  // Type filter buttons
-  document.querySelectorAll('.type-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      btn.classList.toggle('active');
+  // Cost checkboxes - like edit_team
+  const costCheckboxes = document.querySelectorAll('.cost-checkbox');
+  costCheckboxes.forEach(checkbox => {
+    checkbox.addEventListener('change', () => {
+      updateCostFilter();
     });
   });
 
-  // Generation filter buttons
-  document.querySelectorAll('.gen-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      btn.classList.toggle('active');
-    });
-  });
-
-  // Special property filter buttons
-  document.querySelectorAll('.special-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      btn.classList.toggle('active');
-    });
-  });
-
-  // Stat range sliders
-  setupStatRangeSliders();
-
-  // Close modal when clicking outside
-  window.addEventListener('click', (event) => {
-    if (event.target === filterModal) {
-      filterModal.style.display = 'none';
-    }
-  });
+  // Setup stat range sliders
+  setupStatSliders();
+  
+  // Setup other filter buttons
+  setupFilterButtons();
 }
 
-function setupStatRangeSliders() {
+function setupStatSliders() {
   const stats = ['hp', 'attack', 'defense', 'sp-attack', 'sp-defense', 'speed'];
   
   stats.forEach(stat => {
@@ -355,96 +341,99 @@ function setupStatRangeSliders() {
   }
 }
 
-async function applyAdvancedFilters() {
-  // Get selected types
-  activeFilters.types = Array.from(document.querySelectorAll('.type-btn.active'))
-    .map(btn => btn.dataset.type);
+function updateCostFilter() {
+  const costCheckboxes = document.querySelectorAll('.cost-checkbox:checked');
+  activeFilters.costs = Array.from(costCheckboxes).map(cb => parseInt(cb.value));
+}
 
-  // Get selected generations and convert Roman numerals to numbers
-  const romanToNumber = {
-    'I': '1', 'II': '2', 'III': '3', 'IV': '4', 
-    'V': '5', 'VI': '6', 'VII': '7', 'VIII': '8'
-  };
-  activeFilters.generations = Array.from(document.querySelectorAll('.gen-btn.active'))
-    .map(btn => romanToNumber[btn.dataset.gen]);
-
-  // Get selected special properties
-  activeFilters.special = Array.from(document.querySelectorAll('.special-btn.active'))
-    .map(btn => btn.dataset.special);
-
-  // Get stat ranges
-  const stats = ['hp', 'attack', 'defense', 'sp-attack', 'sp-defense', 'speed'];
-  stats.forEach(stat => {
-    const minSlider = document.getElementById(`${stat}-min`);
-    const maxSlider = document.getElementById(`${stat}-max`);
-    if (minSlider && maxSlider) {
-      activeFilters.stats[stat] = [parseInt(minSlider.value), parseInt(maxSlider.value)];
-    }
+function setupFilterButtons() {
+  // Type filter buttons
+  document.querySelectorAll('.type-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      btn.classList.toggle('active');
+    });
   });
 
-  // Get cost range
-  const costMinSlider = document.getElementById('cost-min');
-  const costMaxSlider = document.getElementById('cost-max');
-  if (costMinSlider && costMaxSlider) {
-    activeFilters.costRange = [parseInt(costMinSlider.value), parseInt(costMaxSlider.value)];
-  }
+  // Generation filter buttons
+  document.querySelectorAll('.gen-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      btn.classList.toggle('active');
+    });
+  });
+
+  // Special property filter buttons
+  document.querySelectorAll('.special-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      btn.classList.toggle('active');
+    });
+  });
+
+  // Close modal when clicking outside
+  const filterModal = document.getElementById('filter-modal');
+  window.addEventListener('click', (event) => {
+    if (event.target === filterModal) {
+      filterModal.style.display = 'none';
+    }
+  });
+}
+
+async function applyAdvancedFilters() {
+  // Collect active type filters
+  const activeTypes = Array.from(document.querySelectorAll('.type-btn.active')).map(btn => btn.dataset.type);
+  activeFilters.types = activeTypes;
+
+  // Collect active generation filters
+  const activeGens = Array.from(document.querySelectorAll('.gen-btn.active')).map(btn => btn.dataset.gen);
+  activeFilters.generations = activeGens;
+
+  // Collect active special filters
+  const activeSpecial = Array.from(document.querySelectorAll('.special-btn.active')).map(btn => btn.dataset.special);
+  activeFilters.special = activeSpecial;
+
+  // Update cost filter from checkboxes
+  updateCostFilter();
 
   await applyFilters();
   updateFilterCount();
 }
 
-async function clearAllFilters() {
-  // Clear type filters
-  document.querySelectorAll('.type-btn').forEach(btn => btn.classList.remove('active'));
+function clearAllFilters() {
+  // Reset all filter states
+  activeFilters.search = '';
+  activeFilters.costs = [1, 2, 3, 4, 5];
+  activeFilters.types = [];
+  activeFilters.generations = [];
+  activeFilters.special = [];
+  activeFilters.stats = {
+    hp: [0, 255],
+    attack: [0, 255],
+    defense: [0, 255],
+    'sp-attack': [0, 255],
+    'sp-defense': [0, 255],
+    speed: [0, 255]
+  };
+
+  // Reset UI elements
+  document.querySelector('.search-input').value = '';
   
-  // Clear generation filters
-  document.querySelectorAll('.gen-btn').forEach(btn => btn.classList.remove('active'));
+  // Check all cost checkboxes
+  document.querySelectorAll('.cost-checkbox').forEach(cb => cb.checked = true);
   
-  // Clear special property filters
-  document.querySelectorAll('.special-btn').forEach(btn => btn.classList.remove('active'));
+  // Uncheck all filter buttons
+  document.querySelectorAll('.filter-toggle-btn').forEach(btn => btn.classList.remove('active'));
   
-  // Reset stat sliders
+  // Reset all stat sliders
   const stats = ['hp', 'attack', 'defense', 'sp-attack', 'sp-defense', 'speed'];
   stats.forEach(stat => {
     const minSlider = document.getElementById(`${stat}-min`);
     const maxSlider = document.getElementById(`${stat}-max`);
-    const valueDisplay = document.getElementById(`${stat}-value`);
-    if (minSlider && maxSlider && valueDisplay) {
-      minSlider.value = 0;
-      maxSlider.value = 255;
-      valueDisplay.textContent = '0-255';
-    }
+    const valueSpan = document.getElementById(`${stat}-value`);
+    
+    if (minSlider) minSlider.value = 0;
+    if (maxSlider) maxSlider.value = 255;
+    if (valueSpan) valueSpan.textContent = '0-255';
   });
 
-  // Reset cost range
-  const costMinSlider = document.getElementById('cost-min');
-  const costMaxSlider = document.getElementById('cost-max');
-  const costValueDisplay = document.getElementById('cost-value');
-  if (costMinSlider && costMaxSlider && costValueDisplay) {
-    costMinSlider.value = 1;
-    costMaxSlider.value = 5;
-    costValueDisplay.textContent = '1-5';
-  }
-
-  // Reset active filters
-  activeFilters = {
-    cost: activeFilters.cost,
-    search: activeFilters.search,
-    types: [],
-    generations: [],
-    special: [],
-    stats: {
-      hp: [0, 255],
-      attack: [0, 255],
-      defense: [0, 255],
-      'sp-attack': [0, 255],
-      'sp-defense': [0, 255],
-      speed: [0, 255]
-    },
-    costRange: [1, 5]
-  };
-
-  await applyFilters();
   updateFilterCount();
 }
 
@@ -454,7 +443,7 @@ function updateFilterCount() {
     const count = activeFilters.types.length + 
                   activeFilters.generations.length + 
                   activeFilters.special.length +
-                  (activeFilters.costRange[0] !== 1 || activeFilters.costRange[1] !== 5 ? 1 : 0) +
+                  (activeFilters.costs.length !== 5 ? 1 : 0) + // Cost filter active if not all costs selected
                   Object.values(activeFilters.stats).filter(range => range[0] !== 0 || range[1] !== 255).length;
     
     filterCount.textContent = count > 0 ? count : '';
@@ -466,12 +455,12 @@ async function applyFilters() {
   // Use server-side filtering for better performance and accuracy
   await loadAllPokemon(activeFilters);
   renderPokemonGrid();
+  updatePokemonCount(); // Ensure count is updated after filtering
 }
 
 function renderPokemonGrid() {
   const grid = document.querySelector('.pokemon-selection-grid');
   if (!grid) {
-    
     return;
   }
 
@@ -480,9 +469,10 @@ function renderPokemonGrid() {
   filteredPokemon.forEach(pokemon => {
     const card = document.createElement('div');
     card.className = 'pokemon-card';
+    // Include basic info like before but with improved structure
     card.innerHTML = `
       <div class="pokemon-card-image">
-        <img src="${pokemon.img}" alt="${pokemon.name}" loading="lazy" onerror="this.src='/static/images/placeholder.png'">
+        <img src="${pokemon.img}" alt="${pokemon.name}" onerror="this.src='/static/images/placeholder.png'">
       </div>
       <div class="pokemon-card-info">
         <div class="pokemon-card-name">${pokemon.name}</div>
@@ -501,6 +491,9 @@ function renderPokemonGrid() {
     
     grid.appendChild(card);
   });
+  
+  // Update count after rendering
+  updatePokemonCount();
 }
 
 async function showPokemonDetails(pokemon) {
@@ -744,4 +737,31 @@ function setupPokemonModalDrag() {
       document.body.style.userSelect = '';
     }
   });
+}
+
+function updatePokemonCount() {
+  const totalPokemonElement = document.getElementById('total-pokemon');
+  const pokemonLabel = document.getElementById('pokemon-label');
+  
+  if (totalPokemonElement) {
+    // Show filtered count vs total count when filters are active
+    const hasActiveFilters = activeFilters.search || 
+                            activeFilters.costs.length !== 5 || 
+                            activeFilters.types.length > 0 || 
+                            activeFilters.generations.length > 0 || 
+                            activeFilters.special.length > 0 ||
+                            Object.values(activeFilters.stats).some(range => range[0] !== 0 || range[1] !== 255);
+    
+    if (hasActiveFilters) {
+      totalPokemonElement.textContent = `${filteredPokemon.length}/${allPokemon.length}`;
+      if (pokemonLabel) {
+        pokemonLabel.textContent = 'Filtered';
+      }
+    } else {
+      totalPokemonElement.textContent = allPokemon.length;
+      if (pokemonLabel) {
+        pokemonLabel.textContent = 'Pokémon';
+      }
+    }
+  }
 }

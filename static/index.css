@@ -2,21 +2,270 @@
 body {
     padding: 20px;
 }
-/* Common layout components moved to common.css */
-/* Unused CSS classes removed - these were never used in HTML or JS */
-/* Common Pokemon card styles moved to common.css */
-/* Modal styles use common.css */
+
+body.index-pokemon-bg {
+    background: url('https://wallpaperaccess.com/full/487227.jpg') center/cover fixed no-repeat;
+}
+
+body.index-pokemon-bg::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.5);
+    z-index: -1;
+}
+
+/* Fix navbar positioning for index page to prevent scroll issues */
+body.index-pokemon-bg .navbar {
+    position: fixed !important;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+}
+
+.index-container {
+    display: flex;
+    height: var(--viewport-minus-navbar); /* Full viewport minus navbar height */
+    margin-top: var(--navbar-height); /* Push content below fixed navbar */
+    overflow: hidden; /* Prevent main container scroll */
+}
+
+/* Left: Welcome Section */
+.left-column {
+    width: 15%; /* Reduced from 18% */
+    background: rgba(255, 255, 255, 0.95);
+    border-right: 1px solid #e0e0e0;
+    display: flex;
+    flex-direction: column;
+    padding: 30px 20px;
+}
+
+.welcome-section h2 {
+    color: var(--text-primary);
+    font-size: 1.5em;
+    margin-bottom: 15px;
+    text-align: center;
+}
+
+.welcome-section p {
+    color: var(--text-secondary);
+    font-size: 14px;
+    text-align: center;
+    margin-bottom: 25px;
+    line-height: 1.4;
+}
+
+.quick-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.stat-item {
+    text-align: center;
+    padding: 15px;
+    background: rgba(76, 175, 80, 0.1);
+    border-radius: 8px;
+    border: 1px solid rgba(76, 175, 80, 0.2);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 80px; /* Ensure consistent height */
+}
+
+.stat-number {
+    display: block;
+    font-size: 1.5em; /* Reduced from 1.8em to prevent overflow */
+    font-weight: bold;
+    color: var(--primary-color);
+    margin-bottom: 5px;
+    word-break: break-word; /* Allow text to break if too long */
+    line-height: 1.2;
+    text-align: center;
+}
+
+.stat-label {
+    font-size: 12px;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    text-align: center;
+    word-wrap: break-word; /* Allow label to wrap if needed */
+    line-height: 1.3;
+}
+
+/* Middle: Selection Panel - increased width */
+.selection-column {
+    width: 45%; /* Increased from 34% */
+    background: rgba(255, 255, 255, 0.85);
+    border-right: 1px solid #e0e0e0;
+    padding: 30px 20px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden; /* Prevent column-level scroll */
+}
+
+.search-input {
+    flex: 1;
+}
+
+.pokemon-selection-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); /* Reverted from auto-fit minmax(140px, max-content) */
+    gap: 24px; /* Reverted from 30px */
+    overflow-y: auto;
+    flex: 1; /* Take remaining space */
+    min-height: 0; /* Allow flex child to shrink */
+    justify-content: start; /* Reverted from space-evenly */
+    padding: 20px; /* Reverted from 30px */
+}
+
+/* Pokemon cards with basic info but fixed sizing */
+.pokemon-selection-grid .pokemon-card {
+    width: 120px; /* Fixed width */
+    height: 160px; /* Fixed height to prevent stretching */
+    max-width: 120px; /* Prevent expansion */
+    background: #fff;
+    border-radius: 12px;
+    padding: 12px; /* Internal padding */
+    text-align: center;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.07);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-self: center; /* Reverted from removed */
+    justify-content: flex-start; /* Align content to top */
+}
+
+.pokemon-selection-grid .pokemon-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    border-color: #4CAF50;
+}
+
+.pokemon-selection-grid .pokemon-card.selected {
+    border: 2px solid #2196F3;
+}
+
+.pokemon-selection-grid .pokemon-card-image {
+    margin-bottom: 8px;
+}
+
+.pokemon-selection-grid .pokemon-card-image img {
+    width: 70px;
+    height: 70px;
+    object-fit: contain;
+}
+
+.pokemon-selection-grid .pokemon-card-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    width: 100%;
+}
+
+.pokemon-selection-grid .pokemon-card-name {
+    font-weight: 600;
+    color: #2c3e50;
+    font-size: 12px; /* Reverted from 13px */
+    margin-bottom: 4px; /* Reverted from 6px */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    width: 100%; /* Ensure full width usage */
+}
+
+.pokemon-selection-grid .pokemon-card-cost {
+    color: #e74c3c;
+    font-weight: 600;
+    font-size: 11px; /* Reverted from 12px */
+    margin-bottom: 6px; /* Reverted from 8px */
+}
+
+.pokemon-selection-grid .pokemon-card-types {
+    display: flex;
+    gap: 3px; /* Reverted from 4px */
+    justify-content: center;
+    flex-wrap: wrap;
+    width: 100%; /* Ensure full width usage */
+}
+
+.pokemon-selection-grid .pokemon-card-types .type-badge {
+    padding: 2px 6px; /* Reverted from 3px 8px */
+    border-radius: 8px;
+    font-size: 9px; /* Reverted from 10px */
+    color: white;
+    background: #888;
+    white-space: nowrap;
+    flex-shrink: 0; /* Prevent badges from shrinking */
+}
+
+/* Right: Tips Section */
+.right-column {
+    width: 40%; /* Reduced from 48% */
+    background: rgba(255, 255, 255, 0.95);
+    padding: 30px 20px;
+    overflow-y: auto;
+}
+
+.tips-section h3 {
+    color: var(--text-primary);
+    font-size: 1.3em;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.tips-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.tips-list li {
+    background: rgba(33, 150, 243, 0.1);
+    border: 1px solid rgba(33, 150, 243, 0.2);
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 15px;
+    color: var(--text-secondary);
+    font-size: 14px;
+    line-height: 1.4;
+    position: relative;
+    padding-left: 35px;
+}
+
+.tips-list li::before {
+    content: "💡";
+    position: absolute;
+    left: 12px;
+    top: 15px;
+    font-size: 16px;
+}
 
 /* Pokemon Detail Modal - Specific styling to match edit_team details panel */
 .pokemon-detail-modal {
     max-width: 800px;
     width: 90%;
     padding: 0;
+    max-height: 90vh;            /* stay within viewport */
+    overflow-y: auto;            /* allow scrolling if content taller than viewport */
+}
+
+/* Remove inner rigid max-height so it can grow naturally */
+.notification-modal-content.pokemon-detail-modal .pokemon-detail-container {
+    max-height: none;
 }
 
 .pokemon-detail-container {
     display: flex;
-    max-height: 80vh;
     min-height: 400px;
 }
 
@@ -111,8 +360,6 @@ body {
     margin-bottom: 8px;
 }
 
-/* Remove duplicate styling - using common.css instead */
-
 .moves-container {
     display: flex;
     flex-wrap: wrap;
@@ -144,122 +391,12 @@ body {
     overflow: hidden;
 }
 
-/* Common stat components moved to common.css */
-
-/* Duplicate CSS removed - these styles are already defined above */
-/* Stat bars use common.css */
-
-/* Pokedex-specific styles for index page */
-.pokedex-section .pokemon-selection-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-    gap: 16px;
-    overflow-y: auto;
-    max-height: 600px;
-}
-
-.pokedex-section .pokemon-card {
-    background: #fff;
-    border-radius: 12px;
-    padding: 12px;
-    text-align: center;
-    cursor: pointer;
-    border: 2px solid transparent;
-    transition: all 0.2s ease;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.07);
-}
-
-.pokedex-section .pokemon-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    border-color: #4CAF50;
-}   
-
-.pokedex-section .pokemon-card-image {
-    margin-bottom: 8px;
-}
-
-.pokedex-section .pokemon-card-image img {
-    width: 80px;
-    height: 80px;
-    object-fit: contain;
-}
-
-.pokedex-section .pokemon-card-info {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-}
-
-.pokedex-section .pokemon-card-name {
-    font-weight: 600;
-    color: #2c3e50;
-    font-size: 14px;
-    margin-bottom: 4px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.pokedex-section .pokemon-card-cost {
-    color: #e74c3c;
-    font-weight: 600;
-    font-size: 13px;
-    margin-bottom: 6px;
-}
-
-.pokedex-section .pokemon-card-types {
-    display: flex;
-    gap: 4px;
-    justify-content: center;
-    flex-wrap: wrap;
-}
-
-.pokedex-section .pokemon-card-types .type-badge {
-    padding: 3px 8px;
-    border-radius: 10px;
-    font-size: 11px;
-    color: white;
-    background: #888;
-    white-space: nowrap;
-}
-
-/* Common filter and battle components moved to common.css */
-
-/* Old type-effectiveness-btn styles removed - now using .btn-standard.btn-type-chart */
-
-/* Old resume and new battle button styles removed - now using .btn-standard.btn-resume and .btn-standard.btn-new */
-
-/* Responsive design for battle buttons - moved to common.css */   
-
-body.index-pokemon-bg {
-    background: url('https://wallpaperaccess.com/full/487227.jpg') center/cover fixed no-repeat;
-}
-
-body.index-pokemon-bg::before {
-    content: "";
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(255, 255, 255, 0.5);
-    z-index: -1;
-}
-
 /* --- Override default modal skin for Pokémon details (index page only) --- */
 .notification-modal-content.pokemon-detail-modal {
     /* Replace dark gradient card with plain white so inner columns align visually */
     background: #ffffff;
     border: 1px solid var(--border-light);
     box-shadow: var(--shadow-medium);
-    max-height: 90vh;            /* stay within viewport */
-    overflow-y: auto;            /* allow scrolling if content taller than viewport */
-}
-
-/* Remove inner rigid max-height so it can grow naturally */
-.notification-modal-content.pokemon-detail-modal .pokemon-detail-container {
-    max-height: none;
 }
 
 /* Remove the inner body gradient/padding that created the dark gutters */
@@ -273,6 +410,348 @@ body.index-pokemon-bg::before {
 /* Ensure moves header is readable on the white card */
 .notification-modal-content.pokemon-detail-modal .detail-moves h4 {
     color: var(--text-primary);
+}
+
+/* Mobile responsive adjustments */
+@media (max-width: 768px) {
+    .index-container {
+        flex-direction: column;
+        height: auto;
+        overflow: visible;
+    }
+    
+    .left-column, .right-column {
+        width: 100%;
+        order: 2;
+    }
+    
+    .selection-column {
+        width: 100%;
+        order: 1;
+        max-height: 70vh;
+    }
+    
+    .pokemon-selection-grid {
+        grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); /* Reverted back */
+        gap: 20px; /* Reverted from 25px */
+        justify-content: center; /* Reverted from space-evenly */
+        padding: 16px; /* Reverted from 25px */
+    }
+    
+    .pokemon-selection-grid .pokemon-card {
+        width: 110px;
+        height: 150px; /* Fixed height for mobile */
+        max-width: 110px; /* Prevent expansion on mobile */
+        padding: 10px; /* Internal padding for mobile */
+    }
+    
+    .pokemon-selection-grid .pokemon-card-image img {
+        width: 60px;
+        height: 60px;
+    }
+}
+
+/* Advanced Filter Modal - Override to match edit_team styling exactly */
+.filter-modal {
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(5px);
+}
+
+.filter-modal-content {
+    background: linear-gradient(135deg, #2c3e50, #34495e);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+    max-height: 85vh; /* Reduce max height to ensure footer is visible */
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.filter-header {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    padding: 20px 30px; /* Reduce padding slightly */
+    flex-shrink: 0; /* Prevent header from shrinking */
+}
+
+.filter-header h2 {
+    font-size: 1.8em; /* Slightly smaller */
+    font-weight: 700;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.filter-close {
+    font-size: 28px;
+    color: rgba(255, 255, 255, 0.9);
+    transition: all 0.3s ease;
+}
+
+.filter-close:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: scale(1.1);
+}
+
+.filter-body {
+    padding: 25px 30px; /* Reduce padding */
+    background: linear-gradient(135deg, rgba(44, 62, 80, 0.9), rgba(52, 73, 94, 0.9));
+    overflow-y: auto;
+    flex: 1; /* Take available space */
+    min-height: 0; /* Allow shrinking */
+}
+
+.filter-section {
+    margin-bottom: 25px; /* Reduce spacing between sections */
+}
+
+.filter-section h3 {
+    color: #ecf0f1;
+    font-size: 1.3em; /* Slightly smaller */
+    margin-bottom: 15px; /* Reduce margin */
+    padding-bottom: 8px; /* Reduce padding */
+    border-bottom: 2px solid #667eea;
+    font-weight: 600;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+/* Type grid - matches edit_team exactly */
+.type-grid {
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 12px;
+}
+
+.gen-grid {
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    gap: 12px;
+}
+
+.special-grid {
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 12px;
+}
+
+.filter-toggle-btn {
+    padding: 12px 16px; /* Reduce padding slightly */
+    border: 2px solid #95a5a6;
+    background: linear-gradient(135deg, #34495e, #2c3e50);
+    color: #ecf0f1;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    text-transform: capitalize;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+}
+
+.filter-toggle-btn:hover {
+    border-color: #3498db;
+    background: linear-gradient(135deg, #4a5568, #3a4a5c);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
+}
+
+/* Type-specific active states to match edit_team */
+.type-btn.active {
+    border-color: #f39c12;
+    background: linear-gradient(135deg, #f39c12, #e67e22);
+    color: white;
+    box-shadow: 0 4px 15px rgba(243, 156, 18, 0.4);
+}
+
+.gen-btn.active {
+    border-color: #9b59b6;
+    background: linear-gradient(135deg, #9b59b6, #8e44ad);
+    color: white;
+    box-shadow: 0 4px 15px rgba(155, 89, 182, 0.4);
+}
+
+.special-btn.active {
+    border-color: #1abc9c;
+    background: linear-gradient(135deg, #1abc9c, #16a085);
+    color: white;
+    box-shadow: 0 4px 15px rgba(26, 188, 156, 0.4);
+}
+
+/* Stat sliders - exact match to edit_team */
+.stat-sliders {
+    display: grid;
+    gap: 20px; /* Reduce gap */
+}
+
+.stat-slider-row {
+    display: flex;
+    flex-direction: column;
+    gap: 10px; /* Reduce gap */
+}
+
+.stat-slider-row label {
+    color: #ecf0f1;
+    font-weight: 600;
+    font-size: 14px; /* Slightly smaller */
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.range-slider {
+    position: relative;
+    height: 8px; /* Reduce height */
+    background: linear-gradient(135deg, #7f8c8d, #95a5a6);
+    border-radius: 4px;
+    margin: 10px 0; /* Reduce margin */
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.stat-range-min, .stat-range-max {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 8px;
+    background: none;
+    pointer-events: none;
+    appearance: none;
+    border-radius: 4px;
+}
+
+.stat-range-min {
+    z-index: 1;
+}
+
+.stat-range-max {
+    z-index: 2;
+}
+
+.stat-range-min::-webkit-slider-thumb,
+.stat-range-max::-webkit-slider-thumb {
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    background: linear-gradient(135deg, #3498db, #2980b9);
+    border-radius: 50%;
+    cursor: pointer;
+    pointer-events: all;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4);
+    border: 2px solid white;
+    transition: all 0.3s ease;
+}
+
+.stat-range-min::-webkit-slider-thumb:hover,
+.stat-range-max::-webkit-slider-thumb:hover {
+    transform: scale(1.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+}
+
+/* Filter footer - enhanced styling */
+.filter-footer {
+    background: linear-gradient(135deg, #2c3e50, #34495e);
+    padding: 20px 30px; /* Reduce padding */
+    border-top: 2px solid #667eea;
+    flex-shrink: 0; /* Prevent footer from shrinking */
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.filter-clear-btn, .filter-apply-btn {
+    padding: 12px 28px; /* Reduce padding */
+    border-radius: 8px; /* Smaller border radius */
+    font-size: 14px; /* Smaller font */
+    font-weight: 600; /* Reduce weight */
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    transition: all 0.3s ease;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2); /* Reduce shadow */
+    border: none;
+    cursor: pointer;
+}
+
+.filter-clear-btn {
+    background: linear-gradient(135deg, #e74c3c, #c0392b);
+    color: white;
+}
+
+.filter-clear-btn:hover {
+    background: linear-gradient(135deg, #c0392b, #e74c3c);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(231, 76, 60, 0.3);
+}
+
+.filter-apply-btn {
+    background: linear-gradient(135deg, #27ae60, #2ecc71);
+    color: white;
+}
+
+.filter-apply-btn:hover {
+    background: linear-gradient(135deg, #2ecc71, #27ae60);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(46, 204, 113, 0.3);
+}
+
+.cost-range-container label {
+    color: #ecf0f1;
+    font-weight: 600;
+    font-size: 14px; /* Match other labels */
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+/* Cost multiselect styling - matches edit_team exactly */
+.cost-multiselect {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+}
+
+.cost-checkbox-btn {
+    position: relative;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    background: none;
+    border: none;
+}
+
+.cost-checkbox-btn input[type="checkbox"] {
+    opacity: 0;
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    left: 0;
+    top: 0;
+    margin: 0;
+    cursor: pointer;
+    z-index: 2;
+}
+
+.cost-checkbox-btn span {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #95a5a6, #7f8c8d);
+    color: #ecf0f1;
+    font-size: 18px;
+    font-weight: bold;
+    border: 2px solid #34495e;
+    transition: all 0.3s ease;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+    z-index: 1;
+}
+
+.cost-checkbox-btn input[type="checkbox"]:checked + span {
+    background: linear-gradient(135deg, #3498db, #2980b9);
+    color: white;
+    border-color: #2980b9;
+    box-shadow: 0 4px 15px rgba(52, 152, 219, 0.4);
+    transform: scale(1.05);
+}
+
+.cost-checkbox-btn span:hover {
+    border-color: #3498db;
+    box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
+    transform: translateY(-1px);
 }
 
 
